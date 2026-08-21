@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="containerPadrao">
+
+    <!-- Cabeçalho -->
+    <div class="cardPadrao mb-4">
+
+        <div class="barraDestaque"></div>
+
+        <div class="cabecalhoCard">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+                    <h1 class="tituloPrincipal mb-2">
+                        Usuários
+                    </h1>
+
+                    <p class="subtituloCard mb-0">
+                        Gerencie os usuários cadastrados no sistema.
+                    </p>
+                </div>
+
+                <div>
+                    <span class="badge bg-light text-dark fs-6">
+                        {{ usuarios|length }} usuários
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Tabela -->
+    <div class="cardPadrao">
+
+        <div class="cabecalhoCard">
+
+            <h5 class="tituloTabela mb-1">
+                Usuários cadastrados
+            </h5>
+
+            <p class="subtituloCard mb-0">
+                Consulte e gerencie o status dos usuários.
+            </p>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-hover tabelaPadrao mb-0">
+
+                <thead class="cabecalhoTabela">
+
+                    <tr>
+                        <th scope="col">Nome</th>
+                        <th scope="col">E-mail</th>
+                        <th scope="col">Perfil</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Ações</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for usuario in usuarios %}
+
+                    <tr>
+
+                        <!-- Nome -->
+                        <td>
+                            <strong>
+                                {{ usuario.nome }}
+                            </strong>
+                        </td>
+
+
+                        <!-- E-mail -->
+                        <td>
+                            {{ usuario.email }}
+                        </td>
+
+
+                        <!-- Perfil -->
+                        <td>
+
+                            {% if usuario.perfil == 'admin' %}
+
+                            <span class="badge bg-primary">
+                                Administrador
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+                                Usuário
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Status -->
+                        <td>
+
+                            {% if usuario.status == 'pendente' %}
+
+                            <span class="badge statusAndamento">
+                                Pendente
+                            </span>
+
+                            {% elif usuario.status == 'ativo' %}
+
+                            <span class="badge statusAberto">
+                                Ativo
+                            </span>
+
+                            {% elif usuario.status == 'bloqueado' %}
+
+                            <span class="badge bg-danger">
+                                Bloqueado
+                            </span>
+
+                            {% elif usuario.status == 'reprovado' %}
+
+                            <span class="badge bg-danger">
+                                Reprovado
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+                                {{ usuario.status }}
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- Ações -->
+                        <td class="text-center">
+
+                            {% if usuario.status == 'pendente' %}
+
+                            <a
+                                href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
+                                class="btn btn-success btn-sm me-1"
+                            >
+                                Aprovar
+                            </a>
+
+                            {% elif usuario.status == 'ativo' %}
+
+                            <a
+                                href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
+                                class="btn btn-danger btn-sm me-1"
+                            >
+                                Bloquear
+                            </a>
+
+                            {% elif usuario.status == 'bloqueado' %}
+
+                            <a
+                                href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
+                                class="btn btn-success btn-sm me-1"
+                            >
+                                Ativar
+                            </a>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="text-center py-5"
+                        >
+
+                            <h5>
+                                Nenhum usuário encontrado.
+                            </h5>
+
+                            <p class="text-secondary mb-0">
+                                Não existem usuários cadastrados no sistema.
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

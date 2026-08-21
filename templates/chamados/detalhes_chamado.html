@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="card mt-4 shadow-lg ticket-detail-card">
+
+    <div class="ticket-detail-accent"></div>
+
+    <div class="ticket-header">
+        <h5>Chamado #{{ chamado.id }}</h5>
+
+        <span class="status-badge">
+            {{ chamado.status }}
+        </span>
+    </div>
+
+    <div class="ticket-body">
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-6">
+                <div class="info-card">
+                    <small>Solicitante</small>
+                    <strong>{{ chamado.solicitante }}</strong>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="info-card">
+                    <small>Setor</small>
+                    <strong>{{ chamado.setor }}</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <hr class="ticket-divider">
+
+        <div class="mb-4">
+            <small class="d-block mb-2 text-light opacity-75">
+                Título
+            </small>
+
+            <h4>
+                {{ chamado.titulo }}
+            </h4>
+        </div>
+
+        <div class="mb-4">
+            <small class="d-block mb-2 text-light opacity-75">
+                Descrição
+            </small>
+
+            <div class="description-box">
+                {{ chamado.descricao }}
+            </div>
+        </div>
+
+        <hr class="ticket-divider">
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Categoria</small>
+                    <strong>{{ chamado.categoria }}</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Prioridade</small>
+                    <strong>{{ chamado.prioridade }}</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Status</small>
+                    <strong>{{ chamado.status }}</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <hr class="ticket-divider">
+
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+
+            <span class="text-light opacity-75">
+                Alterar status:
+            </span>
+
+            <a href="/chamados/resolver/{{ chamado.id }}"
+               class="btn btn-success btn-resolver"
+               onclick="return confirm('Tem certeza que deseja Resolver o chamado #{{ chamado.id }}?')">
+                Resolver
+            </a>
+
+            <a href="/chamados/fechar/{{ chamado.id }}"
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .ticket-detail-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2b5ea7 100%);
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        color: white;
+    }
+
+    .ticket-detail-accent {
+        height: 5px;
+        background: linear-gradient(90deg, #92EEFF, #D8FFC5, #C4F7CA);
+    }
+
+    .ticket-header {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ticket-header h5 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .ticket-body {
+        padding: 2rem;
+    }
+
+    .info-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+        height: 100%;
+    }
+
+    .info-card small {
+        color: rgba(255, 255, 255, .7);
+        display: block;
+        margin-bottom: .25rem;
+    }
+
+    .info-card strong {
+        color: white;
+    }
+
+    .description-box {
+        background: rgba(255, 255, 255, .08);
+        border: 1px solid rgba(255, 255, 255, .1);
+        border-radius: 12px;
+        padding: 1rem;
+        color: white;
+    }
+
+    .ticket-divider {
+        border-color: rgba(255, 255, 255, .15);
+    }
+
+    .status-badge {
+        background: linear-gradient(90deg,
+                #92EEFF,
+                #D8FFC5,
+                #C4F7CA);
+        color: #1e3a5f;
+        font-weight: 700;
+        padding: .5rem 1rem;
+        border-radius: 50px;
+    }
+
+    .btn-resolver {
+        background: #28a745;
+        border: none;
+        font-weight: 600;
+        transition: .3s;
+    }
+
+    .btn-resolver:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-fechar {
+        background: rgba(255, 255, 255, .15);
+        border: 1px solid rgba(255, 255, 255, .2);
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-fechar:hover {
+        background: rgba(255, 255, 255, .25);
+        color: white;
+    }
+</style>
+{% endblock %}

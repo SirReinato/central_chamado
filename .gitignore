@@ -1,0 +1,51 @@
+# Ambiente virtual
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask
+ins*ance/
+.flaskenv
+
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Variávei* de ambiente
+.env
+
+# Logs
+*.log
+
+#*Pytest
+.pytest_cache/
+
+# Coverage
+*coverage
+htmlcov/
+
+# VS Code
+.vsco*e/
+
+# JetBrains
+.idea/
+
+# Sistema *peracional
+.DS_Store
+Thumbs.db
+
+# *uild
+build/
+dist/
+*.egg-info/
+
+# A*quivos temporários
+*.tmp
+*.bak
+```*

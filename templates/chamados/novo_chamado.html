@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="containerFormulario my-5">
+
+    <div class="card cardPadrao">
+
+        <!-- Barra de destaque -->
+        <div class="barraDestaque"></div>
+
+        <!-- Cabeçalho -->
+        <div class="cabecalhoCard text-center faixaInferiorDestaque">
+
+            <h1 class="h4 mb-0">
+                Novo Chamado
+            </h1>
+
+            <p class="subtituloCard mt-2 mb-0">
+                Registre uma nova solicitação de suporte
+            </p>
+
+        </div>
+
+        <!-- Corpo do formulário -->
+        <div class="card-body p-4">
+
+            <form method="POST">
+
+                <!-- Solicitante -->
+                <div class="mb-3">
+
+                    <label
+                        for="solicitante"
+                        class="form-label labelCampo"
+                    >
+                        Solicitante
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="solicitante"
+                        name="solicitante"
+                        placeholder="Digite o nome do solicitante"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Setor -->
+                <div class="mb-3">
+
+                    <label
+                        for="setor"
+                        class="form-label labelCampo"
+                    >
+                        Setor
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="setor"
+                        name="setor"
+                        placeholder="Ex: Financeiro, TI, RH"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Título -->
+                <div class="mb-3">
+
+                    <label
+                        for="titulo"
+                        class="form-label labelCampo"
+                    >
+                        Título do Chamado
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="titulo"
+                        name="titulo"
+                        placeholder="Resumo do problema"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Descrição -->
+                <div class="mb-3">
+
+                    <label
+                        for="descricao"
+                        class="form-label labelCampo"
+                    >
+                        Descrição
+                    </label>
+
+                    <textarea
+                        class="form-control textareaPadrao"
+                        id="descricao"
+                        name="descricao"
+                        rows="4"
+                        placeholder="Detalhe o problema com o máximo de informações possível..."
+                        required
+                    ></textarea>
+
+                </div>
+
+
+                <!-- Categoria e Prioridade -->
+                <div class="row g-3 mb-4">
+
+                    <!-- Categoria -->
+                    <div class="col-sm-6">
+
+                        <label
+                            for="categoria"
+                            class="form-label labelCampo"
+                        >
+                            Categoria
+                        </label>
+
+                        <select
+                            class="form-select selectPadrao"
+                            id="categoria"
+                            name="categoria"
+                        >
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Rede">Rede</option>
+                            <option value="E-mail">E-mail</option>
+                        </select>
+
+                    </div>
+
+
+                    <!-- Prioridade -->
+                    <div class="col-sm-6">
+
+                        <label
+                            for="prioridade"
+                            class="form-label labelCampo"
+                        >
+                            Prioridade
+                        </label>
+
+                        <select
+                            class="form-select selectPadrao"
+                            id="prioridade"
+                            name="prioridade"
+                        >
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Botões -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+
+                    <a
+                        href="/"
+                        class="btn botaoSecundario px-4 me-md-2"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn botaoPrimario px-5"
+                    >
+                        Salvar Chamado
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .faixaInferiorDestaque{
+        border-bottom: 4px solid #2b5ea7;
+    }
+</style>
+
+{% endblock %}

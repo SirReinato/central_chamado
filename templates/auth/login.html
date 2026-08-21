@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="login-wrapper d-flex justify-content-center align-items-center">
+
+    <div class="login-card">
+
+        <div class="text-center mb-4">
+            <div class="user-icon">
+                👤
+            </div>
+
+            <h2 class="fw-bold mt-3">
+                Entrar
+            </h2>
+
+            <p class="text-secondary mt-2">
+                Central de Chamados
+            </p>
+        </div>
+
+        <form method="POST">
+
+            <div class="mb-4">
+                <label class="form-label">
+                    Email
+                </label>
+
+                <input type="email" name="email" class="form-control custom-input" placeholder="Digite seu email"
+                    required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">
+                    Senha
+                </label>
+
+                <input type="password" name="senha" class="form-control custom-input" placeholder="Digite sua senha"
+                    required>
+            </div>
+
+            <div class="d-grid mb-3">
+                <button class="btn btn-primary btn-lg rounded-pill">
+                    Entrar
+                </button>
+            </div>
+
+            <div class="text-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg rounded-pill">
+                    Criar uma conta
+                </a>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger mt-4">
+                {{ error }}
+            </div>
+            {% endif %}
+
+        </form>
+
+    </div>
+
+</div>
+
+<style>
+    .login-wrapper {
+        min-height: 75vh;
+    }
+
+    .login-card {
+
+        width: 100%;
+        max-width: 480px;
+
+        padding: 40px;
+
+        background: #1f2937;
+
+        border-radius: 30px;
+
+        border: 2px solid rgba(13, 110, 253, .5);
+
+        box-shadow:
+            0 0 15px rgba(13, 110, 253, .35),
+            0 0 30px rgba(13, 110, 253, .15);
+
+    }
+
+    .user-icon {
+
+        width: 90px;
+        height: 90px;
+
+        margin: auto;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 40px;
+
+        border-radius: 50%;
+
+        border: 2px solid #0d6efd;
+
+        box-shadow: 0 0 15px rgba(13, 110, 253, .6);
+
+    }
+
+    .custom-input {
+
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid #6c757d;
+
+        border-radius: 0;
+
+        color: white;
+
+    }
+
+    .custom-input:focus {
+
+        background: transparent;
+        color: white;
+
+        border-bottom: 2px solid #0d6efd;
+
+        box-shadow: none;
+
+    }
+</style>
+
+{% endblock %}

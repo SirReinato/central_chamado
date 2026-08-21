@@ -1,0 +1,414 @@
+:root {
+    /* =========================================================
+       CORES
+       ========================================================= */
+
+    --cor-fundo: #212529;
+
+    --cor-card-1: #1e3a5f;
+    --cor-card-2: #2b5ea7;
+
+    --cor-texto: #ffffff;
+    --cor-texto-secundario: rgba(255, 255, 255, 0.75);
+
+    --cor-texto-escuro: #000000;
+
+    --cor-borda: rgba(255, 255, 255, 0.15);
+    --cor-borda-suave: rgba(255, 255, 255, 0.25);
+
+    --cor-fundo-input: rgba(255, 255, 255, 0.08);
+    --cor-fundo-input-focus: rgba(255, 255, 255, 0.12);
+
+    --cor-autenticacao: #1f2937;
+
+    /* =========================================================
+       CORES DE STATUS
+       ========================================================= */
+
+    --cor-status-fundo: #000000;
+
+    --cor-status-aberto: #8fffbb;
+    --cor-status-andamento: #ffe082;
+    --cor-status-resolvido: #92eeff;
+    --cor-status-fechado: #ffffff;
+
+    /* =========================================================
+       GRADIENTES
+       ========================================================= */
+
+    --gradiente-principal:
+        linear-gradient(90deg, #92eeff, #d8ffc5, #c4f7ca);
+
+    --gradiente-card:
+        linear-gradient(135deg, #1e3a5f 0%, #2b5ea7 100%);
+
+    /* =========================================================
+       BORDAS
+       ========================================================= */
+
+    --raio-card: 20px;
+    --raio-autenticacao: 30px;
+
+    /* =========================================================
+       SOMBRAS
+       ========================================================= */
+
+    --sombra-padrao:
+        0 8px 20px rgba(0, 0, 0, 0.15);
+
+    --sombra-botao:
+        0 8px 20px rgba(146, 238, 255, 0.25);
+}
+
+
+/* =============================================================
+   NAVBAR
+   ============================================================= */
+
+.navbarSistema {
+    background: var(--gradiente-principal);
+}
+
+.linkNavbar:hover {
+    color: #0d6efd !important;
+}
+
+
+/* =============================================================
+   CONTAINERS
+   ============================================================= */
+
+.containerPadrao {
+    padding: 20px;
+}
+
+.containerFormulario {
+    max-width: 900px;
+    margin: auto;
+}
+
+.containerAutenticacao {
+    min-height: 75vh;
+}
+
+
+/* =============================================================
+   TÍTULOS
+   ============================================================= */
+
+.tituloPrincipal {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+.tituloSecundario {
+    color: var(--cor-texto-secundario);
+}
+
+.tituloTabela {
+    font-weight: 600;
+    color: var(--cor-texto);
+}
+
+
+/* =============================================================
+   CARDS
+   ============================================================= */
+
+.cardPadrao {
+    position: relative;
+
+    background: var(--gradiente-card);
+
+    border: none;
+    border-radius: var(--raio-card);
+
+    overflow: hidden;
+
+    color: var(--cor-texto);
+
+    box-shadow: var(--sombra-padrao);
+}
+
+.barraDestaque {
+    height: 5px;
+
+    background: var(--gradiente-principal);
+}
+
+.cabecalhoCard {
+    padding: 25px;
+    color: var(--cor-texto);
+}
+
+.subtituloCard {
+    color: var(--cor-texto-secundario);
+}
+
+
+/* =============================================================
+   CARDS DE MÉTRICAS
+   ============================================================= */
+
+.cardMetrica {
+    height: 100%;
+
+    background: var(--gradiente-card);
+
+    border: none;
+    border-radius: var(--raio-card);
+
+    color: var(--cor-texto);
+
+    box-shadow: var(--sombra-padrao);
+
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cardMetrica:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* =============================================================
+   FORMULÁRIOS
+   ============================================================= */
+
+.labelCampo {
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.inputPadrao,
+.selectPadrao,
+.textareaPadrao {
+    background: var(--cor-fundo-input);
+
+    border: 1px solid var(--cor-borda);
+
+    color: var(--cor-texto);
+}
+
+.inputPadrao::placeholder,
+.textareaPadrao::placeholder {
+    color: var(--cor-texto-secundario);
+}
+
+.inputPadrao:focus,
+.selectPadrao:focus,
+.textareaPadrao:focus {
+    background: var(--cor-fundo-input-focus);
+
+    color: var(--cor-texto);
+
+    border-color: #92eeff;
+
+    box-shadow:
+        0 0 0 0.2rem rgba(146, 238, 255, 0.25);
+}
+
+.selectPadrao option {
+    color: var(--cor-texto-escuro);
+}
+
+
+/* =============================================================
+   BOTÕES
+   ============================================================= */
+
+.botaoPrimario {
+    background: var(--gradiente-principal);
+
+    color: var(--cor-card-1);
+
+    border: none;
+
+    font-weight: 700;
+
+    transition: 0.3s;
+}
+
+.botaoPrimario:hover {
+    transform: translateY(-2px);
+
+    color: var(--cor-card-1);
+
+    box-shadow: var(--sombra-botao);
+}
+
+.botaoSecundario {
+    border: 1px solid var(--cor-borda-suave);
+
+    color: var(--cor-texto);
+
+    background: transparent;
+}
+
+.botaoSecundario:hover {
+    background: rgba(255, 255, 255, 0.08);
+
+    color: var(--cor-texto);
+}
+
+
+/* =============================================================
+   TABELAS
+   ============================================================= */
+
+.tabelaPadrao {
+    color: var(--cor-texto);
+}
+
+.cabecalhoTabela {
+    --bs-table-bg: var(--cor-card-1);
+    --bs-table-color: var(--cor-texto);
+}
+
+.linhaTabela {
+    --bs-table-bg: #92eeff;
+
+    background: #92eeff !important;
+    color: var(--cor-texto-escuro);
+}
+
+.botaoDetalhes {
+    border: 1px solid var(--cor-card-1);
+
+    color: var(--cor-card-1);
+
+    background: transparent;
+
+    font-weight: 600;
+
+    transition: 0.2s ease;
+}
+
+.botaoDetalhes:hover {
+    background: var(--cor-card-1);
+
+    color: var(--cor-texto);
+}
+
+/* =============================================================
+   STATUS
+   ============================================================= */
+
+.statusAberto {
+    background: var(--cor-status-fundo);
+
+    color: var(--cor-status-aberto);
+}
+
+.statusAndamento {
+    background: var(--cor-status-fundo);
+
+    color: var(--cor-status-andamento);
+}
+
+.statusResolvido {
+    background: var(--cor-status-fundo);
+
+    color: var(--cor-status-resolvido);
+}
+
+.statusFechado {
+    background: #0e0f1a;
+
+    color: var(--cor-status-fechado);
+}
+
+
+/* =============================================================
+   AUTENTICAÇÃO
+   ============================================================= */
+
+.cardAutenticacao {
+    width: 100%;
+    max-width: 500px;
+
+    padding: 40px;
+
+    background: var(--cor-autenticacao);
+
+    border-radius: var(--raio-autenticacao);
+}
+
+.iconeUsuario {
+    width: 90px;
+    height: 90px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: auto;
+
+    border-radius: 50%;
+}
+
+.inputAutenticacao {
+    background: transparent;
+
+    border: none;
+    border-bottom: 2px solid #6c757d;
+
+    border-radius: 0;
+
+    color: var(--cor-texto);
+}
+
+.inputAutenticacao:focus {
+    background: transparent;
+
+    color: var(--cor-texto);
+
+    box-shadow: none;
+}
+
+/* =============================================================
+   HERO - HOME
+   ============================================================= */
+
+.heroCard {
+    position: relative;
+
+    background: var(--gradiente-card);
+
+    border: 1px solid var(--cor-borda);
+
+    border-radius: var(--raio-card);
+
+    overflow: hidden;
+
+    color: var(--cor-texto);
+}
+
+.heroCard .barraDestaque {
+    height: 5px;
+}
+
+/* =============================================================
+   MÉTRICAS DO DASHBOARD
+   ============================================================= */
+
+.cardMetricaTitulo {
+    color: var(--cor-texto-secundario);
+
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.05em;
+}
+
+.cardMetricaValor {
+    color: var(--cor-texto);
+
+    font-size: 2rem;
+    font-weight: 700;
+}
