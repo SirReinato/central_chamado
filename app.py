@@ -1,5 +1,5 @@
-from flask import Flask
-from flask_login import LoginManager
+from flask import Flask, session, redirect, url_for
+from flask_login import LoginManager, current_user, logout_user
 
 from models import db, Usuario
 from routes.auth import auth_bp
@@ -31,7 +31,41 @@ login_manager.login_view = 'auth.login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(Usuario, int(user_id))
+    usuario = db.session.get(Usuario, int(user_id))
+    
+    if not usuario:
+        return None
+    
+    if usuario.status != 'ativo':
+        return None
+    
+    return usuario
+
+@app.before_request
+def verificar_usuario_ativo():
+    if not current_user.is_authenticated:
+        return
+    
+    usuario = db.session.get(
+        Usuario,
+        current_user.id
+    )
+    
+    if not usuario:
+        logout_user()
+        session.clear()
+        
+        return redirect(
+            url_for('auth.login')
+        )
+    
+    if usuario.status != 'ativo':
+        logout_user()
+        session.clear()
+        
+        return redirect(
+            url_for('auth.login')
+        )
 
 
 # Registra os blueprints
