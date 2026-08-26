@@ -2,35 +2,41 @@
 
 {% block content %}
 
+
+{% if status == 'bloqueado' %}
+
 <div class="container text-center mt-5">
-
     <div class="card p-5 shadow">
-
         <h1 class="text-warning">
-            Cadastro Recebido
+            Sua conta está bloqueada no momento
         </h1>
-
         <p class="lead mt-3">
-            Sua conta foi criada com sucesso.
+            Entre em contato com a equipe de suporte.
         </p>
-
-        <p>
-            Um administrador irá analisar sua solicitação.
-        </p>
-
-        <p>
-            Após a aprovação você poderá acessar o sistema normalmente.
-        </p>
-
-        <a
-            href="{{ url_for('auth.login') }}"
-            class="btn btnn btn-primary mt-4">
+        <a href="{{ url_for('auth.login') }}" class="btn btnn btn-primary mt-4">
             Voltar para Login
 
         </a>
-
     </div>
-
 </div>
 
-{% endblock %}
+{% else %}
+
+<div class="container text-center mt-5">
+    <div class="card p-5 shadow">
+        <h1 class="text-success">
+            Cadastro Recebido
+        </h1>
+        <p class="lead mt-3">
+            Sua conta foi criada com sucesso.
+        </p>
+        <a href="{{ url_for('auth.login') }}" class="btn btnn btn-primary mt-4">
+            Voltar para Login
+
+        </a>
+    </div>
+</div>
+
+{% endif %}
+
+{%endblock%}

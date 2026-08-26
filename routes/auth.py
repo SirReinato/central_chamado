@@ -49,7 +49,10 @@ def login():
             
         if usuario.status != 'ativo':
             return redirect(
-                url_for('auth.aguardando_aprovacao')
+                url_for(
+            'auth.aguardando_aprovacao',
+            status=usuario.status
+                )
             )
 
         login_user(usuario)
@@ -73,8 +76,11 @@ def logout():
     
 @auth_bp.route('/aguardando_aprovacao')
 def aguardando_aprovacao():
+    status = request.args.get('status')
+
     return render_template(
-        'auth/aguardando_aprovacao.html'
+        'auth/aguardando_aprovacao.html',
+        status=status
     )
     
 @auth_bp.route('/register', methods=['GET', 'POST'])
