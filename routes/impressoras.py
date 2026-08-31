@@ -39,4 +39,31 @@ def nova_impressora():
     return render_template(
         "impressoras/nova_impressora.html"
     )
+
+@impressoras_bp.route("/descobrir")
+def descobrir_impressoras():
+
+    ImpressorasService.descobrir_impressoras()
+
+    return redirect(
+        url_for("impressoras.index")
+    )
     
+@impressoras_bp.route("/sincronizar")
+def sincronizar():
+
+    ImpressorasService.sincronizar_dc1()
+
+    return redirect(
+        url_for("impressoras.index")
+    )
+    
+    
+@impressoras_bp.route("/atualizar-status")
+def atualizar_status():
+
+    ImpressorasService.atualizar_status()
+
+    return redirect(
+        url_for("impressoras.index")
+    )

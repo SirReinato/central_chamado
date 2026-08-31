@@ -109,3 +109,21 @@ class Impressora(db.Model):
     db.String(50),
     default="public"
     )
+    
+    cilindro = db.Column(
+    db.Integer,
+    nullable=True
+    )
+
+    nivel_papel = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    serial = db.Column(
+        db.String(100)
+    )
+
+    status_detalhado = db.Column(
+        db.String(255)
+    )

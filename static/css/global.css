@@ -9,7 +9,7 @@
     --cor-card-2: #2b5ea7;
 
     --cor-texto: #ffffff;
-    --cor-texto-secundario: rgba(255, 255, 255, 0.75);
+    --cor-texto-secundario: rgba(0, 0, 0, 0.75);
 
     --cor-texto-escuro: #000000;
 
@@ -726,4 +726,69 @@
     color: #ffb8bf;
 
     transform: translateY(-1px);
+}
+
+/* =============================================================
+   IMPRESSORAS
+   ============================================================= */
+
+
+/* =============================================================
+   IP DA IMPRESSORA
+   ============================================================= */
+
+.ipImpressora {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 120px;
+    height: 30px;
+
+    padding: 0 12px;
+
+    background: rgba(255, 255, 255, 0.08);
+
+    border: 1px solid var(--cor-borda);
+
+    border-radius: 8px;
+
+    color: var(--cor-texto-secundario);
+
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+
+/* =============================================================
+   STATUS DA IMPRESSORA
+   ============================================================= */
+
+.statusImpressoraOnline {
+    background: rgba(25, 135, 84, 0.18);
+
+    color: #8fffbb;
+
+    border: 1px solid rgba(25, 135, 84, 0.35);
+}
+
+
+.statusImpressoraOffline {
+    background: rgba(220, 53, 69, 0.18);
+
+    color: #ff8f9b;
+
+    border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+
+/* =============================================================
+   ÚLTIMA VERIFICAÇÃO
+   ============================================================= */
+
+.ultimaVerificacao {
+    color: var(--cor-texto-secundario);
+
+    font-size: 0.9rem;
 }
