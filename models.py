@@ -59,3 +59,53 @@ class Usuario(UserMixin, db.Model):
     @property
     def is_admin(self):
         return self.perfil == 'admin'
+    
+    
+class Impressora(db.Model):
+    __tablename__ = "impressoras"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    nome = db.Column(db.String(100))
+    ip = db.Column(db.String(45), unique=True)
+
+    modelo = db.Column(db.String(100))
+
+    online = db.Column(
+        db.Boolean,
+        default=False
+    )
+
+    toner_preto = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    toner_ciano = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    toner_magenta = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    toner_amarelo = db.Column(
+        db.Integer,
+        nullable=True
+    )
+
+    paginas_impressas = db.Column(
+        db.Integer,
+        default=0
+    )
+
+    ultimo_check = db.Column(
+        db.DateTime
+    )    
+    
+    comunidade_snmp = db.Column(
+    db.String(50),
+    default="public"
+    )

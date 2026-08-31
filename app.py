@@ -7,6 +7,7 @@ from routes.chamados import chamados_bp
 from routes.main import main_bp
 from routes.dashboard import dashboard_bp
 from routes.usuarios import usuarios_bp
+from routes.impressoras import impressoras_bp
 
 
 app = Flask(__name__)
@@ -74,6 +75,7 @@ app.register_blueprint(chamados_bp)
 app.register_blueprint(main_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(usuarios_bp)
+app.register_blueprint(impressoras_bp)
 
 # Cria as tabelas
 with app.app_context():

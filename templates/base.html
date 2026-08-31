@@ -60,13 +60,22 @@
                     </li>
 
                     <!-- Usuários -->
-                     {% if current_user.is_admin %}
+                    {% if current_user.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('usuarios.listar') }}">
                             Usuários
                         </a>
                     </li>
-                     {% endif %}
+                    {% endif %}
+
+                    <!-- Impressoras -->
+                    {% if current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.index') }}">
+                            Impressoras
+                        </a>
+                    </li>
+                    {% endif %}
 
                 </ul>
 

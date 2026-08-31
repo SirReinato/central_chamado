@@ -412,3 +412,318 @@
     font-size: 2rem;
     font-weight: 700;
 }
+
+
+/* =============================================================
+   BADGES - TABELA DE USUÁRIOS
+   ============================================================= */
+
+.badgeTabela {
+    display: inline-flex;
+
+    width: 125px;
+    min-height: 32px;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 12px;
+
+    border-radius: 8px;
+
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    letter-spacing: 0.2px;
+
+    border: 1px solid transparent;
+}
+
+
+/* =============================================================
+   PERFIL
+   ============================================================= */
+
+.perfilAdmin {
+    background: rgba(13, 110, 253, 0.15);
+    color: #000;
+
+    border-color: rgba(13, 110, 253, 0.35);
+}
+
+.perfilUsuario {
+    background: rgba(4, 78, 100, 0.1);
+    color: #000(0, 6, 8, 0.1);
+
+    border-color: rgba(4, 78, 100, 0.1);
+}
+
+
+/* =============================================================
+   STATUS
+   ============================================================= */
+
+.statusPendente {
+    background: rgba(255, 193, 7, 0.15);
+    color: #000;
+
+    border-color: rgba(255, 193, 7, 0.35);
+}
+
+.statusAtivo {
+    background: rgba(25, 135, 84, 0.18);
+    color: #000;
+
+    border-color: rgba(25, 135, 84, 0.35);
+}
+
+.statusBloqueado {
+    background: rgba(220, 53, 69, 0.15);
+    color: #000;
+
+    border-color: rgba(220, 53, 69, 0.35);
+}
+
+.statusReprovado {
+    background: rgba(220, 53, 69, 0.15);
+    color: #000;
+
+    border-color: rgba(220, 53, 69, 0.35);
+}
+
+.statusPadrao {
+    background: rgba(108, 117, 125, 0.18);
+    color: #000;
+
+    border-color: rgba(108, 117, 125, 0.35);
+}
+
+
+/* =============================================================
+   AÇÕES
+   ============================================================= */
+
+.acoesTabela {
+    display: inline-flex;
+
+    width: 125px;
+    min-height: 32px;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 6px 12px;
+
+    border-radius: 8px;
+
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+/* Aprovar / Ativar */
+
+.acaoAtivar {
+    background: rgba(25, 135, 84, 0.18);
+
+    color: #000;
+
+    border: 1px solid rgba(25, 135, 84, 0.35);
+}
+
+.acaoAtivar:hover {
+    background: rgba(25, 135, 84, 0.30);
+
+    color: #9af0c0;
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.20);
+}
+
+
+/* Bloquear */
+
+.acaoBloquear {
+    background: rgba(220, 53, 69, 0.15);
+
+    color: #ff8f9b;
+
+    border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.acaoBloquear:hover {
+    background: rgba(220, 53, 69, 0.28);
+
+    color: #ffb3ba;
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.20);
+}
+
+/* =============================================================
+   TABELA - USUÁRIOS
+   ============================================================= */
+
+.badgePerfil,
+.badgeStatus {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 120px;
+    height: 30px;
+
+    padding: 0 12px;
+
+    border-radius: 8px;
+
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    letter-spacing: 0.2px;
+}
+
+
+/* =============================================================
+   PERFIL
+   ============================================================= */
+
+.badgeAdministrador {
+    background: rgba(13, 110, 253, 0.18);
+    color: #7db5ff;
+
+    border: 1px solid rgba(13, 110, 253, 0.35);
+}
+
+.badgeUsuario {
+    background: rgba(255, 255, 255, 0.10);
+    color: var(--cor-texto-secundario);
+
+    border: 1px solid var(--cor-borda);
+}
+
+
+/* =============================================================
+   STATUS
+   ============================================================= */
+
+.statusAndamento {
+    background: rgba(255, 193, 7, 0.18);
+
+    color: #ffe082;
+
+    border: 1px solid rgba(255, 193, 7, 0.35);
+}
+
+.statusAberto {
+    background: rgba(25, 135, 84, 0.18);
+
+    color: #8fffbb;
+
+    border: 1px solid rgba(25, 135, 84, 0.35);
+}
+
+.statusFechado {
+    background: rgba(220, 53, 69, 0.18);
+
+    color: #ff8f9b;
+
+    border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.statusReprovado {
+    background: rgba(220, 53, 69, 0.18);
+
+    color: #ff8f9b;
+
+    border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.statusIndefinido {
+    background: rgba(255, 255, 255, 0.10);
+
+    color: var(--cor-texto-secundario);
+
+    border: 1px solid var(--cor-borda);
+}
+
+
+/* =============================================================
+   AÇÕES
+   ============================================================= */
+
+.acoesUsuario {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.botaoAcao {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 95px;
+    height: 32px;
+
+    border-radius: 8px;
+
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* Aprovar / Ativar */
+
+.botaoAprovar,
+.botaoAtivar {
+    background: rgba(25, 135, 84, 0.18);
+
+    color: #8fffbb;
+
+    border: 1px solid rgba(25, 135, 84, 0.4);
+}
+
+.botaoAprovar:hover,
+.botaoAtivar:hover {
+    background: rgba(25, 135, 84, 0.30);
+
+    color: #b8ffd3;
+
+    transform: translateY(-1px);
+}
+
+
+/* Bloquear */
+
+.botaoBloquear {
+    background: rgba(220, 53, 69, 0.18);
+
+    color: #ff8f9b;
+
+    border: 1px solid rgba(220, 53, 69, 0.4);
+}
+
+.botaoBloquear:hover {
+    background: rgba(220, 53, 69, 0.30);
+
+    color: #ffb8bf;
+
+    transform: translateY(-1px);
+}

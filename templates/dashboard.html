@@ -167,11 +167,10 @@
                             <th>E-mail</th>
                             <th>Perfil</th>
                             <th>Status</th>
-                            <th>Ações</th>
+                            <th class="text-center">Ações</th>
                         </tr>
 
                     </thead>
-
 
                     <tbody>
 
@@ -179,39 +178,71 @@
 
                         <tr>
 
+                            <!-- NOME -->
                             <td>
-                                {{ usuario.nome }}
+                                <strong>
+                                    {{ usuario.nome }}
+                                </strong>
                             </td>
 
+
+                            <!-- E-MAIL -->
                             <td>
                                 {{ usuario.email }}
                             </td>
 
+
+                            <!-- PERFIL -->
                             <td>
-                                {{ usuario.perfil }}
+
+                                {% if usuario.perfil == 'admin' %}
+
+                                <span class="badge badgePerfil badgeAdministrador">
+                                    Administrador
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge badgePerfil badgeUsuario">
+                                    Usuário
+                                </span>
+
+                                {% endif %}
+
                             </td>
 
 
                             <!-- STATUS -->
-
                             <td>
 
                                 {% if usuario.status == 'pendente' %}
 
-                                <span class="statusAndamento px-3 py-1 rounded">
+                                <span class="badge badgeStatus statusAndamento">
                                     Pendente
                                 </span>
 
                                 {% elif usuario.status == 'ativo' %}
 
-                                <span class="statusAberto px-3 py-1 rounded">
+                                <span class="badge badgeStatus statusAberto">
                                     Ativo
                                 </span>
 
                                 {% elif usuario.status == 'bloqueado' %}
 
-                                <span class="statusFechado px-3 py-1 rounded">
+                                <span class="badge badgeStatus statusFechado">
                                     Bloqueado
+                                </span>
+
+                                {% elif usuario.status == 'reprovado' %}
+
+                                <span class="badge badgeStatus statusReprovado">
+                                    Reprovado
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge badgeStatus statusIndefinido">
+                                    {{ usuario.status }}
                                 </span>
 
                                 {% endif %}
@@ -220,43 +251,40 @@
 
 
                             <!-- AÇÕES -->
+                            <td class="text-center">
 
-                            <td>
+                                <div class="acoesUsuario">
 
-                                {% if usuario.status == 'pendente' %}
+                                    {% if usuario.status == 'pendente' %}
 
-                                <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
-                                    class="btn btn-success btn-sm me-2">
+                                    <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
+                                        class="btn btn-sm botaoAcao botaoAprovar">
 
-                                    Aprovar
+                                        Aprovar
 
-                                </a>
+                                    </a>
 
-                                {% endif %}
+                                    {% elif usuario.status == 'ativo' %}
 
+                                    <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
+                                        class="btn btn-sm botaoAcao botaoBloquear">
 
-                                {% if usuario.status == 'ativo' %}
+                                        Bloquear
 
-                                <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
-                                    class="btn btn-danger btn-sm me-2">
+                                    </a>
 
-                                    Bloquear
+                                    {% elif usuario.status == 'bloqueado' %}
 
-                                </a>
+                                    <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
+                                        class="btn btn-sm botaoAcao botaoAtivar">
 
-                                {% endif %}
+                                        Ativar
 
+                                    </a>
 
-                                {% if usuario.status == 'bloqueado' %}
+                                    {% endif %}
 
-                                <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                    class="btn btn-success btn-sm me-2">
-
-                                    Ativar
-
-                                </a>
-
-                                {% endif %}
+                                </div>
 
                             </td>
 

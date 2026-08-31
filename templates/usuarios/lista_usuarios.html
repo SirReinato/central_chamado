@@ -76,31 +76,35 @@
                     <tr>
 
                         <!-- Nome -->
-                        <td>
+                        <td class="align-middle">
+
                             <strong>
                                 {{ usuario.nome }}
                             </strong>
+
                         </td>
 
 
                         <!-- E-mail -->
-                        <td>
+                        <td class="align-middle">
+
                             {{ usuario.email }}
+
                         </td>
 
 
                         <!-- Perfil -->
-                        <td>
+                        <td class="align-middle">
 
                             {% if usuario.perfil == 'admin' %}
 
-                            <span class="badge bg-primary">
+                            <span class="badgeTabela perfilAdmin">
                                 Administrador
                             </span>
 
                             {% else %}
 
-                            <span class="badge bg-secondary">
+                            <span class="badgeTabela perfilUsuario">
                                 Usuário
                             </span>
 
@@ -110,35 +114,35 @@
 
 
                         <!-- Status -->
-                        <td>
+                        <td class="align-middle">
 
                             {% if usuario.status == 'pendente' %}
 
-                            <span class="badge statusAndamento">
+                            <span class="badgeTabela statusPendente">
                                 Pendente
                             </span>
 
                             {% elif usuario.status == 'ativo' %}
 
-                            <span class="badge statusAberto">
+                            <span class="badgeTabela statusAtivo">
                                 Ativo
                             </span>
 
                             {% elif usuario.status == 'bloqueado' %}
 
-                            <span class="badge bg-danger">
+                            <span class="badgeTabela statusBloqueado">
                                 Bloqueado
                             </span>
 
                             {% elif usuario.status == 'reprovado' %}
 
-                            <span class="badge bg-danger">
+                            <span class="badgeTabela statusReprovado">
                                 Reprovado
                             </span>
 
                             {% else %}
 
-                            <span class="badge bg-secondary">
+                            <span class="badgeTabela statusPadrao">
                                 {{ usuario.status }}
                             </span>
 
@@ -148,32 +152,24 @@
 
 
                         <!-- Ações -->
-                        <td class="text-center">
+                        <td class="text-center align-middle">
 
                             {% if usuario.status == 'pendente' %}
 
-                            <a
-                                href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
-                                class="btn btn-success btn-sm me-1"
-                            >
+                            <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}" class="acoesTabela acaoAtivar">
                                 Aprovar
                             </a>
 
                             {% elif usuario.status == 'ativo' %}
 
-                            <a
-                                href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
-                                class="btn btn-danger btn-sm me-1"
-                            >
+                            <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
+                                class="acoesTabela acaoBloquear">
                                 Bloquear
                             </a>
 
                             {% elif usuario.status == 'bloqueado' %}
 
-                            <a
-                                href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                class="btn btn-success btn-sm me-1"
-                            >
+                            <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}" class="acoesTabela acaoAtivar">
                                 Ativar
                             </a>
 
@@ -187,10 +183,7 @@
 
                     <tr>
 
-                        <td
-                            colspan="5"
-                            class="text-center py-5"
-                        >
+                        <td colspan="5" class="text-center py-5">
 
                             <h5>
                                 Nenhum usuário encontrado.
