@@ -10,215 +10,232 @@
 
     <div class="mb-4">
 
-        <h1 class="tituloPrincipal mb-1">
-            Impressoras
-        </h1>
+        <div class=" d-flex justify-content-between align-items-center flex-wrap">
 
-        <p class="tituloSecundario mb-0">
-            Monitoramento do status das impressoras da rede.
-        </p>
+            <div>
 
-    </div>
+                <h1 class="tituloPrincipal mb-1">
+                    Impressoras
+                </h1>
+
+                <p class="tituloSecundario mb-2">
+                    Monitoramento do status das impressoras da rede.
+                </p>
+            </div>
+
+            <div class="mb-3">
+
+                <a href="{{ url_for('impressoras.nova_impressora') }}" class="btn btn-success">
+
+                    Nova Impressora
+
+                </a>
 
 
-    <!-- =====================================================
+            </div>
+        </div>
+
+
+        <!-- =====================================================
          CARD DE IMPRESSORAS
          ===================================================== -->
 
-    <div class="cardPadrao">
+        <div class="cardPadrao">
 
-        <div class="barraDestaque"></div>
-
-
-        <!-- Cabeçalho do Card -->
-
-        <div class="cabecalhoCard">
-
-            <div class="d-flex justify-content-between align-items-center">
-
-                <div>
-
-                    <h5 class="mb-1">
-                        Monitoramento de Impressoras
-                    </h5>
-
-                    <p class="subtituloCard mb-0">
-                        Acompanhe a disponibilidade dos equipamentos.
-                    </p>
-
-                </div>
+            <div class="barraDestaque"></div>
 
 
-                <!-- Quantidade -->
+            <!-- Cabeçalho do Card -->
 
-                <div class="text-end">
+            <div class="cabecalhoCard">
 
-                    <span class="fs-4 fw-bold">
-                        {{ impressoras|length }}
-                    </span>
+                <div class="d-flex justify-content-between align-items-center">
 
-                    <div class="subtituloCard small">
-                        impressoras
+                    <div>
+
+                        <h5 class="mb-1">
+                            Monitoramento de Impressoras
+                        </h5>
+
+                        <p class="subtituloCard mb-0">
+                            Acompanhe a disponibilidade dos equipamentos.
+                        </p>
+
+                    </div>
+
+
+                    <!-- Quantidade -->
+
+                    <div class="text-end">
+
+                        <span class="fs-4 fw-bold">
+                            {{ impressoras|length }}
+                        </span>
+
+                        <div class="subtituloCard small">
+                            impressoras
+                        </div>
+
                     </div>
 
                 </div>
 
             </div>
 
-        </div>
 
-
-        <!-- =================================================
+            <!-- =================================================
              CONTEÚDO
              ================================================= -->
 
-        <div class="px-4 pb-4">
+            <div class="px-4 pb-4">
 
 
-            <!-- Informação -->
+                <!-- Informação -->
 
-            <div class="alert alert-info mb-4">
+                <div class="alert alert-info mb-4">
 
-                <strong>
-                    Monitoramento:
-                </strong>
+                    <strong>
+                        Monitoramento:
+                    </strong>
 
-                {{ impressoras|length }}
-                impressoras cadastradas.
+                    {{ impressoras|length }}
+                    impressoras cadastradas.
 
-            </div>
+                </div>
 
 
-            <!-- =================================================
+                <!-- =================================================
                  TABELA
                  ================================================= -->
 
-            <div class="table-responsive">
+                <div class="table-responsive">
 
-                <table class="table tabelaPadrao table-hover align-middle mb-0">
+                    <table class="table tabelaPadrao table-hover align-middle mb-0">
 
-                    <thead class="cabecalhoTabela">
+                        <thead class="cabecalhoTabela">
 
-                        <tr>
+                            <tr>
 
-                            <th>
-                                Nome
-                            </th>
+                                <th>
+                                    Nome
+                                </th>
 
-                            <th>
-                                IP
-                            </th>
+                                <th>
+                                    IP
+                                </th>
 
-                            <th>
-                                Status
-                            </th>
+                                <th>
+                                    Status
+                                </th>
 
-                            <th>
-                                Última Verificação
-                            </th>
+                                <th>
+                                    Última Verificação
+                                </th>
 
-                        </tr>
+                            </tr>
 
-                    </thead>
+                        </thead>
 
 
-                    <tbody>
+                        <tbody>
 
-                        {% for imp in impressoras %}
+                            {% for imp in impressoras %}
 
-                        <tr>
+                            <tr>
 
-                            <!-- =================================
+                                <!-- =================================
                                  NOME
                                  ================================= -->
 
-                            <td>
+                                <td>
 
-                                <strong>
-                                    {{ imp.nome }}
-                                </strong>
+                                    <strong>
+                                        {{ imp.nome }}
+                                    </strong>
 
-                            </td>
+                                </td>
 
 
-                            <!-- =================================
+                                <!-- =================================
                                  IP
                                  ================================= -->
 
-                            <td>
+                                <td>
 
-                                <span class="ipImpressora">
-                                    {{ imp.ip }}
-                                </span>
+                                    <span class="ipImpressora">
+                                        {{ imp.ip }}
+                                    </span>
 
-                            </td>
+                                </td>
 
 
-                            <!-- =================================
+                                <!-- =================================
                                  STATUS
                                  ================================= -->
 
-                            <td>
+                                <td>
 
-                                {% if imp.online %}
+                                    {% if imp.online %}
 
-                                <span class="badge badgeStatus statusImpressoraOnline">
-                                    ● Online
-                                </span>
+                                    <span class="badge badgeStatus statusImpressoraOnline">
+                                        ● Online
+                                    </span>
 
-                                {% else %}
+                                    {% else %}
 
-                                <span class="badge badgeStatus statusImpressoraOffline">
-                                    ● Offline
-                                </span>
+                                    <span class="badge badgeStatus statusImpressoraOffline">
+                                        ● Offline
+                                    </span>
 
-                                {% endif %}
+                                    {% endif %}
 
-                            </td>
+                                </td>
 
 
-                            <!-- =================================
+                                <!-- =================================
                                  ÚLTIMA VERIFICAÇÃO
                                  ================================= -->
 
-                            <td>
+                                <td>
 
-                                <span class="ultimaVerificacao">
-                                    {{ imp.ultimo_check }}
-                                </span>
+                                    <span class="ultimaVerificacao">
+                                        {{ imp.ultimo_check }}
+                                    </span>
 
-                            </td>
+                                </td>
 
-                        </tr>
+                            </tr>
 
 
-                        {% else %}
+                            {% else %}
 
-                        <!-- =================================
+                            <!-- =================================
                              NENHUMA IMPRESSORA
                              ================================= -->
 
-                        <tr>
+                            <tr>
 
-                            <td colspan="4" class="text-center py-5">
+                                <td colspan="4" class="text-center py-5">
 
-                                <h5>
-                                    Nenhuma impressora encontrada.
-                                </h5>
+                                    <h5>
+                                        Nenhuma impressora encontrada.
+                                    </h5>
 
-                                <p class="text-secondary mb-0">
-                                    Não existem impressoras cadastradas no sistema.
-                                </p>
+                                    <p class="text-secondary mb-0">
+                                        Não existem impressoras cadastradas no sistema.
+                                    </p>
 
-                            </td>
+                                </td>
 
-                        </tr>
+                            </tr>
 
-                        {% endfor %}
+                            {% endfor %}
 
-                    </tbody>
+                        </tbody>
 
-                </table>
+                    </table>
+
+                </div>
 
             </div>
 
@@ -226,6 +243,4 @@
 
     </div>
 
-</div>
-
-{% endblock %}
+    {% endblock %}

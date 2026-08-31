@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h2>Nova Impressora</h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label>Nome</label>
+            <input
+                type="text"
+                class="form-control"
+                name="nome"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label>IP</label>
+            <input
+                type="text"
+                class="form-control"
+                name="ip"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label>Modelo</label>
+            <input
+                type="text"
+                class="form-control"
+                name="modelo">
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-primary">
+
+            Salvar
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}
