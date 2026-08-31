@@ -1,8 +1,12 @@
 from models import Impressora, db
+
 import subprocess
-from datetime import datetime
-import re
 import json
+import re
+import requests
+
+from datetime import datetime
+
 
 class ImpressorasService:
 
@@ -10,27 +14,27 @@ class ImpressorasService:
     def listar_impressoras():
         return Impressora.query.all()
 
+
     @staticmethod
     def adicionar_impressora(nome, ip, modelo):
+
         existente = Impressora.query.filter_by(
-                    ip=ip
-                ).first()
-                
+            ip=ip
+        ).first()
+
         if existente:
             return existente
-        
+
         impressora = Impressora(
             nome=nome,
             ip=ip,
             modelo=modelo
         )
-        
-        
+
         db.session.add(impressora)
         db.session.commit()
-        
+
         return impressora
-        
 
 
     @staticmethod
@@ -74,6 +78,66 @@ class ImpressorasService:
 
 
     @staticmethod
+    def atualizar_ips_dc1():
+
+        comando = """
+        Get-Printer -ComputerName dc1 |
+        Select Name, PortName |
+        ConvertTo-Json
+        """
+
+        resultado = subprocess.run(
+            [
+                "powershell",
+                "-Command",
+                comando
+            ],
+            capture_output=True,
+            text=True,
+            encoding="cp850"
+        )
+
+        if resultado.returncode != 0:
+            print(resultado.stderr)
+            return
+
+        if not resultado.stdout:
+            return
+
+        impressoras = json.loads(
+            resultado.stdout
+        )
+
+        if isinstance(impressoras, dict):
+            impressoras = [impressoras]
+
+        for item in impressoras:
+
+            nome = item.get("Name")
+            porta = item.get("PortName")
+
+            if not nome:
+                continue
+
+            impressora = Impressora.query.filter_by(
+                nome=nome
+            ).first()
+
+            if not impressora:
+                continue
+
+            match = re.search(
+                r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
+                str(porta)
+            )
+
+            if match:
+                impressora.ip = match.group()
+
+        db.session.commit()
+
+
+    @staticmethod
     def atualizar_status():
 
         impressoras = Impressora.query.all()
@@ -83,7 +147,6 @@ class ImpressorasService:
             if not impressora.ip:
                 continue
 
-            # Extrai apenas um IP válido
             match = re.search(
                 r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
                 str(impressora.ip)
@@ -117,8 +180,27 @@ class ImpressorasService:
                 impressora.online = False
 
         db.session.commit()
-    
+
+
     @staticmethod
-    def consultar_snmp(ip):
-        pass
-    
+    def consultar_interface_web(ip):
+
+        try:
+
+            url = f"http://{ip}/general/status.html"
+
+            resposta = requests.get(
+                url,
+                timeout=5
+            )
+
+            if resposta.status_code != 200:
+                return None
+
+            return resposta.text
+
+        except Exception as e:
+
+            print(e)
+
+            return None

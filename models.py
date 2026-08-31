@@ -105,11 +105,6 @@ class Impressora(db.Model):
         db.DateTime
     )    
     
-    comunidade_snmp = db.Column(
-    db.String(50),
-    default="public"
-    )
-    
     cilindro = db.Column(
     db.Integer,
     nullable=True
@@ -126,4 +121,21 @@ class Impressora(db.Model):
 
     status_detalhado = db.Column(
         db.String(255)
+    )
+    
+    fabricante = db.Column(
+    db.String(50)
+    )
+
+    ultimo_erro = db.Column(
+        db.String(255)
+    )
+
+    ultima_sincronizacao = db.Column(
+        db.DateTime
+    )
+
+    necessita_atencao = db.Column(
+        db.Boolean,
+        default=False
     )

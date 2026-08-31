@@ -53,6 +53,7 @@ def descobrir_impressoras():
 def sincronizar():
 
     ImpressorasService.sincronizar_dc1()
+    ImpressorasService.atualizar_ips_dc1()
 
     return redirect(
         url_for("impressoras.index")
@@ -67,3 +68,12 @@ def atualizar_status():
     return redirect(
         url_for("impressoras.index")
     )
+    
+@impressoras_bp.route("/teste-web")
+def teste_web():
+
+    resultado = ImpressorasService.consultar_interface_web(
+        "10.90.1.16"
+    )
+
+    return resultado
