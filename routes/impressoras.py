@@ -54,6 +54,7 @@ def sincronizar():
 
     ImpressorasService.sincronizar_dc1()
     ImpressorasService.atualizar_ips_dc1()
+    ImpressorasService.atualizar_status()
 
     return redirect(
         url_for("impressoras.index")

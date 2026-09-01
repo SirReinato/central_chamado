@@ -80,17 +80,35 @@ class ImpressorasService:
     @staticmethod
     def atualizar_ips_dc1():
 
-        comando = """
-        Get-Printer -ComputerName dc1 |
-        Select Name, PortName |
-        ConvertTo-Json
+        comando = r"""
+        Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Control\Print\Printers" |
+        ForEach-Object {
+
+            $printer = Get-ItemProperty $_.PSPath
+
+            [PSCustomObject]@{
+                Nome = $_.PSChildName
+                Porta = $printer.Port
+                Driver = $printer.Driver
+            }
+
+        } |
+        ConvertTo-Json -Depth 3
+        """
+
+        # Executa o PowerShell NO DC1
+        comando_remoto = f"""
+        Invoke-Command -ComputerName dc1 -ScriptBlock {{
+            {comando}
+        }}
         """
 
         resultado = subprocess.run(
             [
                 "powershell",
+                "-NoProfile",
                 "-Command",
-                comando
+                comando_remoto
             ],
             capture_output=True,
             text=True,
@@ -98,44 +116,93 @@ class ImpressorasService:
         )
 
         if resultado.returncode != 0:
+
+            print("Erro ao consultar Registry do DC1:")
             print(resultado.stderr)
+
             return
 
-        if not resultado.stdout:
+        if not resultado.stdout.strip():
+
+            print("DC1 não retornou dados.")
+
             return
 
-        impressoras = json.loads(
-            resultado.stdout
-        )
+        try:
 
+            impressoras = json.loads(
+                resultado.stdout
+            )
+
+        except json.JSONDecodeError as e:
+
+            print(
+                "Erro ao interpretar JSON:",
+                e
+            )
+
+            print("Saída recebida:")
+            print(resultado.stdout)
+
+            return
+
+        # Quando existe apenas uma impressora,
+        # o PowerShell retorna um objeto em vez de uma lista.
         if isinstance(impressoras, dict):
-            impressoras = [impressoras]
+
+            impressoras = [
+                impressoras
+            ]
+
+        atualizadas = 0
 
         for item in impressoras:
 
-            nome = item.get("Name")
-            porta = item.get("PortName")
+            nome = item.get("Nome")
+            porta = item.get("Porta")
 
-            if not nome:
+            if not nome or not porta:
                 continue
+
+            # Ignora impressoras redirecionadas
+            if "(redirected" in nome.lower():
+                continue
+
+            # Procura IPv4 dentro da porta
+            match = re.search(
+                r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
+                str(porta)
+            )
+
+            if not match:
+                continue
+
+            ip = match.group()
 
             impressora = Impressora.query.filter_by(
                 nome=nome
             ).first()
 
             if not impressora:
+                print(
+                    f"Impressora não encontrada no banco: {nome}"
+                )
+
                 continue
 
-            match = re.search(
-                r"\b\d{1,3}(?:\.\d{1,3}){3}\b",
-                str(porta)
-            )
+            impressora.ip = ip
 
-            if match:
-                impressora.ip = match.group()
+            atualizadas += 1
+
+            print(
+                f"IP atualizado: {nome} -> {ip}"
+            )
 
         db.session.commit()
 
+        print(
+            f"Total de IPs atualizados: {atualizadas}"
+        )
 
     @staticmethod
     def atualizar_status():
