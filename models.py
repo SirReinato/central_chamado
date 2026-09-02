@@ -77,7 +77,7 @@ class Impressora(db.Model):
     # Chave estrangeira para a tabela EstoqueSuprimento
     suprimento_id = db.Column(
         db.Integer,
-        db.ForeignKey('estoque_suprimentos.id'), nullable=True
+        nullable=True,
         )
   
 
@@ -164,9 +164,6 @@ class EstoqueSuprimento(db.Model):
     quantidade_toner = db.Column(db.Integer, default=0, nullable=False)
     quantidade_cilindro = db.Column(db.Integer, default=0, nullable=False)
     estoque_minimo = db.Column(db.Integer, default=2, nullable=False)
-
-    impressoras = db.relationship("Impressora", backref="familia_suprimento", lazy=True)
-
 
 class HistoricoSuprimento(db.Model):
     __tablename__ = "historico_suprimentos"

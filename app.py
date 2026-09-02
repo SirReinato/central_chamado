@@ -1,7 +1,7 @@
 from flask import Flask, session, redirect, url_for
 from flask_login import LoginManager, current_user, logout_user
 
-from models import db, Usuario
+from models import db, Usuario, EstoqueSuprimento
 from routes.auth import auth_bp
 from routes.chamados import chamados_bp
 from routes.main import main_bp
@@ -14,9 +14,11 @@ app = Flask(__name__)
 
 # Configurações
 app.config['SECRET_KEY'] = 'sua-chave-secreta'
-    # Configurações do banco de dados principal usuários
+
+# Banco principal (Chamados, Usuários, Impressoras)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chamados.db'
-    # Configurações do banco de dados secundário Estoque e Histórico de suprimentos
+
+# Banco secundário isolado (Apenas para o Estoque e Histórico de Suprimentos)
 app.config['SQLALCHEMY_BINDS'] = {
     'estoque_db': 'sqlite:///estoque_suprimentos.db'
 }
@@ -82,11 +84,9 @@ app.register_blueprint(main_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(impressoras_bp)
-
-# Cria as tabelas
+# Cria as tabelas em ambos os bancos (chamados.db e estoque_suprimentos.db)
 with app.app_context():
     db.create_all()
-
 
 if __name__ == '__main__':
     app.run(debug=True)

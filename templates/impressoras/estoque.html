@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container containerPadrao my-4">
+
+    <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="tituloPrincipal">Gerenciamento de Estoque</h1>
+            <p class="tituloSecundario mb-0">Controle de insumos, famílias de suprimentos e histórico de retiradas</p>
+        </div>
+        <div>
+            <a href="{{ url_for('impressoras.index') }}" class="btn botaoSecundario">
+                <i class="bi bi-arrow-left"></i> Voltar para Impressoras
+            </a>
+        </div>
+    </div>
+
+    <!-- Seção de Alertas / Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row g-4">
+        <!-- Coluna Esquerda: Formulário de Nova Família -->
+        <div class="col-lg-4">
+            <div class="card cardPadrao h-100">
+                <div class="barraDestaque"></div>
+                <div class="cabecalhoCard">
+                    <h2 class="h5 mb-0 fw-bold">Nova Família de Suprimento</h2>
+                    <p class="subtituloCard small mt-1 mb-0">Cadastre um novo grupo (ex: Toner HP 58A)</p>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('impressoras.criar_familia') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="nome_familia" class="form-label labelCampo">Nome da Família / Modelo</label>
+                            <input type="text" class="form-control inputPadrao" id="nome_familia" name="nome_familia" placeholder="Ex: HP LaserJet M404" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantidade_toner" class="form-label labelCampo">Qtd. Inicial de Toners</label>
+                            <input type="number" class="form-control inputPadrao" id="quantidade_toner" name="quantidade_toner" value="0" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantidade_cilindro" class="form-label labelCampo">Qtd. Inicial de Cilindros</label>
+                            <input type="number" class="form-control inputPadrao" id="quantidade_cilindro" name="quantidade_cilindro" value="0" min="0" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="estoque_minimo" class="form-label labelCampo">Estoque Mínimo (Alerta)</label>
+                            <input type="number" class="form-control inputPadrao" id="estoque_minimo" name="estoque_minimo" value="2" min="1" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn botaoPrimario py-2">Cadastrar Família</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Direita: Estoque Atual (Tabela de Famílias) -->
+        <div class="col-lg-8">
+            <div class="card cardPadrao h-100">
+                <div class="barraDestaque"></div>
+                <div class="cabecalhoCard">
+                    <h2 class="h5 mb-0 fw-bold">Saldos Atuais em Estoque</h2>
+                    <p class="subtituloCard small mt-1 mb-0">Adicione lotes ou verifique o nível atual dos insumos</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle tabelaPadrao">
+                            <thead class="cabecalhoTabela">
+                                <tr>
+                                    <th>Família</th>
+                                    <th class="text-center">Toners</th>
+                                    <th class="text-center">Cilindros</th>
+                                    <th class="text-center">Mínimo</th>
+                                    <th class="text-end">Ações / Repor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if familias %}
+                                    {% for fam in familias %}
+                                    <tr>
+                                        <td class="fw-bold">
+                                            {{ fam.nome_familia }}
+                                            {% if fam.quantidade_toner <= fam.estoque_minimo or fam.quantidade_cilindro <= fam.estoque_minimo %}
+                                                <span class="badge bg-danger ms-1" title="Estoque baixo!">Baixo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge {{ 'bg-success' if fam.quantidade_toner > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                                {{ fam.quantidade_toner }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge {{ 'bg-success' if fam.quantidade_cilindro > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                                {{ fam.quantidade_cilindro }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center text-muted">{{ fam.estoque_minimo }}</td>
+                                        <td class="text-end">
+                                            <!-- Botão para abrir Modal de Adicionar Lote -->
+                                            <button type="button" class="btn btn-sm botaoDetalhes" data-bs-toggle="modal" data-bs-target="#modalAdicionar{{ fam.id }}">
+                                                <i class="bi bi-plus-circle"></i> Repor
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal de Reposição para cada Família -->
+                                    <div class="modal fade" id="modalAdicionar{{ fam.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content bg-dark text-white border-secondary">
+                                                <div class="modal-header border-secondary">
+                                                    <h5 class="modal-title">Repor Estoque: {{ fam.nome_familia }}</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form action="{{ url_for('impressoras.adicionar_estoque', familia_id=fam.id) }}" method="POST">
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label labelCampo">Adicionar Toners (Qtd a somar)</label>
+                                                            <input type="number" class="form-control inputPadrao" name="toner_add" value="0" min="0">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label labelCampo">Adicionar Cilindros (Qtd a somar)</label>
+                                                            <input type="number" class="form-control inputPadrao" name="cilindro_add" value="0" min="0">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-secondary">
+                                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn botaoPrimario">Salvar Entrada</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Nenhuma família de suprimento cadastrada ainda.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção Inferior: Histórico de Auditoria de Retiradas -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card cardPadrao">
+                <div class="barraDestaque"></div>
+                <div class="cabecalhoCard">
+                    <h2 class="h5 mb-0 fw-bold">Histórico Recente de Retiradas (-1)</h2>
+                    <p class="subtituloCard small mt-1 mb-0">Auditoria das últimas substituições efetuadas nas impressoras</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle tabelaPadrao mb-0">
+                            <thead class="cabecalhoTabela">
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>ID Impressora</th>
+                                    <th>Insumo Retirado</th>
+                                    <th>Quantidade</th>
+                                    <th>Responsável</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if historico %}
+                                    {% for h in historico %}
+                                    <tr>
+                                        <td class="small">{{ h.data_retirada.strftime('%d/%m/%Y %H:%M') if h.data_retirada else '-' }}</td>
+                                        <td>#{{ h.impressora_id }}</td>
+                                        <td>
+                                            <span class="text-uppercase fw-bold">{{ h.tipo_insumo }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-danger fw-bold">{{ h.quantidade }}</span>
+                                        </td>
+                                        <td>{{ h.usuario_responsavel }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">Nenhuma retirada registrada no histórico.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
