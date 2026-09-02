@@ -68,8 +68,18 @@ class Impressora(db.Model):
 
     nome = db.Column(db.String(100))
     ip = db.Column(db.String(45), unique=True)
-
     modelo = db.Column(db.String(100))
+
+    # Localização fisica
+    andar = db.Column(db.String(50), default="Não Informado")
+    sala = db.Column(db.String(50), default="Não Informado")
+    
+    # Chave estrangeira para a tabela EstoqueSuprimento
+    suprimento_id = db.Column(
+        db.Integer,
+        db.ForeignKey('estoque_suprimentos.id'), nullable=True
+        )
+  
 
     online = db.Column(
         db.Boolean,
@@ -139,3 +149,32 @@ class Impressora(db.Model):
         db.Boolean,
         default=False
     )
+    
+    
+# =========================================================
+# NOVAS TABELAS ISOLADAS NO BANCO DE ESTOQUE (estoque_suprimentos.db)
+# =========================================================
+
+class EstoqueSuprimento(db.Model):
+    __tablename__ = "estoque_suprimentos"
+    __bind_key__ = 'estoque_db'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome_familia = db.Column(db.String(100), nullable=False, unique=True)
+    quantidade_toner = db.Column(db.Integer, default=0, nullable=False)
+    quantidade_cilindro = db.Column(db.Integer, default=0, nullable=False)
+    estoque_minimo = db.Column(db.Integer, default=2, nullable=False)
+
+    impressoras = db.relationship("Impressora", backref="familia_suprimento", lazy=True)
+
+
+class HistoricoSuprimento(db.Model):
+    __tablename__ = "historico_suprimentos"
+    __bind_key__ = 'estoque_db'
+
+    id = db.Column(db.Integer, primary_key=True)
+    impressora_id = db.Column(db.Integer, nullable=False)
+    tipo_insumo = db.Column(db.String(20), nullable=False)
+    quantidade = db.Column(db.Integer, nullable=False, default=-1)
+    usuario_responsavel = db.Column(db.String(100), nullable=False)
+    data_retirada = db.Column(db.DateTime, default=datetime.now)
