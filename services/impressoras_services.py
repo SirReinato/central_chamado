@@ -1,11 +1,16 @@
 from models import Impressora, db
 
+
 import subprocess
 import json
 import re
 import requests
 
 from datetime import datetime
+
+from pysnmp.hlapi import *
+
+from services.snmp_service import consultar_impressora
 
 
 class ImpressorasService:
@@ -36,6 +41,28 @@ class ImpressorasService:
 
         return impressora
 
+
+    @staticmethod
+    def _consultar_snmp(ip, oid, comunidade='public', porta=161, timeout=1):
+        """Realiza uma consulta SNMP GET utilizando PySNMP de forma segura e com timeout curto."""
+        try:
+            errorIndication, errorStatus, errorIndex, varBinds = next(
+                getCmd(
+                    SnmpEngine(),
+                    CommunityData(comunidade, mpModel=0), # SNMP v2c (mpModel=0 é v1, mpModel=1 é v2c)
+                    UdpTransportTarget((ip, porta), timeout=timeout, retries=1),
+                    ContextData(),
+                    ObjectType(ObjectIdentity(oid))
+                )
+            )
+
+            if errorIndication or errorStatus:
+                return None
+            else:
+                for varBind in varBinds:
+                    return str(varBind[1])
+        except Exception:
+            return None
 
     @staticmethod
     def sincronizar_dc1():
@@ -206,10 +233,23 @@ class ImpressorasService:
 
     @staticmethod
     def atualizar_status():
+        """
+        Atualiza o status das impressoras através de Ping e SNMP.
+
+        Dados coletados via SNMP:
+        - Número de série
+        - Total de páginas impressas
+        - Percentual de toner preto
+        - Percentual do cilindro
+        """
 
         impressoras = Impressora.query.all()
 
         for impressora in impressoras:
+
+            # -----------------------------------------------------
+            # Validação do IP
+            # -----------------------------------------------------
 
             if not impressora.ip:
                 continue
@@ -226,27 +266,165 @@ class ImpressorasService:
 
             try:
 
-                resultado = subprocess.run(
+                # -------------------------------------------------
+                # 1. CHECAGEM DE REDE
+                # -------------------------------------------------
+
+                resultado_ping = subprocess.run(
                     ["ping", "-n", "1", "-w", "500", ip],
                     capture_output=True,
                     text=True
                 )
 
-                impressora.online = (
-                    resultado.returncode == 0
+                is_online = (
+                    resultado_ping.returncode == 0
                 )
 
+                impressora.online = is_online
+
                 impressora.ultimo_check = datetime.now()
+
+                # -------------------------------------------------
+                # IMPRESSORA OFFLINE
+                # -------------------------------------------------
+
+                if not is_online:
+
+                    impressora.status_detalhado = (
+                        "Equipamento Offline"
+                    )
+
+                    impressora.necessita_atencao = True
+
+                    print(
+                        f"{impressora.nome} ({ip}) -> OFFLINE"
+                    )
+
+                    continue
+
+                # -------------------------------------------------
+                # 2. CONSULTA SNMP
+                # -------------------------------------------------
+
+                dados_snmp = consultar_impressora(ip)
+
+                print(
+                    f"SNMP {impressora.nome} ({ip}): "
+                    f"{dados_snmp}"
+                )
+
+                # -------------------------------------------------
+                # Verifica se houve erro na consulta SNMP
+                # -------------------------------------------------
+
+                if "erro" in dados_snmp:
+
+                    impressora.status_detalhado = (
+                        "Erro de Comunicação SNMP"
+                    )
+
+                    impressora.necessita_atencao = True
+
+                    print(
+                        f"Erro SNMP em {impressora.nome}: "
+                        f"{dados_snmp['erro']}"
+                    )
+
+                    continue
+
+                # -------------------------------------------------
+                # 3. NÚMERO DE SÉRIE
+                # -------------------------------------------------
+
+                serial = dados_snmp.get("serial")
+
+                if serial:
+                    impressora.serial = serial
+
+                # -------------------------------------------------
+                # 4. TOTAL DE PÁGINAS
+                # -------------------------------------------------
+
+                paginas = dados_snmp.get(
+                    "paginas_impressas"
+                )
+
+                if paginas is not None:
+
+                    impressora.paginas_impressas = int(
+                        paginas
+                    )
+
+                # -------------------------------------------------
+                # 5. TONER PRETO
+                # -------------------------------------------------
+
+                toner = dados_snmp.get(
+                    "toner_porcentagem"
+                )
+
+                if toner is not None:
+
+                    impressora.toner_preto = int(
+                        round(float(toner))
+                    )
+
+                # -------------------------------------------------
+                # 6. CILINDRO
+                # -------------------------------------------------
+
+                cilindro = dados_snmp.get(
+                    "cilindro_porcentagem"
+                )
+
+                if cilindro is not None:
+
+                    impressora.cilindro = int(
+                        round(float(cilindro))
+                    )
+
+                # -------------------------------------------------
+                # 7. STATUS
+                # -------------------------------------------------
+
+                impressora.status_detalhado = (
+                    "Pronta / Operacional"
+                )
+
+                impressora.necessita_atencao = False
+
+                print(
+                    f"{impressora.nome} ({ip}) -> "
+                    f"ONLINE | "
+                    f"Toner: {impressora.toner_preto}% | "
+                    f"Cilindro: {impressora.cilindro}% | "
+                    f"Páginas: {impressora.paginas_impressas}"
+                )
 
             except Exception as e:
 
                 print(
-                    f"Erro ao verificar {ip}: {e}"
+                    f"Erro ao atualizar "
+                    f"{impressora.nome} ({ip}): {e}"
                 )
 
                 impressora.online = False
 
+                impressora.status_detalhado = (
+                    "Erro de Comunicação"
+                )
+
+                impressora.necessita_atencao = True
+
+        # ---------------------------------------------------------
+        # SALVA TODAS AS ALTERAÇÕES
+        # ---------------------------------------------------------
+
         db.session.commit()
+
+        print(
+            "Atualização das impressoras finalizada."
+        )
 
 
     @staticmethod

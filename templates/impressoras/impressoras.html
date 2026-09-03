@@ -17,13 +17,13 @@
         </div>
 
         <div class="mb-3 d-flex gap-2 flex-wrap">
-            <a href="{{ url_for('impressoras.nova_impressora') }}" class="btn btn-success">
+            <a href="{{ url_for('impressoras.nova_impressora') }}" class="btn botaoPrimario">
                 Nova Impressora
             </a>
-            <a href="{{ url_for('impressoras.sincronizar') }}" class="btn btn-success"> 
+            <a href="{{ url_for('impressoras.sincronizar') }}" class="btn botaoPrimario">
                 Descobrir Impressoras
             </a>
-            <a href="{{ url_for('impressoras.atualizar_status') }}" class="btn btn-success"> 
+            <a href="{{ url_for('impressoras.atualizar_status') }}" class="btn botaoPrimario">
                 Atualizar status
             </a>
         </div>
@@ -79,48 +79,55 @@
                         <th>Nome</th>
                         <th>IP</th>
                         <th>Status</th>
+                        <th>Qtd. Toner</th>
+                        <th>Qtd. Cilindro</th>
                         <th>Última Verificação</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for imp in impressoras %}
                     <tr>
-                        <!-- NOME -->
-                        <td>
-                            <strong>{{ imp.nome }}</strong>
-                        </td>
-
-                        <!-- IP -->
-                        <td>
-                            <span class="ipImpressora">
-                                {{ imp.ip }}
-                            </span>
-                        </td>
-
-                        <!-- STATUS -->
+                        <td><strong>{{ imp.nome }}</strong></td>
+                        <!-- ip -->
+                        <td><span class="ipImpressora">{{ imp.ip }}</span></td>
                         <td>
                             {% if imp.online %}
-                            <span class="badge badgeStatus statusImpressoraOnline">
-                                ● Online
-                            </span>
+                            <span class="badge badgeStatus statusImpressoraOnline">● Online</span>
                             {% else %}
-                            <span class="badge badgeStatus statusImpressoraOffline">
-                                ● Offline
-                            </span>
+                            <span class="badge badgeStatus statusImpressoraOffline">● Offline</span>
                             {% endif %}
                         </td>
 
-                        <!-- ÚLTIMA VERIFICAÇÃO -->
+                        <!-- TONER -->
+                        <td> 
+                            {% if imp.toner_preto is not none %} 
+                            <span class="badge statusAtivo"> 
+                                {{ imp.toner_preto }}%
+                            </span> 
+                            {% else %} 
+                            <span class="text-muted"> - </span> 
+                            {% endif %} 
+                        </td>
+                        <!-- CILINDRO --> 
+                         <td> 
+                            {% if imp.cilindro is not none %} 
+                            <span class="badge statusAtivo"> 
+                                {{ imp.cilindro }}% 
+                            </span> 
+                            {% else %} 
+                            <span class="text-muted"> - </span> 
+                            {% endif %} 
+                        </td>
+
                         <td>
-                            <span class="ultimaVerificacao">
-                                {{ imp.ultimo_check }}
-                            </span>
+                            <span class="ultimaVerificacao">{{ imp.ultimo_check }}</span>
                         </td>
                     </tr>
                     {% else %}
                     <!-- NENHUMA IMPRESSORA -->
                     <tr>
-                        <td colspan="4" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <h5>
                                 Nenhuma impressora encontrada.
                             </h5>
@@ -133,6 +140,34 @@
                 </tbody>
             </table>
         </div>
+
+    </div>
+
+</div>
+
+<div class="cardPadrao mt-4">
+    <div class="barraDestaque"></div>
+
+    <div class="cabecalhoCard">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-1">
+                    Gerenciamento de Suprimentos
+                </h5>
+                <p class="subtituloCard mb-0">
+                    Verifique o estoque de toners, cilindros e realize reposições.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <p class="subtituloCard mb-0">
+            Acesse o painel completo para controlar lotes, registrar entradas e gerenciar as famílias de suprimentos.
+        </p>
+        <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="btn botaoPrimario px-4">
+            Ir para o Estoque
+        </a>
     </div>
 </div>
 
