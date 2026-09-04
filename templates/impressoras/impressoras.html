@@ -2,173 +2,370 @@
 
 {% block content %}
 
-<!-- =====================================================
-     CABEÇALHO
-     ===================================================== -->
-<div class="mb-4">
-    <div class="d-flex justify-content-between align-items-center flex-wrap">
+<div class="containerPadrao">
+
+    <!-- =====================================================
+         CABEÇALHO
+         ===================================================== -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
         <div>
             <h1 class="tituloPrincipal mb-1">
                 Impressoras
             </h1>
-            <p class="tituloSecundario mb-2">
-                Monitoramento do status das impressoras da rede.
+
+            <p class="tituloSecundario mb-0">
+                Monitoramento e gerenciamento das impressoras da rede.
             </p>
         </div>
 
-        <div class="mb-3 d-flex gap-2 flex-wrap">
-            <a href="{{ url_for('impressoras.nova_impressora') }}" class="btn botaoPrimario">
+        <!-- AÇÕES -->
+        <div class="d-flex gap-2 flex-wrap">
+
+            <a href="{{ url_for('impressoras.nova_impressora') }}"
+               class="btn botaoPrimario">
                 Nova Impressora
             </a>
-            <a href="{{ url_for('impressoras.sincronizar') }}" class="btn botaoPrimario">
+
+            <a href="{{ url_for('impressoras.sincronizar') }}"
+               class="btn botaoSecundario">
                 Descobrir Impressoras
             </a>
-            <a href="{{ url_for('impressoras.atualizar_status') }}" class="btn botaoPrimario">
-                Atualizar status
+
+            <a href="{{ url_for('impressoras.atualizar_status') }}"
+               class="btn botaoPrimario">
+                Atualizar Status
             </a>
+
         </div>
+
     </div>
-</div>
 
-<!-- =====================================================
-     CARD DE IMPRESSORAS
-     ===================================================== -->
-<div class="cardPadrao">
-    <div class="barraDestaque"></div>
 
-    <!-- Cabeçalho do Card -->
-    <div class="cabecalhoCard">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-1">
-                    Monitoramento de Impressoras
-                </h5>
-                <p class="subtituloCard mb-0">
-                    Acompanhe a disponibilidade dos equipamentos.
-                </p>
-            </div>
+    <!-- =====================================================
+         RESUMO
+         ===================================================== -->
+    <div class="row g-4 mb-4">
 
-            <!-- Quantidade -->
-            <div class="text-end">
-                <span class="fs-4 fw-bold">
-                    {{ impressoras|length }}
-                </span>
-                <div class="subtituloCard small">
-                    impressoras
+        <!-- TOTAL -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="cardMetricaTitulo">
+                    Total de Impressoras
                 </div>
+
+                <div class="cardMetricaValor">
+                    {{ impressoras|length }}
+                </div>
+
+                <div class="subtituloCard small">
+                    Equipamentos cadastrados
+                </div>
+
             </div>
+
         </div>
+
+
+        <!-- ONLINE -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="cardMetricaTitulo">
+                    Monitoramento
+                </div>
+
+                <div class="cardMetricaValor">
+                    {{ impressoras|selectattr('online')|list|length }}
+                </div>
+
+                <div class="subtituloCard small">
+                    Impressoras online
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- OFFLINE -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="cardMetricaTitulo">
+                    Atenção
+                </div>
+
+                <div class="cardMetricaValor">
+                    {{ impressoras|rejectattr('online')|list|length }}
+                </div>
+
+                <div class="subtituloCard small">
+                    Impressoras offline
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- CONTEÚDO -->
-    <div class="px-4 pb-4">
 
-        <!-- Informação -->
-        <div class="alert alert-info mb-4">
-            <strong>
-                Monitoramento:
-            </strong>
-            {{ impressoras|length }} impressoras cadastradas.
+    <!-- =====================================================
+         MONITORAMENTO
+         ===================================================== -->
+    <div class="cardPadrao mb-4">
+
+        <div class="barraDestaque"></div>
+
+        <!-- CABEÇALHO -->
+        <div class="cabecalhoCard">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                <div>
+
+                    <h5 class="tituloTabela mb-1">
+                        Monitoramento de Impressoras
+                    </h5>
+
+                    <p class="subtituloCard mb-0">
+                        Acompanhe a disponibilidade e os principais indicadores dos equipamentos.
+                    </p>
+
+                </div>
+
+                <div class="text-end">
+
+                    <div class="cardMetricaValor fs-4">
+                        {{ impressoras|length }}
+                    </div>
+
+                    <div class="subtituloCard small">
+                        cadastradas
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
+
 
         <!-- TABELA -->
         <div class="table-responsive">
+
             <table class="table tabelaPadrao table-hover align-middle mb-0">
+
                 <thead class="cabecalhoTabela">
+
                     <tr>
-                        <th>Nome</th>
-                        <th>IP</th>
-                        <th>Status</th>
-                        <th>Qtd. Toner</th>
-                        <th>Qtd. Cilindro</th>
-                        <th>Última Verificação</th>
+
+                        <th scope="col">
+                            Nome
+                        </th>
+
+                        <th scope="col">
+                            IP
+                        </th>
+
+                        <th scope="col">
+                            Status
+                        </th>
+
+                        <th scope="col">
+                            Toner
+                        </th>
+
+                        <th scope="col">
+                            Cilindro
+                        </th>
+
+                        <th scope="col">
+                            Última Verificação
+                        </th>
+
                     </tr>
+
                 </thead>
 
+
                 <tbody>
+
                     {% for imp in impressoras %}
-                    <tr>
-                        <td><strong>{{ imp.nome }}</strong></td>
-                        <!-- ip -->
-                        <td><span class="ipImpressora">{{ imp.ip }}</span></td>
+
+                    <tr class="linhaTabela">
+
+                        <!-- NOME -->
                         <td>
-                            {% if imp.online %}
-                            <span class="badge badgeStatus statusImpressoraOnline">● Online</span>
-                            {% else %}
-                            <span class="badge badgeStatus statusImpressoraOffline">● Offline</span>
-                            {% endif %}
+
+                            <strong>
+                                {{ imp.nome }}
+                            </strong>
+
                         </td>
+
+
+                        <!-- IP -->
+                        <td>
+
+                            <span class="ipImpressora">
+                                {{ imp.ip }}
+                            </span>
+
+                        </td>
+
+
+                        <!-- STATUS -->
+                        <td>
+
+                            {% if imp.online %}
+
+                            <span class="badgeStatus statusImpressoraOnline">
+                                ● Online
+                            </span>
+
+                            {% else %}
+
+                            <span class="badgeStatus statusImpressoraOffline">
+                                ● Offline
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
 
                         <!-- TONER -->
-                        <td> 
-                            {% if imp.toner_preto is not none %} 
-                            <span class="badge statusAtivo"> 
+                        <td>
+
+                            {% if imp.toner_preto is not none %}
+
+                            <span class="badgeStatus statusAtivo">
                                 {{ imp.toner_preto }}%
-                            </span> 
-                            {% else %} 
-                            <span class="text-muted"> - </span> 
-                            {% endif %} 
-                        </td>
-                        <!-- CILINDRO --> 
-                         <td> 
-                            {% if imp.cilindro is not none %} 
-                            <span class="badge statusAtivo"> 
-                                {{ imp.cilindro }}% 
-                            </span> 
-                            {% else %} 
-                            <span class="text-muted"> - </span> 
-                            {% endif %} 
+                            </span>
+
+                            {% else %}
+
+                            <span class="badgeStatus">
+                                —
+                            </span>
+
+                            {% endif %}
+
                         </td>
 
+
+                        <!-- CILINDRO -->
                         <td>
-                            <span class="ultimaVerificacao">{{ imp.ultimo_check }}</span>
+
+                            {% if imp.cilindro is not none %}
+
+                            <span class="badgeStatus statusAtivo">
+                                {{ imp.cilindro }}%
+                            </span>
+
+                            {% else %}
+
+                            <span class="badgeStatus">
+                                —
+                            </span>
+
+                            {% endif %}
+
                         </td>
+
+
+                        <!-- ÚLTIMA VERIFICAÇÃO -->
+                        <td>
+
+                            <span class="ultimaVerificacao">
+                                {{ imp.ultimo_check }}
+                            </span>
+
+                        </td>
+
                     </tr>
+
+
                     {% else %}
+
                     <!-- NENHUMA IMPRESSORA -->
-                    <tr>
+                    <tr class="linhaTabela">
+
                         <td colspan="6" class="text-center py-5">
-                            <h5>
+
+                            <h5 class="tituloTabela">
                                 Nenhuma impressora encontrada.
                             </h5>
-                            <p class="text-secondary mb-0">
+
+                            <p class="text-tema-secundario mb-0">
                                 Não existem impressoras cadastradas no sistema.
                             </p>
+
                         </td>
+
                     </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
 
     </div>
 
-</div>
 
-<div class="cardPadrao mt-4">
-    <div class="barraDestaque"></div>
+    <!-- =====================================================
+         GERENCIAMENTO DE SUPRIMENTOS
+         ===================================================== -->
+    <div class="cardPadrao">
 
-    <div class="cabecalhoCard">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-1">
-                    Gerenciamento de Suprimentos
-                </h5>
-                <p class="subtituloCard mb-0">
-                    Verifique o estoque de toners, cilindros e realize reposições.
-                </p>
+        <div class="barraDestaque"></div>
+
+        <div class="cabecalhoCard">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                <div>
+
+                    <h5 class="tituloTabela mb-1">
+                        Gerenciamento de Suprimentos
+                    </h5>
+
+                    <p class="subtituloCard mb-0">
+                        Controle toners, cilindros, lotes e reposições.
+                    </p>
+
+                </div>
+
+                <a href="{{ url_for('impressoras.gerenciar_estoque') }}"
+                   class="btn botaoPrimario px-4">
+                    Acessar Estoque
+                </a>
+
             </div>
+
         </div>
+
+
+        <div class="px-4 pb-4">
+
+            <p class="subtituloCard mb-0">
+                Acesse o painel completo para controlar o estoque,
+                registrar entradas e gerenciar as famílias de suprimentos.
+            </p>
+
+        </div>
+
     </div>
 
-    <div class="p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <p class="subtituloCard mb-0">
-            Acesse o painel completo para controlar lotes, registrar entradas e gerenciar as famílias de suprimentos.
-        </p>
-        <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="btn botaoPrimario px-4">
-            Ir para o Estoque
-        </a>
-    </div>
 </div>
 
 {% endblock %}

@@ -11,7 +11,7 @@
 
 <body class="bg-dark">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbarSistema text-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light navbarSistema text-dark shadow-sm">
 
         <div class="container-fluid">
 
@@ -73,6 +73,13 @@
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.index') }}">
                             Impressoras
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
+                            Estoque
                         </a>
                     </li>
                     {% endif %}

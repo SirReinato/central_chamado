@@ -22,6 +22,26 @@ def bloquear_usuario(id):
 
     return usuario
 
+def tornar_adm(id):
+
+    usuario = Usuario.query.get_or_404(id)
+
+    usuario.perfil = 'admin'
+
+    db.session.commit()
+
+    return usuario
+
+def tornar_usuario(id):
+
+    usuario = Usuario.query.get_or_404(id)
+
+    usuario.perfil = 'usuario'
+
+    db.session.commit()
+
+    return usuario
+
 
 def ativar_usuario(id):
 

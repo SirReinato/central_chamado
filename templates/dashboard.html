@@ -176,11 +176,11 @@
 
                         {% for usuario in usuarios %}
 
-                        <tr>
+                        <tr >
 
                             <!-- NOME -->
                             <td>
-                                <strong>
+                                <strong class="tdTexto">
                                     {{ usuario.nome }}
                                 </strong>
                             </td>
@@ -188,7 +188,9 @@
 
                             <!-- E-MAIL -->
                             <td>
-                                {{ usuario.email }}
+                                <span class="tdTexto">
+                                    {{ usuario.email }}
+                                </span>
                             </td>
 
 

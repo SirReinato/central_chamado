@@ -1,46 +1,99 @@
 :root {
     /* =========================================================
-       CORES
+       PALETA BASE
        ========================================================= */
 
-    --cor-fundo: #212529;
+    --cor-preto: #000000;
+    --cor-preto-rgb: 0, 0, 0;
 
-    --cor-card-1: #1e3a5f;
-    --cor-card-2: #2b5ea7;
+    --cor-azul-escuro: #2C3947;
+    --cor-azul-escuro-rgb: 44, 57, 71;
 
-    --cor-texto: #ffffff;
-    --cor-texto-secundario: rgba(0, 0, 0, 0.75);
+    --cor-azul: #547A95;
+    --cor-azul-rgb: 84, 122, 149;
 
-    --cor-texto-escuro: #000000;
+    --cor-dourado: #C2A56D;
+    --cor-dourado-rgb: 194, 165, 109;
 
-    --cor-borda: rgba(255, 255, 255, 0.15);
-    --cor-borda-suave: rgba(255, 255, 255, 0.25);
+    --cor-cinza-claro: #E8EDF2;
+    --cor-cinza-claro-rgb: 232, 237, 242;
 
-    --cor-fundo-input: rgba(255, 255, 255, 0.08);
-    --cor-fundo-input-focus: rgba(255, 255, 255, 0.12);
-
-    --cor-autenticacao: #1f2937;
 
     /* =========================================================
-       CORES DE STATUS
+       CORES FUNCIONAIS
        ========================================================= */
 
-    --cor-status-fundo: #000000;
+    /* Fundo geral da aplicação */
+    --cor-fundo: var(--cor-azul-escuro);
 
-    --cor-status-aberto: #8fffbb;
-    --cor-status-andamento: #ffe082;
-    --cor-status-resolvido: #92eeff;
-    --cor-status-fechado: #ffffff;
+    /* Fundos dos cards */
+    --cor-card-1: #354555;
+    --cor-card-2: #43586A;
+
+    /* Textos */
+    --cor-texto: var(--cor-cinza-claro);
+    --cor-texto-secundario: rgba(var(--cor-cinza-claro-rgb), 0.72);
+
+    /* Texto escuro para uso sobre fundos claros/dourados */
+    --cor-texto-escuro: var(--cor-azul-escuro);
+
+    /* Bordas */
+    --cor-borda: rgba(var(--cor-cinza-claro-rgb), 0.16);
+    --cor-borda-suave: rgba(var(--cor-cinza-claro-rgb), 0.28);
+
+    /* Inputs */
+    --cor-fundo-input: rgba(var(--cor-cinza-claro-rgb), 0.08);
+    --cor-fundo-input-focus: rgba(var(--cor-cinza-claro-rgb), 0.14);
+
+    /* Área de autenticação */
+    --cor-autenticacao: #202B36;
+
+
+    /* =========================================================
+       CORES SEMÂNTICAS
+       Mantidas compatíveis com a nova identidade visual
+       ========================================================= */
+
+    /* Sucesso */
+    --cor-sucesso-rgb: 72, 112, 82;
+    --cor-sucesso-texto: #164b22;
+
+    /* Alerta */
+    --cor-alerta-rgb: var(--cor-dourado-rgb);
+    --cor-alerta-texto: #C2A56D;
+
+    /* Perigo */
+    --cor-perigo-rgb: 150, 67, 67;
+    --cor-perigo-texto: #D99494;
+
+    /* Informação */
+    --cor-info-rgb: var(--cor-azul-rgb);
+    --cor-info-texto: #9CBED4;
+
+    /* Neutro */
+    --cor-neutro-rgb: var(--cor-cinza-claro-rgb);
+
 
     /* =========================================================
        GRADIENTES
        ========================================================= */
 
+    /* Gradiente principal */
     --gradiente-principal:
-        linear-gradient(90deg, #92eeff, #d8ffc5, #c4f7ca);
+        linear-gradient(
+            90deg,
+            #D0B982,
+            var(--cor-azul)
+        );
 
+    /* Gradiente dos cards */
     --gradiente-card:
-        linear-gradient(135deg, #1e3a5f 0%, #2b5ea7 100%);
+        linear-gradient(
+            135deg,
+            var(--cor-azul-escuro) 32%,
+            var(--cor-azul) 100%
+        );
+
 
     /* =========================================================
        BORDAS
@@ -49,15 +102,106 @@
     --raio-card: 20px;
     --raio-autenticacao: 30px;
 
+
     /* =========================================================
        SOMBRAS
        ========================================================= */
 
     --sombra-padrao:
-        0 8px 20px rgba(0, 0, 0, 0.15);
+        0 4px 8px rgba(var(--cor-preto-rgb), 0.35);
 
     --sombra-botao:
-        0 8px 20px rgba(146, 238, 255, 0.25);
+        0 4px 8px rgba(var(--cor-dourado-rgb), 0.25);
+
+
+    /* =========================================================
+       VARIÁVEIS DO BOOTSTRAP
+       
+       O Bootstrap utiliza essas variáveis internamente em:
+       bg-primary
+       bg-success
+       bg-warning
+       bg-info
+       bg-secondary
+       bg-dark
+       text-light
+       btn-outline-*
+       etc.
+
+       Sobrescrevendo aqui, as classes do Bootstrap passam
+       automaticamente a seguir a identidade visual do sistema.
+       ========================================================= */
+
+    /* Primary = Azul principal */
+    --bs-primary: var(--cor-azul);
+    --bs-primary-rgb: var(--cor-azul-rgb);
+
+    /* Secondary = Cinza claro */
+    --bs-secondary: var(--cor-cinza-claro);
+    --bs-secondary-rgb: var(--cor-cinza-claro-rgb);
+
+    /* Success */
+    --bs-success: var(--cor-sucesso-texto);
+    --bs-success-rgb: var(--cor-sucesso-rgb);
+
+    /* Warning = Dourado */
+    --bs-warning: var(--cor-alerta-texto);
+    --bs-warning-rgb: var(--cor-alerta-rgb);
+
+    /* Danger */
+    --bs-danger: var(--cor-perigo-texto);
+    --bs-danger-rgb: var(--cor-perigo-rgb);
+
+    /* Info = Azul */
+    --bs-info: var(--cor-info-texto);
+    --bs-info-rgb: var(--cor-info-rgb);
+
+    /* Light */
+    --bs-light: var(--cor-cinza-claro);
+    --bs-light-rgb: var(--cor-cinza-claro-rgb);
+
+    /* Dark */
+    --bs-dark: var(--cor-azul-escuro);
+    --bs-dark-rgb: var(--cor-azul-escuro-rgb);
+
+    /* Body */
+    --bs-body-bg: var(--cor-fundo);
+    --bs-body-color: var(--cor-texto);
+
+    /* Bordas */
+    --bs-border-color: var(--cor-borda-suave);
+
+    /* Links */
+    --bs-link-color: var(--cor-dourado);
+    --bs-link-hover-color: var(--cor-cinza-claro);
+}
+
+
+
+/* =============================================================
+   BASE DO DOCUMENTO
+   Garante o fundo/texto corretos mesmo se alguma página não usar
+   as classes bg-dark/text-light do Bootstrap no body.
+   ============================================================= */
+
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+}
+
+
+/* =============================================================
+   UTILITÁRIOS DE TEXTO
+   Alternativa aos utilitários .text-white/.text-white-50 do
+   Bootstrap (que são cor fixa #fff, não seguem a paleta).
+   ============================================================= */
+
+.text-tema {
+    color: var(--cor-texto) !important;
+}
+
+.text-tema-secundario {
+    color: var(--cor-texto-secundario) !important;
 }
 
 
@@ -69,8 +213,14 @@
     background: var(--gradiente-principal);
 }
 
+.linkNavbar {
+    border-radius: 6px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 .linkNavbar:hover {
-    color: #0d6efd !important;
+    background: rgba(var(--cor-preto-rgb), 0.08);
+    color: var(--cor-preto) !important;
 }
 
 
@@ -170,7 +320,7 @@
     transform: translateY(-3px);
 
     box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.2);
+        0 10px 25px rgba(var(--cor-preto-rgb), 0.35);
 }
 
 /* =============================================================
@@ -204,10 +354,10 @@
 
     color: var(--cor-texto);
 
-    border-color: #92eeff;
+    border-color: var(--cor-cinza-claro);
 
     box-shadow:
-        0 0 0 0.2rem rgba(146, 238, 255, 0.25);
+        0 0 0 0.2rem rgba(var(--cor-cinza-claro-rgb), 0.25);
 }
 
 .selectPadrao option {
@@ -222,7 +372,7 @@
 .botaoPrimario {
     background: var(--gradiente-principal);
 
-    color: var(--cor-card-1);
+    color: var(--cor-texto-escuro);
 
     border: none;
 
@@ -234,7 +384,7 @@
 .botaoPrimario:hover {
     transform: translateY(-2px);
 
-    color: var(--cor-card-1);
+    color: var(--cor-texto-escuro);
 
     box-shadow: var(--sombra-botao);
 }
@@ -248,7 +398,7 @@
 }
 
 .botaoSecundario:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(var(--cor-cinza-claro-rgb), 0.08);
 
     color: var(--cor-texto);
 }
@@ -268,18 +418,18 @@
 }
 
 .linhaTabela {
-    --bs-table-bg: #92eeff;
+    --bs-table-bg: var(--cor-cinza-claro);
 
-    background: #92eeff !important;
+    background: var(--cor-cinza-claro) !important;
     color: var(--cor-texto-escuro);
 }
 
 .botaoDetalhes {
-    border: 1px solid var(--cor-card-1);
+    /* border: 1px solid var(--cor-azul-escuro); */
 
-    color: var(--cor-card-1);
+    color: var(--cor-cinza-claro);
 
-    background: transparent;
+    background: var(--cor-alerta-texto);
 
     font-weight: 600;
 
@@ -290,34 +440,6 @@
     background: var(--cor-card-1);
 
     color: var(--cor-texto);
-}
-
-/* =============================================================
-   STATUS
-   ============================================================= */
-
-.statusAberto {
-    background: var(--cor-status-fundo);
-
-    color: var(--cor-status-aberto);
-}
-
-.statusAndamento {
-    background: var(--cor-status-fundo);
-
-    color: var(--cor-status-andamento);
-}
-
-.statusResolvido {
-    background: var(--cor-status-fundo);
-
-    color: var(--cor-status-resolvido);
-}
-
-.statusFechado {
-    background: #0e0f1a;
-
-    color: var(--cor-status-fechado);
 }
 
 
@@ -354,7 +476,7 @@
     background: transparent;
 
     border: none;
-    border-bottom: 2px solid #6c757d;
+    border-bottom: 2px solid var(--cor-borda-suave);
 
     border-radius: 0;
 
@@ -378,7 +500,7 @@
 
     background: var(--gradiente-card);
 
-    border: 1px solid var(--cor-borda);
+    /* border: 1px solid var(--cor-borda); */
 
     border-radius: var(--raio-card);
 
@@ -413,21 +535,35 @@
     font-weight: 700;
 }
 
+.tdTexto{
+    color: var(--cor-cinza-claro);
+}
+.badgeUsuarioDashboard {
+    background: var(--cor-autenticacao);
+    color: var(--cor-cinza-claro);
+
+    border-color: var(--cor-borda);
+}
+
 
 /* =============================================================
-   BADGES - TABELA DE USUÁRIOS
+   BADGES (perfil / status)
+   Base compartilhada por .badgeTabela, .badgePerfil e
+   .badgeStatus — eram três blocos quase idênticos.
    ============================================================= */
 
-.badgeTabela {
+.badgeTabela,
+.badgePerfil,
+.badgeStatus {
     display: inline-flex;
 
-    width: 125px;
-    min-height: 32px;
+    min-width: 120px;
+    height: 32px;
 
     align-items: center;
     justify-content: center;
 
-    padding: 6px 12px;
+    padding: 0 12px;
 
     border-radius: 8px;
 
@@ -440,79 +576,95 @@
 }
 
 
-/* =============================================================
-   PERFIL
-   ============================================================= */
+/* --- Perfil / papel do usuário --- */
 
-.perfilAdmin {
-    background: rgba(13, 110, 253, 0.15);
-    color: #000;
+.perfilAdmin,
+.badgeAdministrador {
+    background: rgba(var(--cor-info-rgb), 0.20);
+    color: var(--cor-info-texto);
 
-    border-color: rgba(13, 110, 253, 0.35);
+    border-color: rgba(var(--cor-info-rgb), 0.4);
 }
 
-.perfilUsuario {
-    background: rgba(4, 78, 100, 0.1);
-    color: #000(0, 6, 8, 0.1);
+.perfilUsuario,
+.badgeUsuario {
+    background: var(--cor-autenticacao);
+    color: var(--cor-texto-secundario);
 
-    border-color: rgba(4, 78, 100, 0.1);
+    border-color: var(--cor-borda);
 }
 
 
 /* =============================================================
-   STATUS
+   STATUS (tickets, usuários e impressoras)
+   Os três conjuntos originais (.statusAberto/.statusAndamento/...,
+   .statusPendente/.statusAtivo/..., .statusImpressoraOnline/...)
+   usavam as mesmas 4 cores com significados repetidos — agrupados
+   aqui em 5 variações semânticas reutilizáveis.
    ============================================================= */
 
+.statusAberto,
+.statusAtivo,
+.statusImpressoraOnline {
+    background: rgba(var(--cor-sucesso-rgb), 0.20);
+    color: var(--cor-cinza-claro);
+
+    border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
+}
+
+.statusAndamento,
 .statusPendente {
-    background: rgba(255, 193, 7, 0.15);
-    color: #000;
+    background: rgba(var(--cor-alerta-rgb), 0.20);
+    color: var(--cor-alerta-texto);
 
-    border-color: rgba(255, 193, 7, 0.35);
+    border: 1px solid rgba(var(--cor-alerta-rgb), 0.4);
 }
 
-.statusAtivo {
-    background: rgba(25, 135, 84, 0.18);
-    color: #000;
+.statusResolvido {
+    background: rgba(var(--cor-info-rgb), 0.20);
+    color: var(--cor-info-texto);
 
-    border-color: rgba(25, 135, 84, 0.35);
+    border: 1px solid rgba(var(--cor-info-rgb), 0.4);
 }
 
-.statusBloqueado {
-    background: rgba(220, 53, 69, 0.15);
-    color: #000;
+.statusFechado,
+.statusReprovado,
+.statusBloqueado,
+.statusImpressoraOffline {
+    background: rgba(var(--cor-perigo-rgb), 0.20);
+    color: var(--cor-perigo-texto);
 
-    border-color: rgba(220, 53, 69, 0.35);
+    border: 1px solid rgba(var(--cor-perigo-rgb), 0.4);
 }
 
-.statusReprovado {
-    background: rgba(220, 53, 69, 0.15);
-    color: #000;
-
-    border-color: rgba(220, 53, 69, 0.35);
-}
-
+.statusIndefinido,
 .statusPadrao {
-    background: rgba(108, 117, 125, 0.18);
-    color: #000;
+    background: var(--cor-fundo-input);
+    color: var(--cor-texto-secundario);
 
-    border-color: rgba(108, 117, 125, 0.35);
+    border: 1px solid var(--cor-borda);
 }
 
 
 /* =============================================================
-   AÇÕES
+   AÇÕES / BOTÕES DE TABELA
+   .acoesTabela + .acaoAtivar/.acaoBloquear e
+   .botaoAcao + .botaoAprovar/.botaoAtivar/.botaoBloquear eram
+   dois sistemas paralelos para o mesmo padrão — unificados aqui.
    ============================================================= */
 
-.acoesTabela {
+.acoesTabela,
+.acoesUsuario,
+.botaoAcao {
     display: inline-flex;
 
-    width: 125px;
-    min-height: 32px;
+    min-width: 95px;
+    height: 32px;
 
     align-items: center;
     justify-content: center;
 
-    padding: 6px 12px;
+    padding: 0 12px;
 
     border-radius: 8px;
 
@@ -527,214 +679,76 @@
         background 0.2s ease;
 }
 
-
 /* Aprovar / Ativar */
 
-.acaoAtivar {
-    background: rgba(25, 135, 84, 0.18);
-
-    color: #000;
-
-    border: 1px solid rgba(25, 135, 84, 0.35);
-}
-
-.acaoAtivar:hover {
-    background: rgba(25, 135, 84, 0.30);
-
-    color: #9af0c0;
-
-    transform: translateY(-1px);
-
-    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.20);
-}
-
-
-/* Bloquear */
-
-.acaoBloquear {
-    background: rgba(220, 53, 69, 0.15);
-
-    color: #ff8f9b;
-
-    border: 1px solid rgba(220, 53, 69, 0.35);
-}
-
-.acaoBloquear:hover {
-    background: rgba(220, 53, 69, 0.28);
-
-    color: #ffb3ba;
-
-    transform: translateY(-1px);
-
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.20);
-}
-
-/* =============================================================
-   TABELA - USUÁRIOS
-   ============================================================= */
-
-.badgePerfil,
-.badgeStatus {
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-width: 120px;
-    height: 30px;
-
-    padding: 0 12px;
-
-    border-radius: 8px;
-
-    font-size: 0.8rem;
-    font-weight: 600;
-
-    letter-spacing: 0.2px;
-}
-
-
-/* =============================================================
-   PERFIL
-   ============================================================= */
-
-.badgeAdministrador {
-    background: rgba(13, 110, 253, 0.18);
-    color: #7db5ff;
-
-    border: 1px solid rgba(13, 110, 253, 0.35);
-}
-
-.badgeUsuario {
-    background: rgba(255, 255, 255, 0.10);
-    color: var(--cor-texto-secundario);
-
-    border: 1px solid var(--cor-borda);
-}
-
-
-/* =============================================================
-   STATUS
-   ============================================================= */
-
-.statusAndamento {
-    background: rgba(255, 193, 7, 0.18);
-
-    color: #ffe082;
-
-    border: 1px solid rgba(255, 193, 7, 0.35);
-}
-
-.statusAberto {
-    background: rgba(25, 135, 84, 0.18);
-
-    color: #8fffbb;
-
-    border: 1px solid rgba(25, 135, 84, 0.35);
-}
-
-.statusFechado {
-    background: rgba(220, 53, 69, 0.18);
-
-    color: #ff8f9b;
-
-    border: 1px solid rgba(220, 53, 69, 0.35);
-}
-
-.statusReprovado {
-    background: rgba(220, 53, 69, 0.18);
-
-    color: #ff8f9b;
-
-    border: 1px solid rgba(220, 53, 69, 0.35);
-}
-
-.statusIndefinido {
-    background: rgba(255, 255, 255, 0.10);
-
-    color: var(--cor-texto-secundario);
-
-    border: 1px solid var(--cor-borda);
-}
-
-
-/* =============================================================
-   AÇÕES
-   ============================================================= */
-
-.acoesUsuario {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-}
-
-.botaoAcao {
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-width: 95px;
-    height: 32px;
-
-    border-radius: 8px;
-
-    font-size: 0.8rem;
-    font-weight: 600;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-
-/* Aprovar / Ativar */
-
+.acaoAtivar,
 .botaoAprovar,
 .botaoAtivar {
-    background: rgba(25, 135, 84, 0.18);
+    background: rgba(var(--cor-sucesso-rgb), 0.20);
 
-    color: #8fffbb;
+    color: var(--cor-sucesso-texto);
 
-    border: 1px solid rgba(25, 135, 84, 0.4);
+    border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
 }
 
+.acaoAtivar:hover,
 .botaoAprovar:hover,
 .botaoAtivar:hover {
-    background: rgba(25, 135, 84, 0.30);
+    background: rgba(var(--cor-sucesso-rgb), 0.35);
 
-    color: #b8ffd3;
+    color: var(--cor-cinza-claro);
 
     transform: translateY(-1px);
-}
 
+    box-shadow: 0 4px 12px rgba(var(--cor-sucesso-rgb), 0.3);
+}
 
 /* Bloquear */
 
+.acaoBloquear,
 .botaoBloquear {
-    background: rgba(220, 53, 69, 0.18);
+    background: rgba(var(--cor-perigo-rgb), 0.20);
 
-    color: #ff8f9b;
+    color: var(--cor-perigo-texto);
 
-    border: 1px solid rgba(220, 53, 69, 0.4);
+    border: 1px solid rgba(var(--cor-perigo-rgb), 0.4);
 }
 
+.acaoBloquear:hover,
 .botaoBloquear:hover {
-    background: rgba(220, 53, 69, 0.30);
+    background: rgba(var(--cor-perigo-rgb), 0.35);
 
-    color: #ffb8bf;
+    color: var(--cor-cinza-claro);
 
     transform: translateY(-1px);
+
+    box-shadow: 0 4px 12px rgba(var(--cor-perigo-rgb), 0.3);
+}
+
+/* Tornar Administrador */
+
+.acaoTornarAdm,
+.botaoTornarAdm {
+    background: var(--cor-azul);
+
+    color: var(--cor-azul-texto);
+
+    border: 1px solid rgba(var(--cor-azul), 0.4);
+}
+
+.acaoTornarAdm:hover,
+.botaoTornarAdm:hover {
+    background: var(--cor-alerta-texto);
+
+    color: var(--cor-cinza-claro);
+
+    transform: translateY(-1px);
+
+    box-shadow: 0 4px 12px rgba(var(--cor-azul), 0.3);
 }
 
 /* =============================================================
    IMPRESSORAS
-   ============================================================= */
-
-
-/* =============================================================
-   IP DA IMPRESSORA
    ============================================================= */
 
 .ipImpressora {
@@ -748,47 +762,20 @@
 
     padding: 0 12px;
 
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--cor-fundo-input);
 
     border: 1px solid var(--cor-borda);
 
     border-radius: 8px;
 
-    color: var(--cor-texto-secundario);
+    color: var(--cor-autenticacao);
 
     font-family: monospace;
     font-size: 0.85rem;
 }
 
-
-/* =============================================================
-   STATUS DA IMPRESSORA
-   ============================================================= */
-
-.statusImpressoraOnline {
-    background: rgba(25, 135, 84, 0.18);
-
-    color: #8fffbb;
-
-    border: 1px solid rgba(25, 135, 84, 0.35);
-}
-
-
-.statusImpressoraOffline {
-    background: rgba(220, 53, 69, 0.18);
-
-    color: #ff8f9b;
-
-    border: 1px solid rgba(220, 53, 69, 0.35);
-}
-
-
-/* =============================================================
-   ÚLTIMA VERIFICAÇÃO
-   ============================================================= */
-
 .ultimaVerificacao {
-    color: var(--cor-texto-secundario);
+    color: var(--cor-autenticacao);
 
     font-size: 0.9rem;
 }

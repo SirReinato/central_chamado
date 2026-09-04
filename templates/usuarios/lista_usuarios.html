@@ -4,29 +4,138 @@
 
 <div class="containerPadrao">
 
-    <!-- Cabeçalho -->
-    <div class="cardPadrao mb-4">
+    <!-- =====================================================
+         CABEÇALHO
+         ===================================================== -->
 
-        <div class="barraDestaque"></div>
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
 
-        <div class="cabecalhoCard">
+        <div>
+            <h1 class="tituloPrincipal mb-1">
+                Usuários
+            </h1>
 
-            <div class="d-flex justify-content-between align-items-center">
+            <p class="tituloSecundario mb-0">
+                Gerencie os usuários cadastrados no sistema.
+            </p>
+        </div>
 
-                <div>
-                    <h1 class="tituloPrincipal mb-2">
-                        Usuários
-                    </h1>
+        <div class="text-end">
 
-                    <p class="subtituloCard mb-0">
-                        Gerencie os usuários cadastrados no sistema.
-                    </p>
+            <div class="cardMetricaTitulo">
+                Administração
+            </div>
+
+            <div class="subtituloCard small">
+                Gerenciamento de usuários
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RESUMO
+         ===================================================== -->
+
+    <div class="row g-4 mb-4">
+
+        <!-- TOTAL DE USUÁRIOS -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+
+                        <div class="cardMetricaTitulo mb-2">
+                            Total
+                        </div>
+
+                        <div class="cardMetricaValor">
+                            {{ usuarios|length }}
+                        </div>
+
+                        <div class="subtituloCard small mt-1">
+                            Usuários cadastrados
+                        </div>
+
+                    </div>
+
+                    <span class="badgeStatus statusPadrao">
+                        Geral
+                    </span>
+
                 </div>
 
-                <div>
-                    <span class="badge bg-light text-dark fs-6">
-                        {{ usuarios|length }} usuários
+            </div>
+
+        </div>
+
+
+        <!-- ATIVOS -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+
+                        <div class="cardMetricaTitulo mb-2">
+                            Ativos
+                        </div>
+
+                        <div class="cardMetricaValor">
+                            {{ usuarios|selectattr('status', 'equalto', 'ativo')|list|length }}
+                        </div>
+
+                        <div class="subtituloCard small mt-1">
+                            Usuários ativos
+                        </div>
+
+                    </div>
+
+                    <span class="badgeStatus statusAtivo">
+                        Ativo
                     </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PENDENTES -->
+        <div class="col-md-4">
+
+            <div class="cardMetrica p-4">
+
+                <div class="d-flex justify-content-between align-items-start">
+
+                    <div>
+
+                        <div class="cardMetricaTitulo mb-2">
+                            Pendentes
+                        </div>
+
+                        <div class="cardMetricaValor">
+                            {{ usuarios|selectattr('status', 'equalto', 'pendente')|list|length }}
+                        </div>
+
+                        <div class="subtituloCard small mt-1">
+                            Aguardando aprovação
+                        </div>
+
+                    </div>
+
+                    <span class="badgeStatus statusPendente">
+                        Pendente
+                    </span>
+
                 </div>
 
             </div>
@@ -36,34 +145,85 @@
     </div>
 
 
-    <!-- Tabela -->
+    <!-- =====================================================
+         LISTA DE USUÁRIOS
+         ===================================================== -->
+
     <div class="cardPadrao">
 
+        <div class="barraDestaque"></div>
+
+
+        <!-- CABEÇALHO DO CARD -->
         <div class="cabecalhoCard">
 
-            <h5 class="tituloTabela mb-1">
-                Usuários cadastrados
-            </h5>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
 
-            <p class="subtituloCard mb-0">
-                Consulte e gerencie o status dos usuários.
-            </p>
+                <div>
+
+                    <h5 class="tituloTabela mb-1">
+                        Usuários Cadastrados
+                    </h5>
+
+                    <p class="subtituloCard mb-0">
+                        Consulte e gerencie o status dos usuários do sistema.
+                    </p>
+
+                </div>
+
+                <div class="text-end">
+
+                    <div class="cardMetricaValor fs-4">
+                        {{ usuarios|length }}
+                    </div>
+
+                    <div class="subtituloCard small">
+                        usuários
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
 
+        <!-- =================================================
+             TABELA
+             ================================================= -->
+
         <div class="table-responsive">
 
-            <table class="table table-hover tabelaPadrao mb-0">
+            <table class="table table-hover tabelaPadrao align-middle mb-0">
 
                 <thead class="cabecalhoTabela">
 
                     <tr>
-                        <th scope="col">Nome</th>
-                        <th scope="col">E-mail</th>
-                        <th scope="col">Perfil</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="text-center">Ações</th>
+
+                        <th scope="col">
+                            Nome
+                        </th>
+
+                        <th scope="col">
+                            E-mail
+                        </th>
+
+                        <th scope="col">
+                            Perfil
+                        </th>
+
+                        <th scope="col">
+                            Status
+                        </th>
+
+                        <th scope="col" class="text-center">
+                            Ações
+                        </th>
+
+                        <th scope="col" class="text-center">
+                            RBAC
+                        </th>
+
                     </tr>
 
                 </thead>
@@ -73,10 +233,10 @@
 
                     {% for usuario in usuarios %}
 
-                    <tr>
+                    <tr class="linhaTabela">
 
-                        <!-- Nome -->
-                        <td class="align-middle">
+                        <!-- NOME -->
+                        <td>
 
                             <strong>
                                 {{ usuario.nome }}
@@ -85,26 +245,26 @@
                         </td>
 
 
-                        <!-- E-mail -->
-                        <td class="align-middle">
+                        <!-- E-MAIL -->
+                        <td>
 
                             {{ usuario.email }}
 
                         </td>
 
 
-                        <!-- Perfil -->
-                        <td class="align-middle">
+                        <!-- PERFIL -->
+                        <td>
 
                             {% if usuario.perfil == 'admin' %}
 
-                            <span class="badgeTabela perfilAdmin">
+                            <span class="badgePerfil perfilAdmin">
                                 Administrador
                             </span>
 
                             {% else %}
 
-                            <span class="badgeTabela perfilUsuario">
+                            <span class="badgePerfil perfilUsuario">
                                 Usuário
                             </span>
 
@@ -113,36 +273,36 @@
                         </td>
 
 
-                        <!-- Status -->
-                        <td class="align-middle">
+                        <!-- STATUS -->
+                        <td>
 
                             {% if usuario.status == 'pendente' %}
 
-                            <span class="badgeTabela statusPendente">
+                            <span class="badgeStatus statusPendente">
                                 Pendente
                             </span>
 
                             {% elif usuario.status == 'ativo' %}
 
-                            <span class="badgeTabela statusAtivo">
+                            <span class="badgeStatus statusAtivo">
                                 Ativo
                             </span>
 
                             {% elif usuario.status == 'bloqueado' %}
 
-                            <span class="badgeTabela statusBloqueado">
+                            <span class="badgeStatus statusBloqueado">
                                 Bloqueado
                             </span>
 
                             {% elif usuario.status == 'reprovado' %}
 
-                            <span class="badgeTabela statusReprovado">
+                            <span class="badgeStatus statusReprovado">
                                 Reprovado
                             </span>
 
                             {% else %}
 
-                            <span class="badgeTabela statusPadrao">
+                            <span class="badgeStatus statusPadrao">
                                 {{ usuario.status }}
                             </span>
 
@@ -151,45 +311,86 @@
                         </td>
 
 
-                        <!-- Ações -->
-                        <td class="text-center align-middle">
+                        <!-- AÇÕES -->
+                        <td class="text-center">
 
-                            {% if usuario.status == 'pendente' %}
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
 
-                            <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}" class="acoesTabela acaoAtivar">
-                                Aprovar
-                            </a>
+                                {% if usuario.status == 'pendente' %}
 
-                            {% elif usuario.status == 'ativo' %}
+                                <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
+                                   class="acoesUsuario botaoAprovar">
 
-                            <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
-                                class="acoesTabela acaoBloquear">
-                                Bloquear
-                            </a>
+                                    Aprovar
 
-                            {% elif usuario.status == 'bloqueado' %}
+                                </a>
 
-                            <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}" class="acoesTabela acaoAtivar">
-                                Ativar
-                            </a>
+                                {% elif usuario.status == 'ativo' %}
 
-                            {% endif %}
+                                <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
+                                   class="acoesUsuario botaoBloquear">
 
+                                    Bloquear
+
+                                </a>
+                    
+
+                                {% elif usuario.status == 'bloqueado' %}
+
+                                <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
+                                   class="acoesUsuario botaoAtivar">
+
+                                    Ativar
+
+                                </a>
+                                {% elif usuario.status == 'administrador' %}
+                                <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
+                                   class="acoesUsuario botaoAtivar">
+
+                                    Ativar
+
+                                </a>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                        <!-- RBAC -->
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                {% if usuario.perfil == 'admin' %}
+
+                                <a href="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}"
+                                   class="acoesUsuario botaoTornarAdm">
+                                    Adm
+                                </a>
+
+                                {% elif usuario.perfil == 'usuario' %}
+
+                                <a href="{{ url_for('usuarios.tornar_usuario', id=usuario.id) }}"
+                                   class="acoesUsuario botaoTornarAdm">
+                                    Usuário
+                                </a>
+
+                                {% endif %}
                         </td>
 
                     </tr>
 
                     {% else %}
 
-                    <tr>
+                    <!-- NENHUM USUÁRIO -->
+                    <tr class="linhaTabela">
 
                         <td colspan="5" class="text-center py-5">
 
-                            <h5>
+                            <h5 class="tituloTabela">
                                 Nenhum usuário encontrado.
                             </h5>
 
-                            <p class="text-secondary mb-0">
+                            <p class="text-tema-secundario mb-0">
                                 Não existem usuários cadastrados no sistema.
                             </p>
 
