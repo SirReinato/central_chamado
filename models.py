@@ -170,7 +170,7 @@ class HistoricoSuprimento(db.Model):
     __bind_key__ = 'estoque_db'
 
     id = db.Column(db.Integer, primary_key=True)
-    impressora_id = db.Column(db.Integer, nullable=False)
+    impressora_id = db.Column(db.Integer, nullable=True)
     tipo_insumo = db.Column(db.String(20), nullable=False)
     quantidade = db.Column(db.Integer, nullable=False, default=-1)
     usuario_responsavel = db.Column(db.String(100), nullable=False)

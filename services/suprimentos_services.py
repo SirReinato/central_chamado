@@ -89,3 +89,51 @@ class SuprimentosService:
     def listar_historico(limite=50):
         """Retorna as últimas movimentações/retiradas para auditoria."""
         return HistoricoSuprimento.query.order_by(HistoricoSuprimento.data_retirada.desc()).limit(limite).all()
+    
+    @staticmethod
+    def ajustar_estoque(familia_id, tipo_insumo, quantidade, motivo, usuario_nome):
+        """
+        Ajuste manual de estoque (correção, perda, vencimento, etc).
+        'quantidade' pode ser positiva (entrada) ou negativa (saída),
+        e não está vinculado a nenhuma impressora específica.
+        """
+        familia = SuprimentosService.obter_familia(familia_id)
+        if not familia:
+            return False, "Família de suprimentos não encontrada."
+
+        if tipo_insumo not in ('toner', 'cilindro'):
+            return False, "Tipo de insumo inválido."
+
+        try:
+            quantidade = int(quantidade)
+        except (TypeError, ValueError):
+            return False, "Quantidade inválida."
+
+        if quantidade == 0:
+            return False, "Informe uma quantidade diferente de zero."
+
+        if tipo_insumo == 'toner':
+            novo_valor = familia.quantidade_toner + quantidade
+            if novo_valor < 0:
+                return False, f"Ajuste inválido: estoque de toner ficaria negativo ({novo_valor})."
+            familia.quantidade_toner = novo_valor
+        else:
+            novo_valor = familia.quantidade_cilindro + quantidade
+            if novo_valor < 0:
+                return False, f"Ajuste inválido: estoque de cilindro ficaria negativo ({novo_valor})."
+            familia.quantidade_cilindro = novo_valor
+
+        # Registra no histórico de auditoria (sem vínculo com impressora)
+        historico = HistoricoSuprimento(
+            impressora_id=None,
+            tipo_insumo=tipo_insumo,
+            quantidade=quantidade,
+            usuario_responsavel=f"{usuario_nome} (Ajuste: {motivo})",
+            data_retirada=datetime.now()
+        )
+
+        db.session.add(historico)
+        db.session.commit()
+
+        sinal = "adicionadas" if quantidade > 0 else "removidas"
+        return True, f"{abs(quantidade)} unidade(s) de {tipo_insumo} {sinal} da família '{familia.nome_familia}'."

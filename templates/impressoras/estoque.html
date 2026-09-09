@@ -19,14 +19,15 @@
 
     <!-- Seção de Alertas / Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show"
+        role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
 
     <div class="row g-4">
@@ -42,19 +43,24 @@
                     <form action="{{ url_for('impressoras.criar_familia') }}" method="POST">
                         <div class="mb-3">
                             <label for="nome_familia" class="form-label labelCampo">Nome da Família / Modelo</label>
-                            <input type="text" class="form-control inputPadrao" id="nome_familia" name="nome_familia" placeholder="Ex: HP LaserJet M404" required>
+                            <input type="text" class="form-control inputPadrao" id="nome_familia" name="nome_familia"
+                                placeholder="Ex: HP LaserJet M404" required>
                         </div>
                         <div class="mb-3">
                             <label for="quantidade_toner" class="form-label labelCampo">Qtd. Inicial de Toners</label>
-                            <input type="number" class="form-control inputPadrao" id="quantidade_toner" name="quantidade_toner" value="0" min="0" required>
+                            <input type="number" class="form-control inputPadrao" id="quantidade_toner"
+                                name="quantidade_toner" value="0" min="0" required>
                         </div>
                         <div class="mb-3">
-                            <label for="quantidade_cilindro" class="form-label labelCampo">Qtd. Inicial de Cilindros</label>
-                            <input type="number" class="form-control inputPadrao" id="quantidade_cilindro" name="quantidade_cilindro" value="0" min="0" required>
+                            <label for="quantidade_cilindro" class="form-label labelCampo">Qtd. Inicial de
+                                Cilindros</label>
+                            <input type="number" class="form-control inputPadrao" id="quantidade_cilindro"
+                                name="quantidade_cilindro" value="0" min="0" required>
                         </div>
                         <div class="mb-4">
                             <label for="estoque_minimo" class="form-label labelCampo">Estoque Mínimo (Alerta)</label>
-                            <input type="number" class="form-control inputPadrao" id="estoque_minimo" name="estoque_minimo" value="2" min="1" required>
+                            <input type="number" class="form-control inputPadrao" id="estoque_minimo"
+                                name="estoque_minimo" value="2" min="1" required>
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn botaoPrimario py-2">Cadastrar Família</button>
@@ -86,69 +92,142 @@
                             </thead>
                             <tbody>
                                 {% if familias %}
-                                    {% for fam in familias %}
-                                    <tr>
-                                        <td class="fw-bold">
-                                            {{ fam.nome_familia }}
-                                            {% if fam.quantidade_toner <= fam.estoque_minimo or fam.quantidade_cilindro <= fam.estoque_minimo %}
-                                                <span class="badge bg-danger ms-1" title="Estoque baixo!">Baixo</span>
+                                {% for fam in familias %}
+                                <tr>
+                                    <td class="fw-bold">
+                                        {{ fam.nome_familia }}
+                                        {% if fam.quantidade_toner <= fam.estoque_minimo or fam.quantidade_cilindro
+                                            <=fam.estoque_minimo %} <span class="badge bg-danger ms-1"
+                                            title="Estoque baixo!">Baixo</span>
                                             {% endif %}
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge {{ 'bg-success' if fam.quantidade_toner > fam.estoque_minimo else 'bg-warning text-dark' }}">
-                                                {{ fam.quantidade_toner }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge {{ 'bg-success' if fam.quantidade_cilindro > fam.estoque_minimo else 'bg-warning text-dark' }}">
-                                                {{ fam.quantidade_cilindro }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center text-muted">{{ fam.estoque_minimo }}</td>
-                                        <td class="text-end">
-                                            <!-- Botão para abrir Modal de Adicionar Lote -->
-                                            <button type="button" class="btn btn-sm botaoDetalhes" data-bs-toggle="modal" data-bs-target="#modalAdicionar{{ fam.id }}">
-                                                <i class="bi bi-plus-circle"></i> Repor
-                                            </button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Modal de Reposição para cada Família -->
-                                    <div class="modal fade" id="modalAdicionar{{ fam.id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content bg-dark text-white border-secondary">
-                                                <div class="modal-header border-secondary">
-                                                    <h5 class="modal-title">Repor Estoque: {{ fam.nome_familia }}</h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <form action="{{ url_for('impressoras.adicionar_estoque', familia_id=fam.id) }}" method="POST">
-                                                    <div class="modal-body">
-                                                        <div class="mb-3">
-                                                            <label class="form-label labelCampo">Adicionar Toners (Qtd a somar)</label>
-                                                            <input type="number" class="form-control inputPadrao" name="toner_add" value="0" min="0">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label labelCampo">Adicionar Cilindros (Qtd a somar)</label>
-                                                            <input type="number" class="form-control inputPadrao" name="cilindro_add" value="0" min="0">
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer border-secondary">
-                                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn botaoPrimario">Salvar Entrada</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge {{ 'bg-success' if fam.quantidade_toner > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                            {{ fam.quantidade_toner }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span
+                                            class="badge {{ 'bg-success' if fam.quantidade_cilindro > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                            {{ fam.quantidade_cilindro }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center ">{{ fam.estoque_minimo }}</td>
+                                    <td class="text-end">
+                                        <!-- Botão para abrir Modal de Adicionar Lote -->
+                                        <button type="button" class="btn btn-sm botaoDetalhes" data-bs-toggle="modal"
+                                            data-bs-target="#modalAdicionar{{ fam.id }}">
+                                            <i class="bi bi-plus-circle"></i> Repor
+                                        </button>
+                                        <button type="button" class="btn btn-sm botaoSecundario ms-1"
+                                            data-bs-toggle="modal" data-bs-target="#modalAjustar{{ fam.id }}">
+                                            <i class="bi bi-sliders"></i> Ajustar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
                                 {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">Nenhuma família de suprimento cadastrada ainda.</td>
-                                    </tr>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">Nenhuma família de suprimento
+                                        cadastrada ainda.</td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
                     </div>
+                    <!-- =====================================================
+     MODAIS DE ESTOQUE (fora da tabela para não quebrar o Bootstrap)
+     ===================================================== -->
+                    {% for fam in familias %}
+
+                    <!-- Modal: Repor Estoque -->
+                    <div class="modal fade" id="modalAdicionar{{ fam.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content bg-dark text-white border-secondary">
+                                <div class="modal-header border-secondary">
+                                    <h5 class="modal-title">Repor Estoque: {{ fam.nome_familia }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form action="{{ url_for('impressoras.adicionar_estoque', familia_id=fam.id) }}"
+                                    method="POST">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Adicionar Toners (Qtd a somar)</label>
+                                            <input type="number" class="form-control inputPadrao" name="toner_add"
+                                                value="0" min="0">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Adicionar Cilindros (Qtd a
+                                                somar)</label>
+                                            <input type="number" class="form-control inputPadrao" name="cilindro_add"
+                                                value="0" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-secondary">
+                                        <button type="button" class="btn botaoSecundario"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn botaoPrimario">Salvar Entrada</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal: Ajuste Manual -->
+                    <div class="modal fade" id="modalAjustar{{ fam.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content bg-dark text-white border-secondary">
+                                <div class="modal-header border-secondary">
+                                    <h5 class="modal-title">Ajuste Manual: {{ fam.nome_familia }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <form action="{{ url_for('impressoras.ajustar_estoque', familia_id=fam.id) }}"
+                                    method="POST">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Insumo</label>
+                                            <select class="form-select selectPadrao" name="tipo_insumo" required>
+                                                <option value="toner">Toner</option>
+                                                <option value="cilindro">Cilindro</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Operação</label>
+                                            <select class="form-select selectPadrao" name="operacao" required>
+                                                <option value="add">Adicionar (+)</option>
+                                                <option value="remove">Remover (-)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Quantidade</label>
+                                            <input type="number" class="form-control inputPadrao" name="quantidade"
+                                                value="1" min="1" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Motivo do Ajuste</label>
+                                            <select class="form-select selectPadrao" name="motivo" required>
+                                                <option value="Correção de contagem">Correção de contagem</option>
+                                                <option value="Item danificado">Item danificado</option>
+                                                <option value="Item vencido">Item vencido</option>
+                                                <option value="Perda/Extravio">Perda/Extravio</option>
+                                                <option value="Compra avulsa">Compra avulsa</option>
+                                                <option value="Outro">Outro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-secondary">
+                                        <button type="button" class="btn botaoSecundario"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn botaoPrimario">Confirmar Ajuste</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -161,7 +240,8 @@
                 <div class="barraDestaque"></div>
                 <div class="cabecalhoCard">
                     <h2 class="h5 mb-0 fw-bold">Histórico Recente de Retiradas (-1)</h2>
-                    <p class="subtituloCard small mt-1 mb-0">Auditoria das últimas substituições efetuadas nas impressoras</p>
+                    <p class="subtituloCard small mt-1 mb-0">Auditoria das últimas substituições efetuadas nas
+                        impressoras</p>
                 </div>
                 <div class="card-body p-4">
                     <div class="table-responsive">
@@ -177,23 +257,25 @@
                             </thead>
                             <tbody>
                                 {% if historico %}
-                                    {% for h in historico %}
-                                    <tr>
-                                        <td class="small">{{ h.data_retirada.strftime('%d/%m/%Y %H:%M') if h.data_retirada else '-' }}</td>
-                                        <td>#{{ h.impressora_id }}</td>
-                                        <td>
-                                            <span class="text-uppercase fw-bold">{{ h.tipo_insumo }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-danger fw-bold">{{ h.quantidade }}</span>
-                                        </td>
-                                        <td>{{ h.usuario_responsavel }}</td>
-                                    </tr>
-                                    {% endfor %}
+                                {% for h in historico %}
+                                <tr>
+                                    <td class="small">{{ h.data_retirada.strftime('%d/%m/%Y %H:%M') if h.data_retirada
+                                        else '-' }}</td>
+                                    <td>#{{ h.impressora_id }}</td>
+                                    <td>
+                                        <span class="text-uppercase fw-bold">{{ h.tipo_insumo }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-danger fw-bold">{{ h.quantidade }}</span>
+                                    </td>
+                                    <td>{{ h.usuario_responsavel }}</td>
+                                </tr>
+                                {% endfor %}
                                 {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-3">Nenhuma retirada registrada no histórico.</td>
-                                    </tr>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">Nenhuma retirada registrada no
+                                        histórico.</td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>

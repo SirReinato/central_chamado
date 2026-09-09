@@ -142,3 +142,29 @@ def vincular_impressora(impressora_id):
     db.session.commit()
     flash(f"Vínculo e localização da impressora {impressora.nome} atualizados com sucesso!", "success")
     return redirect(url_for('impressoras.index'))
+
+
+@impressoras_bp.route('/estoque/ajustar/<int:familia_id>', methods=['POST'])
+@login_required
+def ajustar_estoque(familia_id):
+    tipo_insumo = request.form.get('tipo_insumo')
+    operacao = request.form.get('operacao')  # 'add' ou 'remove'
+    quantidade = request.form.get('quantidade', 0)
+    motivo = request.form.get('motivo', 'Não informado')
+    usuario_nome = current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
+
+    try:
+        quantidade = int(quantidade)
+    except (TypeError, ValueError):
+        quantidade = 0
+
+    if operacao == 'remove':
+        quantidade = -abs(quantidade)
+    else:
+        quantidade = abs(quantidade)
+
+    sucesso, mensagem = SuprimentosService.ajustar_estoque(
+        familia_id, tipo_insumo, quantidade, motivo, usuario_nome
+    )
+    flash(mensagem, 'success' if sucesso else 'danger')
+    return redirect(url_for('impressoras.gerenciar_estoque'))
