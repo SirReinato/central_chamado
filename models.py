@@ -171,6 +171,8 @@ class HistoricoSuprimento(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     impressora_id = db.Column(db.Integer, nullable=True)
+    familia_id = db.Column(db.Integer, db.ForeignKey('estoque_suprimentos.id'), nullable=True)
+    familia = db.relationship('EstoqueSuprimento')
     tipo_insumo = db.Column(db.String(20), nullable=False)
     quantidade = db.Column(db.Integer, nullable=False, default=-1)
     usuario_responsavel = db.Column(db.String(100), nullable=False)

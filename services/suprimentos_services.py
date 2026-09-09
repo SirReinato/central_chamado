@@ -75,6 +75,7 @@ class SuprimentosService:
         # Registra a movimentação no histórico de auditoria
         historico = HistoricoSuprimento(
             impressora_id=impressora.id,
+            familia_id=familia.id,
             tipo_insumo=tipo_insumo,
             quantidade=-1,
             usuario_responsavel=usuario_nome,
@@ -126,6 +127,7 @@ class SuprimentosService:
         # Registra no histórico de auditoria (sem vínculo com impressora)
         historico = HistoricoSuprimento(
             impressora_id=None,
+            familia_id=familia.id,
             tipo_insumo=tipo_insumo,
             quantidade=quantidade,
             usuario_responsavel=f"{usuario_nome} (Ajuste: {motivo})",

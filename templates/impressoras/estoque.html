@@ -249,7 +249,7 @@
                             <thead class="cabecalhoTabela">
                                 <tr>
                                     <th>Data / Hora</th>
-                                    <th>ID Impressora</th>
+                                    <th>Família</th>
                                     <th>Insumo Retirado</th>
                                     <th>Quantidade</th>
                                     <th>Responsável</th>
@@ -261,7 +261,15 @@
                                 <tr>
                                     <td class="small">{{ h.data_retirada.strftime('%d/%m/%Y %H:%M') if h.data_retirada
                                         else '-' }}</td>
-                                    <td>#{{ h.impressora_id }}</td>
+                                    <td>
+                                        {% if h.familia %}
+                                        {{ h.familia.nome_familia }}
+                                        {% elif h.impressora and h.impressora.familia_suprimento %}
+                                        {{ h.impressora.familia_suprimento.nome_familia }}
+                                        {% else %}
+                                        <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <span class="text-uppercase fw-bold">{{ h.tipo_insumo }}</span>
                                     </td>
