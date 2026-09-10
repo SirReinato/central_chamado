@@ -42,6 +42,15 @@ def tornar_usuario(id):
 
     return usuario
 
+def tornar_operador(id):
+
+    usuario = Usuario.query.get_or_404(id)
+
+    usuario.perfil = 'operador'
+
+    db.session.commit()
+
+    return usuario
 
 def ativar_usuario(id):
 

@@ -11,7 +11,7 @@
 
 <body class="bg-dark">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light navbarSistema text-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light navbarSistema text-dark shadow-sm fixed-top">
 
         <div class="container-fluid">
 
@@ -51,6 +51,8 @@
                         </a>
                     </li>
 
+                    <!-- Usuários -->
+                    {% if current_user.is_admin %}
                     <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold"
@@ -59,8 +61,6 @@
                         </a>
                     </li>
 
-                    <!-- Usuários -->
-                    {% if current_user.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('usuarios.listar') }}">
                             Usuários
@@ -69,14 +69,13 @@
                     {% endif %}
 
                     <!-- Impressoras -->
-                    {% if current_user.is_admin %}
+                    {% if current_user.is_admin or current_user.is_operador %}
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.index') }}">
                             Impressoras
                         </a>
                     </li>
-                    {% endif %}
-                    {% if current_user.is_admin %}
+                    
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
                             Estoque

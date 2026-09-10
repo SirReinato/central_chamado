@@ -262,6 +262,11 @@
                                 Administrador
                             </span>
 
+                            {% elif usuario.perfil == 'operador' %}
+                            <span class="badgePerfil perfilOperador">
+                                Operador
+                            </span>
+
                             {% else %}
 
                             <span class="badgePerfil perfilUsuario">
@@ -319,7 +324,7 @@
                                 {% if usuario.status == 'pendente' %}
 
                                 <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
-                                   class="acoesUsuario botaoAprovar">
+                                    class="acoesUsuario botaoAprovar">
 
                                     Aprovar
 
@@ -328,24 +333,24 @@
                                 {% elif usuario.status == 'ativo' %}
 
                                 <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
-                                   class="acoesUsuario botaoBloquear">
+                                    class="acoesUsuario botaoBloquear">
 
                                     Bloquear
 
                                 </a>
-                    
+
 
                                 {% elif usuario.status == 'bloqueado' %}
 
                                 <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                   class="acoesUsuario botaoAtivar">
+                                    class="acoesUsuario botaoAtivar">
 
                                     Ativar
 
                                 </a>
                                 {% elif usuario.status == 'administrador' %}
                                 <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                   class="acoesUsuario botaoAtivar">
+                                    class="acoesUsuario botaoAtivar">
 
                                     Ativar
 
@@ -361,18 +366,22 @@
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-2 flex-wrap">
                                 {% if usuario.perfil == 'admin' %}
-
-                                <a href="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}"
-                                   class="acoesUsuario botaoTornarAdm">
-                                    Adm
-                                </a>
+                                <a href="{{ url_for('usuarios.tornar_usuario', id=usuario.id) }}"
+                                    class="acoesUsuario botaoTornarAdm">Usuário</a>
+                                <a href="{{ url_for('usuarios.tornar_operador', id=usuario.id) }}"
+                                    class="acoesUsuario botaoTornarAdm">Operador</a>
 
                                 {% elif usuario.perfil == 'usuario' %}
+                                <a href="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}"
+                                    class="acoesUsuario botaoTornarAdm">Admin</a>
+                                <a href="{{ url_for('usuarios.tornar_operador', id=usuario.id) }}"
+                                    class="acoesUsuario botaoTornarAdm">Operador</a>
 
+                                {% elif usuario.perfil == 'operador' %}
+                                <a href="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}"
+                                    class="acoesUsuario botaoTornarAdm">Admin</a>
                                 <a href="{{ url_for('usuarios.tornar_usuario', id=usuario.id) }}"
-                                   class="acoesUsuario botaoTornarAdm">
-                                    Usuário
-                                </a>
+                                    class="acoesUsuario botaoTornarAdm">Usuário</a>
 
                                 {% endif %}
                         </td>

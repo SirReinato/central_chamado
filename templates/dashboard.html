@@ -203,6 +203,13 @@
                                     Administrador
                                 </span>
 
+                                {% elif usuario.perfil == 'operador' %}
+
+                                <span class="badge badgePerfil badgeAdministrador">
+                                    Operador
+
+                                </span>
+
                                 {% else %}
 
                                 <span class="badge badgePerfil badgeUsuario">

@@ -60,6 +60,10 @@ class Usuario(UserMixin, db.Model):
     def is_admin(self):
         return self.perfil == 'admin'
     
+    @property
+    def is_operador(self):
+        return self.perfil == 'operador'
+    
     
 class Impressora(db.Model):
     __tablename__ = "impressoras"

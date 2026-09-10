@@ -90,3 +90,15 @@ def tornar_usuario(id):
     return redirect(
         url_for('dashboard.dashboard')
     )
+    
+@usuarios_bp.route('/tornar_operador/<int:id>')
+@login_required
+@admin_required
+def tornar_operador(id):
+    from services.usuario_service import tornar_operador
+
+    tornar_operador(id)
+
+    return redirect(
+        url_for('dashboard.dashboard')
+    )
