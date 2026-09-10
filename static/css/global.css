@@ -607,7 +607,7 @@ body {
 .statusAtivo,
 .statusImpressoraOnline {
     background: rgba(var(--cor-sucesso-rgb), 0.20);
-    color: var(--cor-cinza-claro);
+    color: var(--cor-azul-escuro);
 
     border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
 }
