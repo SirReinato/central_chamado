@@ -607,7 +607,7 @@ body {
 .statusAtivo,
 .statusImpressoraOnline {
     background: rgba(var(--cor-sucesso-rgb), 0.20);
-    color: var(--cor-azul-escuro);
+    color: var(--cor-cinza-claro);
 
     border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
 }
@@ -686,7 +686,7 @@ body {
 .botaoAtivar {
     background: rgba(var(--cor-sucesso-rgb), 0.20);
 
-    color: var(--cor-sucesso-texto);
+    color: var(--cor-cinza-claro);
 
     border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
 }
