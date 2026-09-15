@@ -914,6 +914,65 @@ body {
     border: 1px solid rgba(var(--cor-alerta-rgb), 0.4);
 }
 
+/* =============================================================
+   RANKING (Dashboard) - Chamados por categoria / setor
+   ============================================================= */
+
+.painelRanking {
+    height: 100%;
+    background: var(--gradiente-card);
+    border-radius: var(--raio-card);
+    box-shadow: var(--sombra-padrao);
+    overflow: hidden;
+    color: var(--cor-texto);
+}
+
+.painelRankingTitulo {
+    padding: 20px 25px 5px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cor-texto);
+}
+
+.listaRanking {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 15px 25px 25px;
+}
+
+.rankingItemCabecalho {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--cor-texto-secundario);
+    margin-bottom: 5px;
+}
+
+.rankingItemNome {
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.rankingBarraFundo {
+    height: 7px;
+    background: rgba(var(--cor-cinza-claro-rgb), 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rankingBarraPreenchimento {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--gradiente-principal);
+}
+
+.rankingVazio {
+    padding: 25px;
+    text-align: center;
+    color: var(--cor-texto-secundario);
+}
+
 .painelAtencaoVazio {
     padding: 30px 25px 35px;
     text-align: center;

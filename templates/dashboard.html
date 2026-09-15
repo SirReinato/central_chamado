@@ -105,6 +105,134 @@
         </div>
 
     </div>
+    <!-- =====================================================
+         RANKING - CHAMADOS POR CATEGORIA / SETOR
+         ===================================================== -->
+
+    <div class="row g-4 mt-1">
+
+        <!-- Por categoria -->
+        <div class="col-lg-7">
+            <div class="painelRanking">
+
+                <div class="painelRankingTitulo">
+                    Chamados por Categoria
+                </div>
+
+                {% if por_categoria %}
+
+                <div class="listaRanking">
+                    {% for item in por_categoria %}
+                    <div>
+                        <div class="rankingItemCabecalho">
+                            <span class="rankingItemNome">{{ item.nome }}</span>
+                            <span>{{ item.total }}</span>
+                        </div>
+                        <div class="rankingBarraFundo">
+                            <div class="rankingBarraPreenchimento" style="width: {{ item.percentual }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <div class="rankingVazio">Nenhum chamado cadastrado ainda.</div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- Por setor -->
+        <div class="col-lg-5">
+            <div class="painelRanking">
+
+                <div class="painelRankingTitulo">
+                    Top Setores
+                </div>
+
+                {% if por_setor %}
+
+                <div class="listaRanking">
+                    {% for item in por_setor %}
+                    <div>
+                        <div class="rankingItemCabecalho">
+                            <span class="rankingItemNome">{{ item.nome }}</span>
+                            <span>{{ item.total }}</span>
+                        </div>
+                        <div class="rankingBarraFundo">
+                            <div class="rankingBarraPreenchimento" style="width: {{ item.percentual }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <div class="rankingVazio">Nenhum chamado cadastrado ainda.</div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         ITENS QUE PRECISAM DE ATENÇÃO
+         (impressoras offline / toner baixo / estoque baixo)
+         ===================================================== -->
+
+    {% if current_user.is_admin %}
+
+    <div class="painelAtencao mt-4 shadow-lg">
+
+        <div class="barraDestaque"></div>
+
+        <div class="painelAtencaoCabecalho">
+            <div class="painelAtencaoTitulo">
+                <i class="bi bi-exclamation-triangle-fill" style="color: var(--cor-dourado);"></i>
+                Itens que Precisam de Atenção
+            </div>
+            {% if itens_atencao %}
+            <span class="painelAtencaoContador">{{ itens_atencao|length }}</span>
+            {% endif %}
+        </div>
+
+        {% if itens_atencao %}
+
+        <div class="listaAtencao">
+            {% for item in itens_atencao %}
+            <div class="itemAtencao itemAtencao--{{ item.tipo }}">
+
+                <div class="itemAtencaoIcone">
+                    <i class="bi {{ 'bi-printer-fill' if item.tipo == 'impressora' else 'bi-box-seam-fill' }}"></i>
+                </div>
+
+                <div class="itemAtencaoInfo">
+                    <div class="itemAtencaoNome">{{ item.nome }}</div>
+                    <div class="itemAtencaoDetalhe">{{ item.detalhe }}</div>
+                </div>
+
+                <span class="itemAtencaoNivel itemAtencaoNivel--{{ item.severidade }}">
+                    {{ item.valor }}
+                </span>
+
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+
+        <div class="painelAtencaoVazio">
+            <i class="bi bi-check-circle-fill fs-3 mb-2 d-block" style="color: var(--cor-dourado);"></i>
+            Nenhum item crítico no momento.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    {% endif %}
+
+
 
 
     <!-- =====================================================
@@ -176,7 +304,7 @@
 
                         {% for usuario in usuarios %}
 
-                        <tr >
+                        <tr>
 
                             <!-- NOME -->
                             <td>
