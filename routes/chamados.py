@@ -10,6 +10,8 @@ from services.chamado_service import (
     excluir_chamado as deletar_chamado_service
 )
 
+from services.impressoras_services import ImpressorasService
+
 from utils.decorator import admin_required
 
 
@@ -102,6 +104,8 @@ def home():
         ])
     ).all()
 
+    itens_atencao = ImpressorasService.obter_itens_atencao()
+
     return render_template(
         'index.html',
         total=total,
@@ -109,7 +113,8 @@ def home():
         em_atendimento=em_atendimento,
         resolvidos=resolvidos,
         fechados=fechados,
-        chamados_abertos=chamados_abertos
+        chamados_abertos=chamados_abertos,
+        itens_atencao=itens_atencao
     )
 
 

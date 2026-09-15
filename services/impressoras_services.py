@@ -1,4 +1,4 @@
-from models import Impressora, db
+from models import Impressora, db, EstoqueSuprimento
 
 
 import subprocess
@@ -12,7 +12,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pysnmp.hlapi import *
 
 from services.snmp_service import consultar_impressora, consultar_impressoras_bulk
-
 
 class ImpressorasService:
 
@@ -491,3 +490,86 @@ class ImpressorasService:
             print(e)
 
             return None
+        
+    # =============================================================
+    # PAINEL DE ATENÇÃO (Home) - Impressoras + Suprimentos críticos
+    # =============================================================
+
+    LIMITE_PERCENTUAL_BAIXO = 20
+    LIMITE_PERCENTUAL_CRITICO = 10
+
+    @staticmethod
+    def obter_itens_atencao():
+        """
+        Monta a lista de itens críticos para o painel da Home:
+        - Impressoras online com toner ou cilindro abaixo do limite.
+        - Famílias de suprimentos com estoque de toner ou cilindro
+          abaixo de 1 unidade.
+        """
+
+        itens = []
+
+        # --- Impressoras com toner/cilindro baixo (só as online) ---
+
+        impressoras = Impressora.query.filter_by(online=True).all()
+
+        for impressora in impressoras:
+
+            if (
+                impressora.toner_preto is not None
+                and impressora.toner_preto <= ImpressorasService.LIMITE_PERCENTUAL_BAIXO
+            ):
+                itens.append({
+                    "tipo": "impressora",
+                    "nome": impressora.nome,
+                    "detalhe": "Toner preto baixo",
+                    "valor": f"{impressora.toner_preto}%",
+                    "severidade": (
+                        "critico"
+                        if impressora.toner_preto <= ImpressorasService.LIMITE_PERCENTUAL_CRITICO
+                        else "alerta"
+                    ),
+                })
+
+            if (
+                impressora.cilindro is not None
+                and impressora.cilindro <= ImpressorasService.LIMITE_PERCENTUAL_BAIXO
+            ):
+                itens.append({
+                    "tipo": "impressora",
+                    "nome": impressora.nome,
+                    "detalhe": "Cilindro baixo",
+                    "valor": f"{impressora.cilindro}%",
+                    "severidade": (
+                        "critico"
+                        if impressora.cilindro <= ImpressorasService.LIMITE_PERCENTUAL_CRITICO
+                        else "alerta"
+                    ),
+                })
+
+        # --- Suprimentos com estoque abaixo de 1 unidade ---
+
+        familias = EstoqueSuprimento.query.all()
+
+        for familia in familias:
+
+            if familia.quantidade_toner < 1:
+                itens.append({
+                    "tipo": "suprimento",
+                    "nome": familia.nome_familia,
+                    "detalhe": "Toner em estoque",
+                    "valor": f"{familia.quantidade_toner} un.",
+                    "severidade": "critico",
+                })
+
+            if familia.quantidade_cilindro < 1:
+                itens.append({
+                    "tipo": "suprimento",
+                    "nome": familia.nome_familia,
+                    "detalhe": "Cilindro em estoque",
+                    "valor": f"{familia.quantidade_cilindro} un.",
+                    "severidade": "critico",
+                })
+
+        return itens        
+        

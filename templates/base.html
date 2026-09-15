@@ -16,7 +16,7 @@
         <div class="container-fluid">
 
             <!-- Nome do sistema -->
-            <a class="navbar-brand text-dark" href="{{ url_for('main.index') }}">
+            <a class="navbar-brand text-light" href="{{ url_for('main.index') }}">
                 Central de Chamados
             </a>
 
@@ -37,7 +37,7 @@
 
                     <!-- Novo chamado -->
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold"
+                        <a class="nav-link linkNavbar text-light fw-semibold"
                             href="{{ url_for('chamados.novo_chamado') }}">
                             Novo Chamado
                         </a>
@@ -45,7 +45,7 @@
 
                     <!-- Listar chamados -->
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold"
+                        <a class="nav-link linkNavbar text-light fw-semibold"
                             href="{{ url_for('chamados.listar_chamados') }}">
                             Listar Chamados
                         </a>
@@ -55,14 +55,14 @@
                     {% if current_user.is_admin %}
                     <!-- Dashboard -->
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold"
+                        <a class="nav-link linkNavbar text-light fw-semibold"
                             href="{{ url_for('dashboard.dashboard') }}">
                             Dashboard
                         </a>
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('usuarios.listar') }}">
+                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('usuarios.listar') }}">
                             Usuários
                         </a>
                     </li>
@@ -71,13 +71,13 @@
                     <!-- Impressoras -->
                     {% if current_user.is_admin or current_user.is_operador %}
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.index') }}">
+                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.index') }}">
                             Impressoras
                         </a>
                     </li>
                     
                     <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
+                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
                             Estoque
                         </a>
                     </li>
@@ -88,11 +88,11 @@
                 <!-- Usuário logado -->
                 <div class="d-flex align-items-center gap-2 ms-auto">
 
-                    <span class="text-dark fw-semibold">
+                    <span class="text-light fw-semibold">
                         Olá, {{ current_user.nome }}
                     </span>
 
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-dark btn-sm fw-semibold">
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm fw-semibold">
                         Sair
                     </a>
 
