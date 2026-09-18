@@ -80,19 +80,15 @@
 
     /* Gradiente principal */
     --gradiente-principal:
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             #D0B982,
-            var(--cor-azul)
-        );
+            var(--cor-azul));
 
     /* Gradiente dos cards */
     --gradiente-card:
-        linear-gradient(
-            135deg,
+        linear-gradient(135deg,
             var(--cor-azul-escuro) 32%,
-            var(--cor-azul) 100%
-        );
+            var(--cor-azul) 100%);
 
 
     /* =========================================================
@@ -395,9 +391,9 @@ body {
 }
 
 .botaoSecundario {
-    border: 1px solid var(--cor-borda-suave);
+    border: 1px solid var(--cor-autenticacao);
 
-    color: var(--cor-texto);
+    color: var(--cor-autenticacao);
 
     background: transparent;
 }
@@ -577,9 +573,10 @@ body {
     font-weight: 700;
 }
 
-.tdTexto{
+.tdTexto {
     color: var(--cor-cinza-claro);
 }
+
 .badgeUsuarioDashboard {
     background: var(--cor-autenticacao);
     color: var(--cor-cinza-claro);
@@ -871,7 +868,7 @@ body {
     flex-direction: column;
     gap: 10px;
     padding: 5px 15px 20px;
-    border-radius: 30px ;
+    border-radius: 30px;
 }
 
 .itemAtencao {
@@ -890,8 +887,13 @@ body {
     transform: translateX(3px);
 }
 
-.itemAtencao--impressora { border-left-color: var(--cor-azul); }
-.itemAtencao--suprimento { border-left-color: var(--cor-dourado); }
+.itemAtencao--impressora {
+    border-left-color: var(--cor-azul);
+}
+
+.itemAtencao--suprimento {
+    border-left-color: var(--cor-dourado);
+}
 
 .itemAtencaoIcone {
     display: flex;
@@ -914,7 +916,10 @@ body {
     color: var(--cor-dourado);
 }
 
-.itemAtencaoInfo { flex: 1; min-width: 0; }
+.itemAtencaoInfo {
+    flex: 1;
+    min-width: 0;
+}
 
 .itemAtencaoNome {
     font-weight: 600;
@@ -1131,5 +1136,3 @@ body {
     border-color: var(--cor-dourado);
     color: var(--cor-dourado);
 }
-
-

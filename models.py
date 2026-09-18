@@ -171,6 +171,25 @@ class Impressora(db.Model):
     def familia_suprimento(self):
         return self.suprimento
 
+    @property
+    def is_virtual(self):
+        """Identifica se é uma fila virtual de software (PDF, Generic, etc.) em vez de hardware físico."""
+        if not self.nome:
+            return False
+        termos = (
+            'pdf24',
+            'generic',
+            'text only',
+            'print to pdf',
+            'xps',
+            'fax',
+            'onenote',
+            'anydesk',
+            'adobe pdf'
+        )
+        nome_lower = self.nome.lower()
+        return any(t in nome_lower for t in termos)
+
 
 # =========================================================
 # TABELAS DE ESTOQUE E SUPRIMENTOS (BANCO UNIFICADO)

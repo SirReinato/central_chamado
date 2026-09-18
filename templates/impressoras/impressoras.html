@@ -133,7 +133,7 @@
         <div class="px-4 pb-3">
             <form method="GET" action="{{ url_for('impressoras.index') }}" class="row g-2 align-items-center">
                 <!-- Campo de busca geral -->
-                <div class="col-12 col-md-5">
+                <div class="col-12 col-lg-4">
                     <div class="input-group">
                         <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
                             <i class="bi bi-search"></i>
@@ -146,8 +146,17 @@
                     </div>
                 </div>
 
+                <!-- Filtro de Tipo (Física vs Virtual) -->
+                <div class="col-6 col-md-3 col-lg-2">
+                    <select name="tipo" class="form-select selectPadrao">
+                        <option value="">Tipo: Todos</option>
+                        <option value="fisicas" {% if filtros.tipo == 'fisicas' %}selected{% endif %}>Apenas Físicas</option>
+                        <option value="virtuais" {% if filtros.tipo == 'virtuais' %}selected{% endif %}>Virtuais / Software</option>
+                    </select>
+                </div>
+
                 <!-- Filtro de Status de Rede -->
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-3 col-lg-2">
                     <select name="status" class="form-select selectPadrao">
                         <option value="">Status: Todos</option>
                         <option value="online" {% if filtros.status == 'online' %}selected{% endif %}>● Online</option>
@@ -156,7 +165,7 @@
                 </div>
 
                 <!-- Filtro de Suprimento Vinculado -->
-                <div class="col-6 col-md-2">
+                <div class="col-6 col-md-3 col-lg-2">
                     <select name="suprimento" class="form-select selectPadrao">
                         <option value="">Insumo: Todos</option>
                         <option value="vinculado" {% if filtros.suprimento == 'vinculado' %}selected{% endif %}>Com Vínculo</option>
@@ -165,11 +174,11 @@
                 </div>
 
                 <!-- Botões de Ação -->
-                <div class="col-12 col-md-2 d-flex gap-1">
+                <div class="col-6 col-md-3 col-lg-2 d-flex gap-1">
                     <button type="submit" class="btn botaoPrimario flex-grow-1" title="Filtrar">
                         Filtrar
                     </button>
-                    {% if filtros.busca or filtros.status or filtros.suprimento %}
+                    {% if filtros.busca or filtros.status or filtros.suprimento or filtros.tipo %}
                     <a href="{{ url_for('impressoras.index') }}" class="btn botaoSecundario" title="Limpar Filtros">
                         <i class="bi bi-x-circle"></i>
                     </a>
@@ -236,9 +245,14 @@
 
                         <!-- NOME -->
                         <td>
-                            <strong>
-                                {{ imp.nome }}
-                            </strong>
+                            <div class="d-flex align-items-center flex-wrap gap-1">
+                                <strong>{{ imp.nome }}</strong>
+                                {% if imp.is_virtual %}
+                                <span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--cor-texto-secundario); border: 1px solid var(--cor-borda); font-size: 0.72rem; font-weight: 500;" title="Fila virtual / software (não é impressora física)">
+                                    <i class="bi bi-display me-1"></i>Virtual
+                                </span>
+                                {% endif %}
+                            </div>
                             {% if imp.modelo %}
                             <div class="small text-tema-secundario">{{ imp.modelo }}</div>
                             {% endif %}
@@ -506,7 +520,7 @@
             <nav aria-label="Navegação de páginas">
                 <ul class="pagination paginacaoTema mb-0">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.prev_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.prev_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
                             <i class="bi bi-chevron-left"></i> Anterior
                         </a>
                     </li>
@@ -514,7 +528,7 @@
                     {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                         {% if p %}
                             <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                                <a class="page-link" href="{{ url_for('impressoras.index', page=p, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                                <a class="page-link" href="{{ url_for('impressoras.index', page=p, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
                                     {{ p }}
                                 </a>
                             </li>
@@ -526,7 +540,7 @@
                     {% endfor %}
 
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.next_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.next_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
                             Próximo <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>

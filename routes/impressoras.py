@@ -18,6 +18,7 @@ def index():
     busca = request.args.get("busca", "").strip()
     status_filtro = request.args.get("status", "").strip()
     suprimento_filtro = request.args.get("suprimento", "").strip()
+    tipo_filtro = request.args.get("tipo", "").strip()
     page = request.args.get("page", 1, type=int)
 
     # Métricas globais sobre o parque de impressão (independentes do filtro ativo)
@@ -29,6 +30,7 @@ def index():
         busca=busca,
         status_filtro=status_filtro,
         suprimento_filtro=suprimento_filtro,
+        tipo_filtro=tipo_filtro,
         page=page,
         per_page=12
     )
@@ -46,7 +48,8 @@ def index():
         filtros={
             "busca": busca,
             "status": status_filtro,
-            "suprimento": suprimento_filtro
+            "suprimento": suprimento_filtro,
+            "tipo": tipo_filtro
         }
     )
     

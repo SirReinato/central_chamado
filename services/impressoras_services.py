@@ -17,12 +17,24 @@ from services.snmp_service import consultar_impressora, consultar_impressoras_bu
 
 class ImpressorasService:
 
-    @staticmethod
-    def listar_impressoras():
-        return Impressora.query.all()
+    TERMOS_VIRTUAIS = (
+        'pdf24',
+        'generic',
+        'text only',
+        'print to pdf',
+        'xps',
+        'fax',
+        'onenote',
+        'anydesk',
+        'adobe pdf'
+    )
 
     @staticmethod
-    def listar_impressoras_paginadas(busca=None, status_filtro=None, suprimento_filtro=None, page=1, per_page=12):
+    def listar_impressoras():
+        return Impressora.query.order_by(Impressora.online.desc(), Impressora.nome.asc()).all()
+
+    @staticmethod
+    def listar_impressoras_paginadas(busca=None, status_filtro=None, suprimento_filtro=None, tipo_filtro=None, page=1, per_page=12):
         query = Impressora.query
 
         if busca:
@@ -47,9 +59,19 @@ class ImpressorasService:
         elif suprimento_filtro == 'sem_vinculo':
             query = query.filter(Impressora.suprimento_id.is_(None))
 
-        query = query.order_by(Impressora.nome.asc())
+        # Filtro de tipo: Apenas Físicas ou Apenas Virtuais
+        if tipo_filtro == 'fisicas':
+            for t in ImpressorasService.TERMOS_VIRTUAIS:
+                query = query.filter(~Impressora.nome.ilike(f"%{t}%"))
+        elif tipo_filtro == 'virtuais':
+            condicoes = [Impressora.nome.ilike(f"%{t}%") for t in ImpressorasService.TERMOS_VIRTUAIS]
+            query = query.filter(db.or_(*condicoes))
+
+        # Impressoras Online aparecem primeiro, seguidas por nome alfabético
+        query = query.order_by(Impressora.online.desc(), Impressora.nome.asc())
 
         return query.paginate(page=page, per_page=per_page, error_out=False)
+
 
 
     @staticmethod
@@ -209,6 +231,10 @@ class ImpressorasService:
 
             # Ignora impressoras redirecionadas
             if "(redirected" in nome.lower():
+                continue
+
+            # Ignora filas virtuais de software (PDF24, Generic, etc.)
+            if any(termo in nome.lower() for termo in cls.TERMOS_VIRTUAIS):
                 continue
 
             # Procura IPv4 dentro da porta
