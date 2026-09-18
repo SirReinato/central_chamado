@@ -8,7 +8,7 @@
      HERO
      ========================================================= -->
 
-<div class="heroCard mb-5 shadow-lg indexMargin">
+<div class="heroCard mb-5 shadow-lg">
 
     <!-- Faixa de destaque -->
     <div class="barraDestaque"></div>
@@ -46,7 +46,7 @@
         <!-- Ação principal -->
         <div class="col-lg-4 text-start text-md-end">
 
-            <a href="/chamados/novo" class="btn botaoPrimario btn-lg rounded-pill px-4 shadow-sm">
+            <a href="{{ url_for('chamados.novo_chamado') }}" class="btn botaoPrimario btn-lg rounded-pill px-4 shadow-sm">
                 <i class="bi bi-plus-circle me-1"></i>
                 Novo Chamado
             </a>
@@ -317,7 +317,7 @@
 
                             <td class="ps-4 linhaTabela text-center">
 
-                                <a href="/chamados/detalhes/{{ chamado.id }}" class="btn btn-sm botaoDetalhes">
+                                <a href="{{ url_for('chamados.detalhes_chamado', id=chamado.id) }}" class="btn btn-sm botaoDetalhes">
                                     Detalhes
                                 </a>
 
@@ -343,7 +343,7 @@
      Estoque em Atenção
      ========================================================= -->
 
-<div class="painelAtencao mb-5 shadow-lg indexMargin">
+<div class="painelAtencao mb-5 shadow-lg">
     <!-- Faixa de destaque -->
     <div class="barraDestaque"></div>
     <div class="painelAtencaoCabecalho">

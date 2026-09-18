@@ -2,46 +2,75 @@
 
 {% block content %}
 
-<div class="container mt-4">
+<div class="containerFormulario my-5">
 
-    <h2>Nova Impressora</h2>
+    <div class="card cardPadrao">
 
-    <form method="POST">
+        <div class="barraDestaque"></div>
 
-        <div class="mb-3">
-            <label>Nome</label>
-            <input
-                type="text"
-                class="form-control"
-                name="nome"
-                required>
+        <div class="cabecalhoCard text-center">
+            <div class="iconeUsuario mb-2" style="width: 70px; height: 70px; font-size: 28px;">
+                <i class="bi bi-printer-fill"></i>
+            </div>
+            <h1 class="h4 mb-0 fw-bold text-tema">
+                Cadastrar Nova Impressora
+            </h1>
+            <p class="subtituloCard mt-2 mb-0">
+                Insira os dados de rede do equipamento para início do monitoramento
+            </p>
         </div>
 
-        <div class="mb-3">
-            <label>IP</label>
-            <input
-                type="text"
-                class="form-control"
-                name="ip"
-                required>
+        <div class="card-body p-4">
+
+            <form method="POST">
+
+                <div class="mb-3">
+                    <label for="nome" class="form-label labelCampo">Nome da Impressora / Identificador</label>
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="nome"
+                        name="nome"
+                        placeholder="Ex: Impressora Recepção, Financeiro HP"
+                        required
+                        autofocus>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ip" class="form-label labelCampo">Endereço IP</label>
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="ip"
+                        name="ip"
+                        placeholder="Ex: 10.90.1.25"
+                        required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="modelo" class="form-label labelCampo">Modelo do Equipamento</label>
+                    <input
+                        type="text"
+                        class="form-control inputPadrao"
+                        id="modelo"
+                        name="modelo"
+                        placeholder="Ex: HP LaserJet Pro M404, Kyocera ECOSYS">
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{{ url_for('impressoras.index') }}" class="btn botaoSecundario px-4 me-md-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn botaoPrimario px-5">
+                        Salvar Impressora
+                    </button>
+                </div>
+
+            </form>
+
         </div>
 
-        <div class="mb-3">
-            <label>Modelo</label>
-            <input
-                type="text"
-                class="form-control"
-                name="modelo">
-        </div>
-
-        <button
-            type="submit"
-            class="btn btn-primary">
-
-            Salvar
-        </button>
-
-    </form>
+    </div>
 
 </div>
 

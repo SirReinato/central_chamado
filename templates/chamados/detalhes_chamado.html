@@ -2,240 +2,158 @@
 
 {% block content %}
 
-<div class="card mt-4 shadow-lg ticket-detail-card">
+<div class="cardPadrao shadow-lg">
 
-    <div class="ticket-detail-accent"></div>
+    <div class="barraDestaque"></div>
 
-    <div class="ticket-header">
-        <h5>Chamado #{{ chamado.id }}</h5>
+    <div class="cabecalhoCard d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-ticket-perforated-fill text-primary fs-4"></i>
+            <h4 class="mb-0 fw-bold text-tema">Chamado #{{ chamado.id }}</h4>
+        </div>
 
-        <span class="status-badge">
-            {{ chamado.status }}
-        </span>
+        <div>
+            {% if chamado.status == 'Aberto' %}
+                <span class="badgeStatus statusPendente">● Aberto</span>
+            {% elif chamado.status == 'Em Atendimento' %}
+                <span class="badgeStatus statusAtivo">● Em Atendimento</span>
+            {% elif chamado.status == 'Resolvido' %}
+                <span class="badgeStatus statusSucesso">● Resolvido</span>
+            {% elif chamado.status == 'Fechado' %}
+                <span class="badgeStatus statusFechado">● Fechado</span>
+            {% else %}
+                <span class="badgeStatus">{{ chamado.status }}</span>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="ticket-body">
+    <div class="p-4 p-md-5">
 
         <div class="row g-3 mb-4">
-
             <div class="col-md-6">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Solicitante</small>
                     <strong>{{ chamado.solicitante }}</strong>
                 </div>
             </div>
 
             <div class="col-md-6">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Setor</small>
                     <strong>{{ chamado.setor }}</strong>
                 </div>
             </div>
-
         </div>
 
-        <hr class="ticket-divider">
+        <hr class="divisorTicket">
 
         <div class="mb-4">
-            <small class="d-block mb-2 text-light opacity-75">
-                Título
+            <small class="d-block mb-2 text-tema-secundario">
+                Título do Chamado
             </small>
-
-            <h4>
+            <h4 class="text-tema fw-bold">
                 {{ chamado.titulo }}
             </h4>
         </div>
 
         <div class="mb-4">
-            <small class="d-block mb-2 text-light opacity-75">
-                Descrição
+            <small class="d-block mb-2 text-tema-secundario">
+                Descrição Detalhada
             </small>
-
-            <div class="description-box">
+            <div class="caixaDescricaoTicket">
                 {{ chamado.descricao }}
             </div>
         </div>
 
-        <hr class="ticket-divider">
+        <hr class="divisorTicket">
 
         <div class="row g-3 mb-4">
-
             <div class="col-md-4">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Categoria</small>
                     <strong>{{ chamado.categoria }}</strong>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Prioridade</small>
                     <strong>{{ chamado.prioridade }}</strong>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="info-card">
-                    <small>Status</small>
+                <div class="blocoInfoTicket">
+                    <small>Status Atual</small>
                     <strong>{{ chamado.status }}</strong>
                 </div>
             </div>
-
         </div>
 
         <div class="row g-3 mb-4">
-
             <div class="col-md-4">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Técnico Responsável</small>
                     <strong>{{ chamado.tecnico.nome if chamado.tecnico else 'Não atribuído' }}</strong>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Aberto em</small>
                     <strong>{{ chamado.data_abertura.strftime('%d/%m/%Y %H:%M') if chamado.data_abertura else '-' }}</strong>
                 </div>
             </div>
 
             <div class="col-md-4">
-                <div class="info-card">
+                <div class="blocoInfoTicket">
                     <small>Última Atualização</small>
                     <strong>{{ chamado.data_atualizacao.strftime('%d/%m/%Y %H:%M') if chamado.data_atualizacao else '-' }}</strong>
                 </div>
             </div>
-
         </div>
 
-        <hr class="ticket-divider">
+        <hr class="divisorTicket">
 
-
-        <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="d-flex flex-wrap gap-2 align-items-center mt-4">
 
             {% if current_user.is_admin or current_user.is_operador %}
-            <span class="text-light opacity-75">
+            <span class="text-tema-secundario me-2 small">
                 Alterar status:
             </span>
 
-            <a href="{{ url_for('chamados.resolver_chamado', id=chamado.id) }}"
-               class="btn btn-success btn-resolver"
-               onclick="return confirm('Tem certeza que deseja Resolver o chamado #{{ chamado.id }}?')">
-                Resolver
-            </a>
+            {% if chamado.status != 'Resolvido' and chamado.status != 'Fechado' %}
+            <form method="POST" action="{{ url_for('chamados.resolver_chamado', id=chamado.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja Resolver o chamado #{{ chamado.id }}?');">
+                <button type="submit" class="btn btn-sm btn-success px-3">
+                    <i class="bi bi-check2-circle me-1"></i> Resolver
+                </button>
+            </form>
+            {% endif %}
 
-            <a href="{{ url_for('chamados.fechar_chamado', id=chamado.id) }}"
-               class="btn btn-secondary btn-fechar"
-               onclick="return confirm('Tem certeza que deseja Fechar o chamado #{{ chamado.id }}?')">
-                Fechar
+            {% if chamado.status != 'Fechado' %}
+            <form method="POST" action="{{ url_for('chamados.fechar_chamado', id=chamado.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja Fechar o chamado #{{ chamado.id }}?');">
+                <button type="submit" class="btn btn-sm botaoSecundario px-3">
+                    <i class="bi bi-lock me-1"></i> Fechar
+                </button>
+            </form>
+            {% endif %}
+
+            {% endif %}
+
+            {% if current_user.is_admin or current_user.is_operador or chamado.usuario_id == current_user.id %}
+            <a href="{{ url_for('chamados.editar_chamado', id=chamado.id) }}" class="btn btn-sm botaoPrimario px-3">
+                <i class="bi bi-pencil-square me-1"></i> Editar
             </a>
             {% endif %}
 
-            <a href="{{ url_for('chamados.listar_chamados') }}"
-               class="btn btn-outline-light ms-auto">
-                Voltar
+            <a href="{{ url_for('chamados.listar_chamados') }}" class="btn btn-sm botaoSecundario ms-auto px-4">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
             </a>
 
         </div>
-
 
     </div>
 
 </div>
 
-<style>
-    .ticket-detail-card {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2b5ea7 100%);
-        border: none;
-        border-radius: 20px;
-        overflow: hidden;
-        color: white;
-    }
-
-    .ticket-detail-accent {
-        height: 5px;
-        background: linear-gradient(90deg, #92EEFF, #D8FFC5, #C4F7CA);
-    }
-
-    .ticket-header {
-        padding: 1.5rem 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .ticket-header h5 {
-        margin: 0;
-        font-size: 1.3rem;
-        font-weight: 700;
-    }
-
-    .ticket-body {
-        padding: 2rem;
-    }
-
-    .info-card {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1rem;
-        height: 100%;
-    }
-
-    .info-card small {
-        color: rgba(255, 255, 255, .7);
-        display: block;
-        margin-bottom: .25rem;
-    }
-
-    .info-card strong {
-        color: white;
-    }
-
-    .description-box {
-        background: rgba(255, 255, 255, .08);
-        border: 1px solid rgba(255, 255, 255, .1);
-        border-radius: 12px;
-        padding: 1rem;
-        color: white;
-    }
-
-    .ticket-divider {
-        border-color: rgba(255, 255, 255, .15);
-    }
-
-    .status-badge {
-        background: linear-gradient(90deg,
-                #92EEFF,
-                #D8FFC5,
-                #C4F7CA);
-        color: #1e3a5f;
-        font-weight: 700;
-        padding: .5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .btn-resolver {
-        background: #28a745;
-        border: none;
-        font-weight: 600;
-        transition: .3s;
-    }
-
-    .btn-resolver:hover {
-        transform: translateY(-2px);
-    }
-
-    .btn-fechar {
-        background: rgba(255, 255, 255, .15);
-        border: 1px solid rgba(255, 255, 255, .2);
-        color: white;
-        font-weight: 600;
-    }
-
-    .btn-fechar:hover {
-        background: rgba(255, 255, 255, .25);
-        color: white;
-    }
-</style>
 {% endblock %}

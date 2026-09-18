@@ -186,7 +186,9 @@
 body {
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
+    padding-top: 75px;
 }
+
 
 
 /* =============================================================
@@ -453,46 +455,83 @@ body {
 .cardAutenticacao {
     width: 100%;
     max-width: 500px;
-
     padding: 40px;
-
     background: var(--cor-autenticacao);
-
     border-radius: var(--raio-autenticacao);
+    border: 1px solid var(--cor-borda);
+    box-shadow: var(--sombra-padrao);
 }
 
 .iconeUsuario {
-    width: 90px;
-    height: 90px;
-
+    width: 80px;
+    height: 80px;
     display: flex;
-
     align-items: center;
     justify-content: center;
-
     margin: auto;
-
     border-radius: 50%;
+    background: rgba(var(--cor-dourado-rgb), 0.12);
+    border: 2px solid var(--cor-dourado);
+    color: var(--cor-dourado);
+    font-size: 2rem;
 }
 
 .inputAutenticacao {
     background: transparent;
-
     border: none;
     border-bottom: 2px solid var(--cor-borda-suave);
-
     border-radius: 0;
-
     color: var(--cor-texto);
 }
 
 .inputAutenticacao:focus {
     background: transparent;
-
     color: var(--cor-texto);
-
+    border-bottom-color: var(--cor-dourado);
     box-shadow: none;
 }
+
+/* =============================================================
+   DETALHES DO CHAMADO
+   ============================================================= */
+
+.blocoInfoTicket {
+    background: rgba(var(--cor-cinza-claro-rgb), 0.05);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    padding: 14px 18px;
+    height: 100%;
+}
+
+.blocoInfoTicket small {
+    display: block;
+    color: var(--cor-texto-secundario);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.blocoInfoTicket strong {
+    color: var(--cor-texto);
+    font-size: 1rem;
+}
+
+.caixaDescricaoTicket {
+    background: rgba(var(--cor-cinza-claro-rgb), 0.04);
+    border: 1px solid var(--cor-borda);
+    border-radius: 14px;
+    padding: 20px;
+    color: var(--cor-texto);
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.divisorTicket {
+    border-top: 1px solid var(--cor-borda);
+    margin: 24px 0;
+}
+
 
 /* =============================================================
    HERO - HOME
@@ -978,3 +1017,71 @@ body {
     text-align: center;
     color: var(--cor-texto-secundario);
 }
+
+
+/* =============================================================
+   DETALHES DO CHAMADO (TICKET)
+   ============================================================= */
+
+.blocoInfoTicket {
+    background: rgba(var(--cor-cinza-claro-rgb), 0.05);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+}
+
+.blocoInfoTicket small {
+    color: var(--cor-texto-secundario);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.blocoInfoTicket strong {
+    color: var(--cor-texto);
+    font-size: 1rem;
+}
+
+.caixaDescricaoTicket {
+    background: rgba(var(--cor-cinza-claro-rgb), 0.05);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    padding: 1.25rem;
+    color: var(--cor-texto);
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.divisorTicket {
+    border-color: var(--cor-borda);
+    opacity: 0.5;
+}
+
+
+/* =============================================================
+   MODAIS
+   ============================================================= */
+
+.modal-content.modalTema {
+    background: var(--cor-card-1);
+    color: var(--cor-texto);
+    border: 1px solid var(--cor-borda-suave);
+    border-radius: var(--raio-card);
+    box-shadow: 0 15px 35px rgba(var(--cor-preto-rgb), 0.6);
+}
+
+.modalTema .modal-header {
+    border-bottom: 1px solid var(--cor-borda);
+    padding: 1.25rem 1.5rem;
+}
+
+.modalTema .modal-footer {
+    border-top: 1px solid var(--cor-borda);
+    padding: 1rem 1.5rem;
+}
+
+.modalTema .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+

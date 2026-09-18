@@ -2,41 +2,50 @@
 
 {% block content %}
 
+<div class="containerAutenticacao d-flex justify-content-center align-items-center py-5">
 
-{% if status == 'bloqueado' %}
+    <div class="cardPadrao p-4 p-md-5 text-center shadow-lg" style="max-width: 520px; width: 100%;">
 
-<div class="container text-center mt-5">
-    <div class="card p-5 shadow">
-        <h1 class="text-warning">
-            Sua conta está bloqueada no momento
-        </h1>
-        <p class="lead mt-3">
-            Entre em contato com a equipe de suporte.
+        <div class="barraDestaque"></div>
+
+        {% if status == 'bloqueado' %}
+
+        <div class="iconeUsuario mb-3 text-warning" style="border-color: rgba(255, 193, 7, 0.4);">
+            <i class="bi bi-shield-x fs-1"></i>
+        </div>
+
+        <h2 class="fw-bold mb-2 text-tema">
+            Conta Bloqueada
+        </h2>
+
+        <p class="text-tema-secundario mb-4">
+            Sua conta está bloqueada no momento. Entre em contato com a equipe de suporte para restabelecer o acesso.
         </p>
-        <a href="{{ url_for('auth.login') }}" class="btn btnn btn-primary mt-4">
-            Voltar para Login
 
-        </a>
-    </div>
-</div>
+        {% else %}
 
-{% else %}
+        <div class="iconeUsuario mb-3 text-success">
+            <i class="bi bi-hourglass-split fs-1"></i>
+        </div>
 
-<div class="container text-center mt-5">
-    <div class="card p-5 shadow">
-        <h1 class="text-success">
+        <h2 class="fw-bold mb-2 text-tema">
             Cadastro Recebido
-        </h1>
-        <p class="lead mt-3">
-            Sua conta foi criada com sucesso.
-        </p>
-        <a href="{{ url_for('auth.login') }}" class="btn btnn btn-primary mt-4">
-            Voltar para Login
+        </h2>
 
-        </a>
+        <p class="text-tema-secundario mb-4">
+            Sua conta foi criada com sucesso e está aguardando aprovação de um administrador.
+        </p>
+
+        {% endif %}
+
+        <div class="d-grid">
+            <a href="{{ url_for('auth.login') }}" class="btn botaoPrimario py-2">
+                Voltar para Login
+            </a>
+        </div>
+
     </div>
+
 </div>
 
-{% endif %}
-
-{%endblock%}
+{% endblock %}

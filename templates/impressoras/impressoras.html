@@ -174,6 +174,10 @@
                         </th>
 
                         <th scope="col">
+                            Localização
+                        </th>
+
+                        <th scope="col">
                             Status
                         </th>
 
@@ -186,7 +190,15 @@
                         </th>
 
                         <th scope="col">
+                            Suprimento
+                        </th>
+
+                        <th scope="col">
                             Última Verificação
+                        </th>
+
+                        <th scope="col" class="text-center">
+                            Ações
                         </th>
 
                     </tr>
@@ -202,94 +214,235 @@
 
                         <!-- NOME -->
                         <td>
-
                             <strong>
                                 {{ imp.nome }}
                             </strong>
-
+                            {% if imp.modelo %}
+                            <div class="small text-tema-secundario">{{ imp.modelo }}</div>
+                            {% endif %}
                         </td>
 
 
                         <!-- IP -->
                         <td>
-
                             <span class="ipImpressora">
                                 {{ imp.ip }}
                             </span>
+                        </td>
 
+
+                        <!-- LOCALIZAÇÃO -->
+                        <td>
+                            {% if (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
+                                <span class="badgeStatus">
+                                    {{ imp.andar }} - {{ imp.sala }}
+                                </span>
+                            {% else %}
+                                <span class="text-tema-secundario opacity-75 small">Não informado</span>
+                            {% endif %}
                         </td>
 
 
                         <!-- STATUS -->
                         <td>
-
                             {% if imp.online %}
-
                             <span class="badgeStatus statusImpressoraOnline">
                                 ● Online
                             </span>
-
                             {% else %}
-
                             <span class="badgeStatus statusImpressoraOffline">
                                 ● Offline
                             </span>
-
                             {% endif %}
-
                         </td>
 
 
                         <!-- TONER -->
                         <td>
-
                             {% if imp.toner_preto is not none %}
-
-                            <span class="badgeStatus statusAtivo">
+                            <span class="badgeStatus {% if imp.toner_preto <= 15 %}statusFechado{% else %}statusAtivo{% endif %}">
                                 {{ imp.toner_preto }}%
                             </span>
-
                             {% else %}
-
                             <span class="badgeStatus">
                                 —
                             </span>
-
                             {% endif %}
-
                         </td>
 
 
                         <!-- CILINDRO -->
                         <td>
-
                             {% if imp.cilindro is not none %}
-
-                            <span class="badgeStatus statusAtivo">
+                            <span class="badgeStatus {% if imp.cilindro <= 15 %}statusFechado{% else %}statusAtivo{% endif %}">
                                 {{ imp.cilindro }}%
                             </span>
-
                             {% else %}
-
                             <span class="badgeStatus">
                                 —
                             </span>
-
                             {% endif %}
+                        </td>
 
+
+                        <!-- SUPRIMENTO VINCULADO -->
+                        <td>
+                            {% if imp.suprimento %}
+                            <span class="badgeStatus statusAtivo" title="Toner: {{ imp.suprimento.quantidade_toner }} | Cilindro: {{ imp.suprimento.quantidade_cilindro }}">
+                                {{ imp.suprimento.nome_familia }}
+                            </span>
+                            {% else %}
+                            <span class="text-tema-secundario opacity-75 small">Sem vínculo</span>
+                            {% endif %}
                         </td>
 
 
                         <!-- ÚLTIMA VERIFICAÇÃO -->
                         <td>
-
                             <span class="ultimaVerificacao">
-                                {{ imp.ultimo_check }}
+                                {{ imp.ultimo_check.strftime('%d/%m/%Y %H:%M') if imp.ultimo_check else '—' }}
                             </span>
+                        </td>
 
+
+                        <!-- AÇÕES -->
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                <button type="button"
+                                        class="btn btn-sm botaoSecundario py-1 px-2"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalVincular{{ imp.id }}"
+                                        title="Vincular Localização e Suprimento">
+                                    <i class="bi bi-geo-alt"></i> Vincular
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-warning py-1 px-2"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalRetirar{{ imp.id }}"
+                                        title="Retirar Insumo de Estoque">
+                                    <i class="bi bi-box-arrow-up-right"></i> Retirar
+                                </button>
+                            </div>
                         </td>
 
                     </tr>
+
+
+                    <!-- ==========================================
+                         MODAL VINCULAR LOCALIZAÇÃO / SUPRIMENTO
+                         ========================================== -->
+                    <div class="modal fade" id="modalVincular{{ imp.id }}" tabindex="-1" aria-labelledby="modalVincularLabel{{ imp.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content modalTema">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold text-tema" id="modalVincularLabel{{ imp.id }}">
+                                        <i class="bi bi-geo-alt text-primary me-1"></i> Vincular: {{ imp.nome }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
+                                    <div class="modal-body p-4 text-start">
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Andar</label>
+                                            <input type="text"
+                                                   name="andar"
+                                                   class="form-control inputPadrao"
+                                                   value="{{ imp.andar if imp.andar != 'Não Informado' else '' }}"
+                                                   placeholder="Ex: 1º Andar, Térreo">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Sala / Setor</label>
+                                            <input type="text"
+                                                   name="sala"
+                                                   class="form-control inputPadrao"
+                                                   value="{{ imp.sala if imp.sala != 'Não Informado' else '' }}"
+                                                   placeholder="Ex: Sala 102, Financeiro">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Família de Suprimento (Estoque)</label>
+                                            <select name="suprimento_id" class="form-select selectPadrao">
+                                                <option value="">-- Nenhum / Desvincular --</option>
+                                                {% for fam in familias %}
+                                                <option value="{{ fam.id }}" {% if imp.suprimento_id == fam.id %}selected{% endif %}>
+                                                    {{ fam.nome_familia }} (Toner: {{ fam.quantidade_toner }} | Cilindro: {{ fam.quantidade_cilindro }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <small class="text-tema-secundario mt-1 d-block">
+                                                Vincula esta impressora a um grupo de suprimentos para facilitar trocas de insumos.
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn botaoPrimario">Salvar Vínculo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- ==========================================
+                         MODAL RETIRAR INSUMO
+                         ========================================== -->
+                    <div class="modal fade" id="modalRetirar{{ imp.id }}" tabindex="-1" aria-labelledby="modalRetirarLabel{{ imp.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content modalTema">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold text-tema" id="modalRetirarLabel{{ imp.id }}">
+                                        <i class="bi bi-box-arrow-up-right text-warning me-1"></i> Retirar Insumo: {{ imp.nome }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                {% if imp.suprimento %}
+                                <form method="POST" action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
+                                    <div class="modal-body p-4 text-start">
+                                        <div class="alert alert-info py-2 px-3 mb-3 small" role="alert">
+                                            <strong>Família vinculada:</strong> {{ imp.suprimento.nome_familia }}<br>
+                                            <strong>Estoque disponível:</strong> Toners: {{ imp.suprimento.quantidade_toner }} | Cilindros: {{ imp.suprimento.quantidade_cilindro }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Insumo a ser retirado</label>
+                                            <select name="tipo_insumo" class="form-select selectPadrao" required>
+                                                <option value="toner">Toner (Estoque: {{ imp.suprimento.quantidade_toner }})</option>
+                                                <option value="cilindro">Cilindro (Estoque: {{ imp.suprimento.quantidade_cilindro }})</option>
+                                            </select>
+                                        </div>
+                                        <p class="text-tema-secundario small mb-0">
+                                            Ao confirmar, 1 unidade do item selecionado será abatida do estoque e registrada no histórico em seu nome.
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-warning">Confirmar Retirada</button>
+                                    </div>
+                                </form>
+                                {% else %}
+                                <div class="modal-body p-4 text-center">
+                                    <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-3"></i>
+                                    <h6 class="fw-bold text-tema">Impressora sem suprimento vinculado</h6>
+                                    <p class="text-tema-secundario small mb-3">
+                                        Para registrar a retirada de um insumo diretamente por esta tela, vincule primeiro esta impressora a uma família de suprimentos.
+                                    </p>
+                                    <button type="button"
+                                            class="btn botaoPrimario btn-sm"
+                                            data-bs-dismiss="modal"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalVincular{{ imp.id }}">
+                                        Vincular Agora
+                                    </button>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
 
 
                     {% else %}
@@ -297,7 +450,7 @@
                     <!-- NENHUMA IMPRESSORA -->
                     <tr class="linhaTabela">
 
-                        <td colspan="6" class="text-center py-5">
+                        <td colspan="9" class="text-center py-5">
 
                             <h5 class="tituloTabela">
                                 Nenhuma impressora encontrada.
