@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import db, Impressora
 from services.impressoras_services import ImpressorasService
 from services.suprimentos_services import SuprimentosService
+from utils.decorator import staff_required
 
 impressoras_bp = Blueprint(
     "impressoras",
@@ -12,6 +13,7 @@ impressoras_bp = Blueprint(
 
 @impressoras_bp.route("/")
 @login_required
+@staff_required
 def index():
     impressoras = ImpressorasService.listar_impressoras()
     familias = SuprimentosService.listar_familias()
@@ -24,7 +26,9 @@ def index():
     
 @impressoras_bp.route("/nova", methods=["GET", "POST"])
 @login_required
+@staff_required
 def nova_impressora():
+
     if request.method == "POST":
         nome = request.form.get("nome")
         ip = request.form.get("ip")
@@ -44,8 +48,9 @@ def nova_impressora():
         "impressoras/nova_impressora.html"
     )
 
-@impressoras_bp.route("/descobrir")
+@impressoras_bp.route("/descobrir", methods=["GET", "POST"])
 @login_required
+@staff_required
 def descobrir_impressoras():
     ImpressorasService.descobrir_impressoras()
     flash("Varredura de descoberta finalizada.", "success")
@@ -53,8 +58,9 @@ def descobrir_impressoras():
         url_for("impressoras.index")
     )
     
-@impressoras_bp.route("/sincronizar")
+@impressoras_bp.route("/sincronizar", methods=["GET", "POST"])
 @login_required
+@staff_required
 def sincronizar():
     ImpressorasService.sincronizar_dc1()
     ImpressorasService.atualizar_ips_dc1()
@@ -64,8 +70,9 @@ def sincronizar():
         url_for("impressoras.index")
     )
     
-@impressoras_bp.route("/atualizar-status")
+@impressoras_bp.route("/atualizar-status", methods=["GET", "POST"])
 @login_required
+@staff_required
 def atualizar_status():
     ImpressorasService.atualizar_status()
     flash("Status das impressoras atualizado!", "success")
@@ -75,6 +82,7 @@ def atualizar_status():
     
 @impressoras_bp.route("/teste-web")
 @login_required
+@staff_required
 def teste_web():
     resultado = ImpressorasService.consultar_interface_web(
         "10.90.1.16"
@@ -83,11 +91,12 @@ def teste_web():
 
 
 # ==========================================
-# NOVAS ROTAS: CONTROLE DE ESTOQUE E SUPRIMENTOS
+# ROTAS: CONTROLE DE ESTOQUE E SUPRIMENTOS
 # ==========================================
 
 @impressoras_bp.route('/estoque')
 @login_required
+@staff_required
 def gerenciar_estoque():
     familias = SuprimentosService.listar_familias()
     historico = SuprimentosService.listar_historico(limite=30)
@@ -95,6 +104,7 @@ def gerenciar_estoque():
 
 @impressoras_bp.route('/estoque/criar', methods=['POST'])
 @login_required
+@staff_required
 def criar_familia():
     nome = request.form.get('nome_familia')
     toner = request.form.get('quantidade_toner', 0)
@@ -107,6 +117,7 @@ def criar_familia():
 
 @impressoras_bp.route('/estoque/adicionar/<int:familia_id>', methods=['POST'])
 @login_required
+@staff_required
 def adicionar_estoque(familia_id):
     toner_add = request.form.get('toner_add', 0)
     cilindro_add = request.form.get('cilindro_add', 0)
@@ -117,6 +128,7 @@ def adicionar_estoque(familia_id):
 
 @impressoras_bp.route('/retirar/<int:impressora_id>', methods=['POST'])
 @login_required
+@staff_required
 def retirar_insumo(impressora_id):
     tipo_insumo = request.form.get('tipo_insumo') # 'toner' ou 'cilindro'
     usuario_nome = current_user.nome if hasattr(current_user, 'nome') else 'Sistema'
@@ -127,6 +139,7 @@ def retirar_insumo(impressora_id):
 
 @impressoras_bp.route('/vincular/<int:impressora_id>', methods=['POST'])
 @login_required
+@staff_required
 def vincular_impressora(impressora_id):
     impressora = db.session.get(Impressora, impressora_id)
     if not impressora:
@@ -137,7 +150,10 @@ def vincular_impressora(impressora_id):
     impressora.sala = request.form.get('sala', impressora.sala)
     
     suprimento_id = request.form.get('suprimento_id')
-    impressora.suprimento_id = int(suprimento_id) if suprimento_id else None
+    try:
+        impressora.suprimento_id = int(suprimento_id) if suprimento_id else None
+    except (ValueError, TypeError):
+        impressora.suprimento_id = None
 
     db.session.commit()
     flash(f"Vínculo e localização da impressora {impressora.nome} atualizados com sucesso!", "success")
@@ -146,6 +162,7 @@ def vincular_impressora(impressora_id):
 
 @impressoras_bp.route('/estoque/ajustar/<int:familia_id>', methods=['POST'])
 @login_required
+@staff_required
 def ajustar_estoque(familia_id):
     tipo_insumo = request.form.get('tipo_insumo')
     operacao = request.form.get('operacao')  # 'add' ou 'remove'
@@ -167,4 +184,4 @@ def ajustar_estoque(familia_id):
         familia_id, tipo_insumo, quantidade, motivo, usuario_nome
     )
     flash(mensagem, 'success' if sucesso else 'danger')
-    return redirect(url_for('impressoras.gerenciar_estoque'))
+    return redirect(url_for('impressoras.gerenciar_estoque'))

@@ -83,7 +83,33 @@
 
         </div>
 
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Técnico Responsável</small>
+                    <strong>{{ chamado.tecnico.nome if chamado.tecnico else 'Não atribuído' }}</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Aberto em</small>
+                    <strong>{{ chamado.data_abertura.strftime('%d/%m/%Y %H:%M') if chamado.data_abertura else '-' }}</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-card">
+                    <small>Última Atualização</small>
+                    <strong>{{ chamado.data_atualizacao.strftime('%d/%m/%Y %H:%M') if chamado.data_atualizacao else '-' }}</strong>
+                </div>
+            </div>
+
+        </div>
+
         <hr class="ticket-divider">
+
 
         <div class="d-flex flex-wrap gap-2 align-items-center">
 

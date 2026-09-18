@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, abort, url_for
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, abort, url_for, flash
 from flask_login import login_required, current_user
 from sqlalchemy import case
 
@@ -12,7 +13,8 @@ from services.chamado_service import (
 
 from services.impressoras_services import ImpressorasService
 
-from utils.decorator import admin_required
+from utils.decorator import admin_required, staff_required
+
 
 
 chamados_bp = Blueprint(
@@ -144,7 +146,8 @@ def novo_chamado():
 
     if request.method == 'POST':
 
-        criar_chamado(request.form)
+        chamado = criar_chamado(request.form)
+        flash(f"Chamado #{chamado.id} criado com sucesso!", "success")
 
         return redirect(
             url_for('chamados.listar_chamados')
@@ -167,25 +170,35 @@ def editar_chamado(id):
 
     # Usuário comum só pode editar seus próprios chamados
     if (
-        not current_user.is_admin
+        not (current_user.is_admin or current_user.is_operador)
         and chamado.usuario_id != current_user.id
     ):
         abort(403)
 
     if request.method == 'POST':
 
-        chamado.solicitante = request.form['solicitante']
-        chamado.setor = request.form['setor']
-        chamado.titulo = request.form['titulo']
-        chamado.descricao = request.form['descricao']
-        chamado.categoria = request.form['categoria']
-        chamado.prioridade = request.form['prioridade']
-        chamado.status = request.form['status']
+        chamado.solicitante = request.form.get('solicitante', chamado.solicitante).strip()
+        chamado.setor = request.form.get('setor', chamado.setor).strip()
+        chamado.titulo = request.form.get('titulo', chamado.titulo).strip()
+        chamado.descricao = request.form.get('descricao', chamado.descricao).strip()
+        chamado.categoria = request.form.get('categoria', chamado.categoria)
+        chamado.data_atualizacao = datetime.now()
+
+        # Apenas admin ou operador podem alterar status e prioridade
+        if current_user.is_admin or current_user.is_operador:
+            chamado.prioridade = request.form.get('prioridade', chamado.prioridade)
+            novo_status = request.form.get('status', chamado.status)
+            if novo_status in ('Resolvido', 'Fechado') and chamado.status not in ('Resolvido', 'Fechado'):
+                chamado.data_fechamento = datetime.now()
+                if not chamado.tecnico_id:
+                    chamado.tecnico_id = current_user.id
+            chamado.status = novo_status
 
         db.session.commit()
+        flash(f"Chamado #{chamado.id} atualizado com sucesso!", "success")
 
         return redirect(
-            url_for('chamados.listar_chamados')
+            url_for('chamados.detalhes_chamado', id=chamado.id)
         )
 
     return render_template(
@@ -198,12 +211,13 @@ def editar_chamado(id):
 # EXCLUIR CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/excluir/<int:id>')
+@chamados_bp.route('/chamados/excluir/<int:id>', methods=['POST', 'GET'])
 @login_required
 @admin_required
 def excluir_chamado(id):
 
     deletar_chamado_service(id)
+    flash(f"Chamado #{id} excluído com sucesso.", "warning")
 
     return redirect(
         url_for('chamados.listar_chamados')
@@ -222,7 +236,7 @@ def detalhes_chamado(id):
 
     # Usuário comum só pode visualizar seus próprios chamados
     if (
-        not current_user.is_admin
+        not (current_user.is_admin or current_user.is_operador)
         and chamado.usuario_id != current_user.id
     ):
         abort(403)
@@ -237,19 +251,24 @@ def detalhes_chamado(id):
 # RESOLVER CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/resolver/<int:id>')
+@chamados_bp.route('/chamados/resolver/<int:id>', methods=['POST', 'GET'])
 @login_required
-@admin_required
+@staff_required
 def resolver_chamado(id):
 
     chamado = buscar_chamado_por_id(id)
 
     chamado.status = 'Resolvido'
+    chamado.data_fechamento = datetime.now()
+    chamado.data_atualizacao = datetime.now()
+    if not chamado.tecnico_id:
+        chamado.tecnico_id = current_user.id
 
     db.session.commit()
+    flash(f"Chamado #{chamado.id} marcado como Resolvido!", "success")
 
     return redirect(
-        url_for('chamados.listar_chamados')
+        url_for('chamados.detalhes_chamado', id=chamado.id)
     )
 
 
@@ -257,17 +276,22 @@ def resolver_chamado(id):
 # FECHAR CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/fechar/<int:id>')
+@chamados_bp.route('/chamados/fechar/<int:id>', methods=['POST', 'GET'])
 @login_required
-@admin_required
+@staff_required
 def fechar_chamado(id):
 
     chamado = buscar_chamado_por_id(id)
 
     chamado.status = 'Fechado'
+    chamado.data_fechamento = datetime.now()
+    chamado.data_atualizacao = datetime.now()
+    if not chamado.tecnico_id:
+        chamado.tecnico_id = current_user.id
 
     db.session.commit()
+    flash(f"Chamado #{chamado.id} encerrado com sucesso!", "info")
 
     return redirect(
-        url_for('chamados.listar_chamados')
-    )
+        url_for('chamados.detalhes_chamado', id=chamado.id)
+    )

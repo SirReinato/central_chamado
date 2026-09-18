@@ -14,7 +14,8 @@ class Chamado(db.Model):
         db.ForeignKey('usuarios.id'), 
         nullable=False
     )
-    usuario = db.relationship('Usuario', backref='chamados')
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id], backref='chamados')
+
 
     solicitante = db.Column(db.String(100), nullable=False)
     setor = db.Column(db.String(100), nullable=False)
@@ -23,7 +24,18 @@ class Chamado(db.Model):
     categoria = db.Column(db.String(50), nullable=False)
     prioridade = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(30), nullable=False, default='Aberto')
+
     data_abertura = db.Column(db.DateTime, default=datetime.now)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    data_fechamento = db.Column(db.DateTime, nullable=True)
+
+    tecnico_id = db.Column(
+        db.Integer,
+        db.ForeignKey('usuarios.id'),
+        nullable=True
+    )
+    tecnico = db.relationship('Usuario', foreign_keys=[tecnico_id], backref='chamados_atendidos')
+
 
 class Usuario(UserMixin, db.Model):
     __tablename__ = 'usuarios'
@@ -81,9 +93,10 @@ class Impressora(db.Model):
     # Chave estrangeira para a tabela EstoqueSuprimento
     suprimento_id = db.Column(
         db.Integer,
+        db.ForeignKey('estoque_suprimentos.id'),
         nullable=True,
-        )
-  
+    )
+    suprimento = db.relationship('EstoqueSuprimento', backref='impressoras')
 
     online = db.Column(
         db.Boolean,
@@ -117,11 +130,11 @@ class Impressora(db.Model):
 
     ultimo_check = db.Column(
         db.DateTime
-    )    
-    
+    )
+
     cilindro = db.Column(
-    db.Integer,
-    nullable=True
+        db.Integer,
+        nullable=True
     )
 
     nivel_papel = db.Column(
@@ -136,9 +149,9 @@ class Impressora(db.Model):
     status_detalhado = db.Column(
         db.String(255)
     )
-    
+
     fabricante = db.Column(
-    db.String(50)
+        db.String(50)
     )
 
     ultimo_erro = db.Column(
@@ -156,18 +169,15 @@ class Impressora(db.Model):
 
     @property
     def familia_suprimento(self):
-        if not self.suprimento_id:
-            return None
-        return db.session.get(EstoqueSuprimento, self.suprimento_id)
-    
-    
+        return self.suprimento
+
+
 # =========================================================
-# NOVAS TABELAS ISOLADAS NO BANCO DE ESTOQUE (estoque_suprimentos.db)
+# TABELAS DE ESTOQUE E SUPRIMENTOS (BANCO UNIFICADO)
 # =========================================================
 
 class EstoqueSuprimento(db.Model):
     __tablename__ = "estoque_suprimentos"
-    __bind_key__ = 'estoque_db'
 
     id = db.Column(db.Integer, primary_key=True)
     nome_familia = db.Column(db.String(100), nullable=False, unique=True)
@@ -177,19 +187,24 @@ class EstoqueSuprimento(db.Model):
 
 class HistoricoSuprimento(db.Model):
     __tablename__ = "historico_suprimentos"
-    __bind_key__ = 'estoque_db'
 
     id = db.Column(db.Integer, primary_key=True)
-    impressora_id = db.Column(db.Integer, nullable=True)
-    familia_id = db.Column(db.Integer, db.ForeignKey('estoque_suprimentos.id'), nullable=True)
-    familia = db.relationship('EstoqueSuprimento')
+    impressora_id = db.Column(
+        db.Integer,
+        db.ForeignKey('impressoras.id'),
+        nullable=True
+    )
+    impressora = db.relationship('Impressora', backref='historico_retiradas')
+
+    familia_id = db.Column(
+        db.Integer,
+        db.ForeignKey('estoque_suprimentos.id'),
+        nullable=True
+    )
+    familia = db.relationship('EstoqueSuprimento', backref='historico_suprimentos')
+
     tipo_insumo = db.Column(db.String(20), nullable=False)
     quantidade = db.Column(db.Integer, nullable=False, default=-1)
     usuario_responsavel = db.Column(db.String(100), nullable=False)
     data_retirada = db.Column(db.DateTime, default=datetime.now)
-
-    @property
-    def impressora(self):
-        if not self.impressora_id:
-            return None
-        return db.session.get(Impressora, self.impressora_id)
+

@@ -23,17 +23,13 @@ app = Flask(__name__)
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-padrao-desenvolvimento-trocar-em-producao')
 
-# Banco principal (Chamados, Usuários, Impressoras)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chamados.db'
-
-# Banco secundário isolado (Apenas para o Estoque e Histórico de Suprimentos)
-app.config['SQLALCHEMY_BINDS'] = {
-    'estoque_db': 'sqlite:///estoque_suprimentos.db'
-}
+# Banco de dados unificado (Chamados, Usuários, Impressoras, Estoque e Histórico)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///chamados.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # manter a sessão ativa mesmo após fechar o navegador, falso
-app.config['SESSION_PERMANENT'] = False 
+app.config['SESSION_PERMANENT'] = False
+ 
 
 
 # Banco de dados
