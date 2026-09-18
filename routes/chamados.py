@@ -38,7 +38,7 @@ def query_chamados():
         Retornam apenas os chamados pertencentes ao usuário.
     """
 
-    if current_user.is_admin:
+    if current_user.is_admin or current_user.is_operador:
         return Chamado.query
 
     return Chamado.query.filter_by(
@@ -61,7 +61,8 @@ def lista_de_chamados():
     )
 
     return query_chamados().order_by(
-        ordem_status
+        ordem_status,
+        Chamado.data_abertura.desc()
     ).all()
 
 
@@ -73,38 +74,29 @@ def lista_de_chamados():
 @login_required
 def home():
 
-    query = query_chamados()
+    total = query_chamados().count()
 
-    total = query.count()
-
-    abertos = query.filter(
-        Chamado.status.in_([
-            'Aberto',
-            'Novo'
-        ])
+    abertos = query_chamados().filter_by(
+        status='Aberto'
     ).count()
 
-    em_atendimento = query.filter(
-        Chamado.status.in_([
-            'Em Atendimento',
-            'Pendente'
-        ])
+    em_atendimento = query_chamados().filter_by(
+        status='Em Atendimento'
     ).count()
 
-    resolvidos = query.filter_by(
+    resolvidos = query_chamados().filter_by(
         status='Resolvido'
     ).count()
 
-    fechados = query.filter_by(
+    fechados = query_chamados().filter_by(
         status='Fechado'
     ).count()
 
-    chamados_abertos = query.filter(
-        Chamado.status.in_([
-            'Aberto',
-            'Novo'
-        ])
-    ).all()
+    chamados_abertos = query_chamados().filter_by(
+        status='Aberto'
+    ).order_by(
+        Chamado.data_abertura.desc()
+    ).limit(5).all()
 
     itens_atencao = ImpressorasService.obter_itens_atencao()
 
@@ -121,18 +113,76 @@ def home():
 
 
 # =============================================================
-# LISTAGEM DE CHAMADOS
+# LISTAGEM DE CHAMADOS (COM FILTROS E PAGINAÇÃO)
 # =============================================================
 
 @chamados_bp.route('/chamados')
 @login_required
 def listar_chamados():
+    busca = request.args.get('busca', '').strip()
+    status = request.args.get('status', '').strip()
+    prioridade = request.args.get('prioridade', '').strip()
+    categoria = request.args.get('categoria', '').strip()
+    page = request.args.get('page', 1, type=int)
 
-    chamados = lista_de_chamados()
+    query = query_chamados()
+
+    if busca:
+        termo_id = busca.lstrip('#')
+        if termo_id.isdigit():
+            query = query.filter(
+                db.or_(
+                    Chamado.id == int(termo_id),
+                    Chamado.titulo.ilike(f'%{busca}%'),
+                    Chamado.solicitante.ilike(f'%{busca}%'),
+                    Chamado.setor.ilike(f'%{busca}%'),
+                    Chamado.descricao.ilike(f'%{busca}%')
+                )
+            )
+        else:
+            termo = f'%{busca}%'
+            query = query.filter(
+                db.or_(
+                    Chamado.titulo.ilike(termo),
+                    Chamado.solicitante.ilike(termo),
+                    Chamado.setor.ilike(termo),
+                    Chamado.descricao.ilike(termo)
+                )
+            )
+
+    if status:
+        query = query.filter(Chamado.status == status)
+
+    if prioridade:
+        query = query.filter(Chamado.prioridade == prioridade)
+
+    if categoria:
+        query = query.filter(Chamado.categoria == categoria)
+
+    ordem_status = case(
+        (Chamado.status == 'Aberto', 1),
+        (Chamado.status == 'Em Atendimento', 2),
+        (Chamado.status == 'Pendente', 3),
+        (Chamado.status == 'Resolvido', 4),
+        (Chamado.status == 'Fechado', 5),
+        else_=6
+    )
+
+    pagination = query.order_by(
+        ordem_status,
+        Chamado.data_abertura.desc()
+    ).paginate(page=page, per_page=10, error_out=False)
 
     return render_template(
         'chamados/listar_chamados.html',
-        chamados=chamados
+        chamados=pagination.items,
+        pagination=pagination,
+        filtros={
+            'busca': busca,
+            'status': status,
+            'prioridade': prioridade,
+            'categoria': categoria
+        }
     )
 
 

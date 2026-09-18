@@ -1084,4 +1084,52 @@ body {
 .modalTema .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
 }
+
+
+/* =============================================================
+   PAGINAÇÃO TEMÁTICA
+   ============================================================= */
+
+.paginacaoContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 18px 25px;
+    border-top: 1px solid var(--cor-borda);
+}
+
+.pagination.paginacaoTema .page-item .page-link {
+    background-color: var(--cor-card-1);
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto);
+    padding: 6px 14px;
+    border-radius: 8px;
+    margin: 0 2px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.pagination.paginacaoTema .page-item.active .page-link {
+    background: var(--gradiente-principal);
+    border-color: var(--cor-dourado);
+    color: var(--cor-texto-escuro);
+    font-weight: 700;
+}
+
+.pagination.paginacaoTema .page-item.disabled .page-link {
+    background-color: rgba(var(--cor-cinza-claro-rgb), 0.05);
+    border-color: var(--cor-borda);
+    color: var(--cor-texto-secundario);
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.pagination.paginacaoTema .page-item:not(.active):not(.disabled) .page-link:hover {
+    background-color: var(--cor-card-2);
+    border-color: var(--cor-dourado);
+    color: var(--cor-dourado);
+}
+
 

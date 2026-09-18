@@ -15,13 +15,39 @@ impressoras_bp = Blueprint(
 @login_required
 @staff_required
 def index():
-    impressoras = ImpressorasService.listar_impressoras()
+    busca = request.args.get("busca", "").strip()
+    status_filtro = request.args.get("status", "").strip()
+    suprimento_filtro = request.args.get("suprimento", "").strip()
+    page = request.args.get("page", 1, type=int)
+
+    # Métricas globais sobre o parque de impressão (independentes do filtro ativo)
+    total_impressoras = Impressora.query.count()
+    total_online = Impressora.query.filter_by(online=True).count()
+    total_offline = Impressora.query.filter_by(online=False).count()
+
+    pagination = ImpressorasService.listar_impressoras_paginadas(
+        busca=busca,
+        status_filtro=status_filtro,
+        suprimento_filtro=suprimento_filtro,
+        page=page,
+        per_page=12
+    )
+
     familias = SuprimentosService.listar_familias()
-    
+
     return render_template(
         "impressoras/impressoras.html",
-        impressoras=impressoras,
-        familias=familias
+        impressoras=pagination.items,
+        pagination=pagination,
+        familias=familias,
+        total_impressoras=total_impressoras,
+        total_online=total_online,
+        total_offline=total_offline,
+        filtros={
+            "busca": busca,
+            "status": status_filtro,
+            "suprimento": suprimento_filtro
+        }
     )
     
 @impressoras_bp.route("/nova", methods=["GET", "POST"])
@@ -98,9 +124,15 @@ def teste_web():
 @login_required
 @staff_required
 def gerenciar_estoque():
+    page = request.args.get('page', 1, type=int)
     familias = SuprimentosService.listar_familias()
-    historico = SuprimentosService.listar_historico(limite=30)
-    return render_template('impressoras/estoque.html', familias=familias, historico=historico)
+    historico_pagination = SuprimentosService.listar_historico_paginado(page=page, per_page=15)
+    return render_template(
+        'impressoras/estoque.html',
+        familias=familias,
+        historico=historico_pagination.items,
+        historico_pagination=historico_pagination
+    )
 
 @impressoras_bp.route('/estoque/criar', methods=['POST'])
 @login_required

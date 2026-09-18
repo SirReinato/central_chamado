@@ -297,6 +297,48 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Rodapé de Paginação do Histórico -->
+                    {% if historico_pagination and historico_pagination.total > 0 %}
+                    <div class="paginacaoContainer mt-3">
+                        <div class="text-tema-secundario small">
+                            Exibindo <strong>{{ historico|length }}</strong> de <strong>{{ historico_pagination.total }}</strong> registro(s)
+                            (Página {{ historico_pagination.page }} de {{ historico_pagination.pages }})
+                        </div>
+
+                        {% if historico_pagination.pages > 1 %}
+                        <nav aria-label="Navegação do histórico">
+                            <ul class="pagination paginacaoTema mb-0">
+                                <li class="page-item {% if not historico_pagination.has_prev %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('impressoras.gerenciar_estoque', page=historico_pagination.prev_num) }}">
+                                        <i class="bi bi-chevron-left"></i> Anterior
+                                    </a>
+                                </li>
+
+                                {% for p in historico_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if p %}
+                                        <li class="page-item {% if p == historico_pagination.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('impressoras.gerenciar_estoque', page=p) }}">
+                                                {{ p }}
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">…</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                <li class="page-item {% if not historico_pagination.has_next %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ url_for('impressoras.gerenciar_estoque', page=historico_pagination.next_num) }}">
+                                        Próximo <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

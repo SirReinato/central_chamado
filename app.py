@@ -14,11 +14,14 @@ from routes.dashboard import dashboard_bp
 from routes.usuarios import usuarios_bp
 from routes.impressoras import impressoras_bp
 from services.impressoras_services import ImpressorasService
+from utils.logger import setup_logging, get_logger
 
 # Carrega variaveis do arquivo .env
 load_dotenv()
 
 app = Flask(__name__)
+setup_logging(app)
+logger = get_logger('central_chamados')
 
 # Configurações
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-padrao-desenvolvimento-trocar-em-producao')
@@ -100,11 +103,11 @@ def tarefa_atualizar_impressoras():
     """Função executada periodicamente em segundo plano."""
     with app.app_context():
         try:
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Iniciando atualização automática das impressoras...")
+            logger.info("Iniciando atualização automática das impressoras...")
             ImpressorasService.atualizar_status()
-            print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Impressoras atualizadas com sucesso.")
+            logger.info("Impressoras atualizadas com sucesso via scheduler.")
         except Exception as e:
-            print(f"[ERRO] Falha ao atualizar impressoras automaticamente: {e}")
+            logger.error(f"Falha ao atualizar impressoras automaticamente: {e}", exc_info=True)
 
 scheduler = BackgroundScheduler()
 
@@ -127,5 +130,5 @@ if __name__ == '__main__':
     from waitress import serve
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
-    print(f"Servidor iniciado em http://{host}:{port}")
+    logger.info(f"Servidor iniciado em http://{host}:{port}")
     serve(app, host=host, port=port)

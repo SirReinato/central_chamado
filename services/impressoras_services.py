@@ -1,5 +1,7 @@
 from models import Impressora, db, EstoqueSuprimento
+from utils.logger import get_logger
 
+logger = get_logger('impressoras_services')
 
 import subprocess
 import json
@@ -18,6 +20,36 @@ class ImpressorasService:
     @staticmethod
     def listar_impressoras():
         return Impressora.query.all()
+
+    @staticmethod
+    def listar_impressoras_paginadas(busca=None, status_filtro=None, suprimento_filtro=None, page=1, per_page=12):
+        query = Impressora.query
+
+        if busca:
+            termo = f"%{busca.strip()}%"
+            query = query.filter(
+                db.or_(
+                    Impressora.nome.ilike(termo),
+                    Impressora.ip.ilike(termo),
+                    Impressora.modelo.ilike(termo),
+                    Impressora.andar.ilike(termo),
+                    Impressora.sala.ilike(termo)
+                )
+            )
+
+        if status_filtro == 'online':
+            query = query.filter(Impressora.online.is_(True))
+        elif status_filtro == 'offline':
+            query = query.filter(Impressora.online.is_(False))
+
+        if suprimento_filtro == 'vinculado':
+            query = query.filter(Impressora.suprimento_id.isnot(None))
+        elif suprimento_filtro == 'sem_vinculo':
+            query = query.filter(Impressora.suprimento_id.is_(None))
+
+        query = query.order_by(Impressora.nome.asc())
+
+        return query.paginate(page=page, per_page=per_page, error_out=False)
 
 
     @staticmethod
@@ -75,7 +107,7 @@ class ImpressorasService:
         )
 
         if resultado.returncode != 0:
-            print(resultado.stderr)
+            logger.warning(f"Erro ao executar net view no DC1: {resultado.stderr}")
             return
 
         linhas = resultado.stdout.splitlines()
@@ -143,40 +175,25 @@ class ImpressorasService:
         )
 
         if resultado.returncode != 0:
-
-            print("Erro ao consultar Registry do DC1:")
-            print(resultado.stderr)
-
+            logger.error(f"Erro ao consultar Registry do DC1: {resultado.stderr}")
             return
 
         if not resultado.stdout.strip():
-
-            print("DC1 não retornou dados.")
-
+            logger.warning("DC1 não retornou dados de impressoras.")
             return
 
         try:
-
             impressoras = json.loads(
                 resultado.stdout
             )
-
         except json.JSONDecodeError as e:
-
-            print(
-                "Erro ao interpretar JSON:",
-                e
-            )
-
-            print("Saída recebida:")
-            print(resultado.stdout)
-
+            logger.error(f"Erro ao interpretar JSON do DC1: {e}")
+            logger.debug(f"Saída bruta recebida: {resultado.stdout}")
             return
 
         # Quando existe apenas uma impressora,
         # o PowerShell retorna um objeto em vez de uma lista.
         if isinstance(impressoras, dict):
-
             impressoras = [
                 impressoras
             ]
@@ -184,7 +201,6 @@ class ImpressorasService:
         atualizadas = 0
 
         for item in impressoras:
-
             nome = item.get("Nome")
             porta = item.get("Porta")
 
@@ -211,25 +227,15 @@ class ImpressorasService:
             ).first()
 
             if not impressora:
-                print(
-                    f"Impressora não encontrada no banco: {nome}"
-                )
-
+                logger.debug(f"Impressora não encontrada no banco: {nome}")
                 continue
 
             impressora.ip = ip
-
             atualizadas += 1
-
-            print(
-                f"IP atualizado: {nome} -> {ip}"
-            )
+            logger.info(f"IP atualizado: {nome} -> {ip}")
 
         db.session.commit()
-
-        print(
-            f"Total de IPs atualizados: {atualizadas}"
-        )
+        logger.info(f"Total de IPs de impressoras atualizados: {atualizadas}")
 
     @staticmethod
     def _ping(ip, timeout_ms=500):
@@ -346,80 +352,42 @@ class ImpressorasService:
             # -----------------------------------------------------
 
             if not is_online:
-
                 impressora.status_detalhado = "Equipamento Offline"
                 impressora.necessita_atencao = True
-
-                print(f"{impressora.nome} ({ip}) -> OFFLINE")
-
+                logger.debug(f"{impressora.nome} ({ip}) -> OFFLINE")
                 continue
 
             try:
-
                 dados_snmp = dados_snmp_por_ip.get(ip, {})
-
-                print(
-                    f"SNMP {impressora.nome} ({ip}): "
-                    f"{dados_snmp}"
-                )
+                logger.debug(f"SNMP {impressora.nome} ({ip}): {dados_snmp}")
 
                 # -------------------------------------------------
                 # Verifica se houve erro na consulta SNMP
                 # -------------------------------------------------
-
                 if not dados_snmp or "erro" in dados_snmp:
-
-                    impressora.status_detalhado = (
-                        "Erro de Comunicação SNMP"
-                    )
-
+                    impressora.status_detalhado = "Erro de Comunicação SNMP"
                     impressora.necessita_atencao = True
-
-                    print(
-                        f"Erro SNMP em {impressora.nome}: "
-                        f"{dados_snmp.get('erro', 'sem resposta')}"
-                    )
-
+                    logger.warning(f"Erro SNMP em {impressora.nome}: {dados_snmp.get('erro', 'sem resposta')}")
                     continue
 
                 # -------------------------------------------------
                 # NÚMERO DE SÉRIE
                 # -------------------------------------------------
-
                 serial = dados_snmp.get("serial")
-
                 if serial:
                     impressora.serial = serial
 
                 # -------------------------------------------------
                 # TOTAL DE PÁGINAS
                 # -------------------------------------------------
-
                 paginas = dados_snmp.get("paginas_impressas")
-
                 if paginas is not None:
                     impressora.paginas_impressas = int(paginas)
 
                 # -------------------------------------------------
                 # TONER PRETO
                 # -------------------------------------------------
-
-                # -------------------------------------------------
-                # TONER PRETO
-                #
-                # Alguns modelos (ex.: Brother DCP-8157DN) NAO
-                # reportam percentual de toner nem via SNMP nem
-                # na propria pagina de manutencao da impressora
-                # -- so contam quantas vezes o toner foi trocado.
-                # Nesses casos, gravamos None explicitamente para
-                # nao deixar um valor antigo "congelado" no banco
-                # (era isso que causava o 91% fixo em todas as
-                # Brother: o campo nunca era atualizado e ficava
-                # com o ultimo valor salvo, seja la qual fosse).
-                # -------------------------------------------------
-
                 toner = dados_snmp.get("toner_porcentagem")
-
                 impressora.toner_preto = (
                     int(round(float(toner))) if toner is not None else None
                 )
@@ -427,34 +395,25 @@ class ImpressorasService:
                 # -------------------------------------------------
                 # CILINDRO
                 # -------------------------------------------------
-
                 cilindro = dados_snmp.get("cilindro_porcentagem")
-
                 if cilindro is not None:
                     impressora.cilindro = int(round(float(cilindro)))
 
                 # -------------------------------------------------
                 # STATUS
                 # -------------------------------------------------
-
                 impressora.status_detalhado = "Pronta / Operacional"
                 impressora.necessita_atencao = False
 
-                print(
-                    f"{impressora.nome} ({ip}) -> "
-                    f"ONLINE | "
+                logger.info(
+                    f"{impressora.nome} ({ip}) -> ONLINE | "
                     f"Toner: {impressora.toner_preto}% | "
                     f"Cilindro: {impressora.cilindro}% | "
                     f"Páginas: {impressora.paginas_impressas}"
                 )
 
             except Exception as e:
-
-                print(
-                    f"Erro ao atualizar "
-                    f"{impressora.nome} ({ip}): {e}"
-                )
-
+                logger.error(f"Erro ao atualizar {impressora.nome} ({ip}): {e}")
                 impressora.online = False
                 impressora.status_detalhado = "Erro de Comunicação"
                 impressora.necessita_atencao = True
@@ -462,33 +421,22 @@ class ImpressorasService:
         # ---------------------------------------------------------
         # SALVA TODAS AS ALTERAÇÕES
         # ---------------------------------------------------------
-
         db.session.commit()
-
-        print("Atualização das impressoras finalizada.")
-
+        logger.info("Atualização das impressoras finalizada com sucesso.")
 
     @staticmethod
     def consultar_interface_web(ip):
-
         try:
-
             url = f"http://{ip}/general/status.html"
-
             resposta = requests.get(
                 url,
                 timeout=5
             )
-
             if resposta.status_code != 200:
                 return None
-
             return resposta.text
-
         except Exception as e:
-
-            print(e)
-
+            logger.warning(f"Falha ao consultar interface web da impressora {ip}: {e}")
             return None
         
     # =============================================================

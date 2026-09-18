@@ -49,67 +49,47 @@
 
         <!-- TOTAL -->
         <div class="col-md-4">
-
             <div class="cardMetrica p-4">
-
                 <div class="cardMetricaTitulo">
                     Total de Impressoras
                 </div>
-
                 <div class="cardMetricaValor">
-                    {{ impressoras|length }}
+                    {{ total_impressoras }}
                 </div>
-
                 <div class="subtituloCard small">
-                    Equipamentos cadastrados
+                    Equipamentos no parque
                 </div>
-
             </div>
-
         </div>
-
 
         <!-- ONLINE -->
         <div class="col-md-4">
-
             <div class="cardMetrica p-4">
-
                 <div class="cardMetricaTitulo">
                     Monitoramento
                 </div>
-
                 <div class="cardMetricaValor">
-                    {{ impressoras|selectattr('online')|list|length }}
+                    {{ total_online }}
                 </div>
-
                 <div class="subtituloCard small">
                     Impressoras online
                 </div>
-
             </div>
-
         </div>
-
 
         <!-- OFFLINE -->
         <div class="col-md-4">
-
             <div class="cardMetrica p-4">
-
                 <div class="cardMetricaTitulo">
                     Atenção
                 </div>
-
                 <div class="cardMetricaValor">
-                    {{ impressoras|rejectattr('online')|list|length }}
+                    {{ total_offline }}
                 </div>
-
                 <div class="subtituloCard small">
                     Impressoras offline
                 </div>
-
             </div>
-
         </div>
 
     </div>
@@ -128,33 +108,75 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
 
                 <div>
-
                     <h5 class="tituloTabela mb-1">
                         Monitoramento de Impressoras
                     </h5>
-
                     <p class="subtituloCard mb-0">
-                        Acompanhe a disponibilidade e os principais indicadores dos equipamentos.
+                        Acompanhe a disponibilidade, níveis de insumo e localização dos equipamentos.
                     </p>
-
                 </div>
 
                 <div class="text-end">
-
                     <div class="cardMetricaValor fs-4">
-                        {{ impressoras|length }}
+                        {{ pagination.total }}
                     </div>
-
                     <div class="subtituloCard small">
-                        cadastradas
+                        encontradas
                     </div>
-
                 </div>
 
             </div>
 
         </div>
 
+        <!-- BARRA DE FILTROS E PESQUISA -->
+        <div class="px-4 pb-3">
+            <form method="GET" action="{{ url_for('impressoras.index') }}" class="row g-2 align-items-center">
+                <!-- Campo de busca geral -->
+                <div class="col-12 col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text"
+                               name="busca"
+                               class="form-control inputPadrao border-start-0 ps-0"
+                               placeholder="Buscar por nome, IP, modelo, andar, sala..."
+                               value="{{ filtros.busca }}">
+                    </div>
+                </div>
+
+                <!-- Filtro de Status de Rede -->
+                <div class="col-6 col-md-3">
+                    <select name="status" class="form-select selectPadrao">
+                        <option value="">Status: Todos</option>
+                        <option value="online" {% if filtros.status == 'online' %}selected{% endif %}>● Online</option>
+                        <option value="offline" {% if filtros.status == 'offline' %}selected{% endif %}>● Offline</option>
+                    </select>
+                </div>
+
+                <!-- Filtro de Suprimento Vinculado -->
+                <div class="col-6 col-md-2">
+                    <select name="suprimento" class="form-select selectPadrao">
+                        <option value="">Insumo: Todos</option>
+                        <option value="vinculado" {% if filtros.suprimento == 'vinculado' %}selected{% endif %}>Com Vínculo</option>
+                        <option value="sem_vinculo" {% if filtros.suprimento == 'sem_vinculo' %}selected{% endif %}>Sem Vínculo</option>
+                    </select>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="col-12 col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn botaoPrimario flex-grow-1" title="Filtrar">
+                        Filtrar
+                    </button>
+                    {% if filtros.busca or filtros.status or filtros.suprimento %}
+                    <a href="{{ url_for('impressoras.index') }}" class="btn botaoSecundario" title="Limpar Filtros">
+                        <i class="bi bi-x-circle"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
 
         <!-- TABELA -->
         <div class="table-responsive">
@@ -471,6 +493,48 @@
             </table>
 
         </div>
+
+        <!-- RODAPÉ DE PAGINAÇÃO -->
+        {% if pagination and pagination.total > 0 %}
+        <div class="paginacaoContainer">
+            <div class="text-tema-secundario small">
+                Exibindo <strong>{{ impressoras|length }}</strong> de <strong>{{ pagination.total }}</strong> impressora(s)
+                (Página {{ pagination.page }} de {{ pagination.pages }})
+            </div>
+
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Navegação de páginas">
+                <ul class="pagination paginacaoTema mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.prev_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </a>
+                    </li>
+
+                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if p %}
+                            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('impressoras.index', page=p, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                                    {{ p }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">…</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.next_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento) }}">
+                            Próximo <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+        {% endif %}
 
     </div>
 

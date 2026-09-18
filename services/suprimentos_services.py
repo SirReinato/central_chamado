@@ -90,6 +90,13 @@ class SuprimentosService:
     def listar_historico(limite=50):
         """Retorna as últimas movimentações/retiradas para auditoria."""
         return HistoricoSuprimento.query.order_by(HistoricoSuprimento.data_retirada.desc()).limit(limite).all()
+
+    @staticmethod
+    def listar_historico_paginado(page=1, per_page=15):
+        """Retorna histórico de auditoria paginado."""
+        return HistoricoSuprimento.query.order_by(
+            HistoricoSuprimento.data_retirada.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
     
     @staticmethod
     def ajustar_estoque(familia_id, tipo_insumo, quantidade, motivo, usuario_nome):

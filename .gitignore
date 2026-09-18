@@ -21,6 +21,7 @@ instance/
 
 # Logs
 *.log
+logs/
 
 # Pytest
 .pytest_cache/
