@@ -25,33 +25,24 @@ def login():
 
     if request.method == 'POST':
 
-        email = request.form['email']
-        password = request.form['senha']
+        email = request.form.get('email', '').strip()
+        password = request.form.get('senha', '')
 
         usuario = Usuario.query.filter_by(
             email=email
         ).first()
 
-        if not usuario:
+        if not usuario or not check_password_hash(usuario.password, password):
             return render_template(
-                'login.html',
-                error='Usuário não encontrado.'
+                'auth/login.html',
+                error='E-mail ou senha incorretos.'
             )
 
-        if not check_password_hash(
-            usuario.password,
-            password
-        ):
-            return render_template(
-                'login.html',
-                error='Senha inválida.'
-            )
-            
         if usuario.status != 'ativo':
             return redirect(
                 url_for(
-            'auth.aguardando_aprovacao',
-            status=usuario.status
+                    'auth.aguardando_aprovacao',
+                    status=usuario.status
                 )
             )
 
@@ -69,11 +60,11 @@ def logout():
 
     logout_user()
     session.clear()
-    
+
     return redirect(
         url_for('auth.login')
     )
-    
+
 @auth_bp.route('/aguardando_aprovacao')
 def aguardando_aprovacao():
     status = request.args.get('status')
@@ -82,46 +73,49 @@ def aguardando_aprovacao():
         'auth/aguardando_aprovacao.html',
         status=status
     )
-    
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
 
     if request.method == 'POST':
 
-        nome = request.form['nome']
-        email = request.form['email']
-        senha = request.form['senha']
+        nome = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+
+        if not nome or not email or not senha:
+            return render_template(
+                'auth/register.html',
+                error='Por favor, preencha todos os campos.'
+            )
 
         admin_existe = Usuario.query.filter_by(
             perfil='admin'
         ).first()
 
         if not admin_existe:
-            
             perfil = 'admin'
             status = 'ativo'
-            
         else:
             perfil = 'usuario'
             status = 'pendente'
-    
+
         usuario_existente = Usuario.query.filter_by(
             email=email
         ).first()
 
         if usuario_existente:
-
             return render_template(
-                'register.html',
-                error='Este email já está cadastrado.'
+                'auth/register.html',
+                error='Este e-mail já está cadastrado.'
             )
 
         novo_usuario = Usuario(
             nome=nome,
             email=email,
             password=generate_password_hash(senha),
-            perfil= perfil,
-            status= status
+            perfil=perfil,
+            status=status
         )
 
         db.session.add(novo_usuario)
@@ -134,4 +128,5 @@ def register():
     return render_template(
         'auth/register.html'
     )
+
     

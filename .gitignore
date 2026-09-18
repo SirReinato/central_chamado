@@ -8,44 +8,40 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Flask
-ins*ance/
+# Flask & Banco de Dados
+instance/
 .flaskenv
-
-# Banco de dados
 *.db
 *.sqlite
 *.sqlite3
 
-# Variávei* de ambiente
+# Variaveis de ambiente
 .env
+.env.local
 
 # Logs
 *.log
 
-#*Pytest
+# Pytest
 .pytest_cache/
 
 # Coverage
-*coverage
+.coverage
 htmlcov/
 
-# VS Code
-.vsco*e/
-
-# JetBrains
+# VS Code & JetBrains
+.vscode/
 .idea/
 
-# Sistema *peracional
+# Sistema Operacional
 .DS_Store
 Thumbs.db
 
-# *uild
+# Build
 build/
 dist/
 *.egg-info/
 
-# A*quivos temporários
+# Arquivos temporarios
 *.tmp
-*.bak
-```*
+*.bak

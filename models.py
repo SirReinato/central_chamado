@@ -153,6 +153,12 @@ class Impressora(db.Model):
         db.Boolean,
         default=False
     )
+
+    @property
+    def familia_suprimento(self):
+        if not self.suprimento_id:
+            return None
+        return db.session.get(EstoqueSuprimento, self.suprimento_id)
     
     
 # =========================================================
@@ -181,3 +187,9 @@ class HistoricoSuprimento(db.Model):
     quantidade = db.Column(db.Integer, nullable=False, default=-1)
     usuario_responsavel = db.Column(db.String(100), nullable=False)
     data_retirada = db.Column(db.DateTime, default=datetime.now)
+
+    @property
+    def impressora(self):
+        if not self.impressora_id:
+            return None
+        return db.session.get(Impressora, self.impressora_id)

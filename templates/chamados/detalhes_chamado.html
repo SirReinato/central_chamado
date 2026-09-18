@@ -87,19 +87,31 @@
 
         <div class="d-flex flex-wrap gap-2 align-items-center">
 
+            {% if current_user.is_admin or current_user.is_operador %}
             <span class="text-light opacity-75">
                 Alterar status:
             </span>
 
-            <a href="/chamados/resolver/{{ chamado.id }}"
+            <a href="{{ url_for('chamados.resolver_chamado', id=chamado.id) }}"
                class="btn btn-success btn-resolver"
                onclick="return confirm('Tem certeza que deseja Resolver o chamado #{{ chamado.id }}?')">
                 Resolver
             </a>
 
-            <a href="/chamados/fechar/{{ chamado.id }}"
+            <a href="{{ url_for('chamados.fechar_chamado', id=chamado.id) }}"
+               class="btn btn-secondary btn-fechar"
+               onclick="return confirm('Tem certeza que deseja Fechar o chamado #{{ chamado.id }}?')">
+                Fechar
+            </a>
+            {% endif %}
+
+            <a href="{{ url_for('chamados.listar_chamados') }}"
+               class="btn btn-outline-light ms-auto">
+                Voltar
+            </a>
 
         </div>
+
 
     </div>
 

@@ -348,13 +348,6 @@
                                     Ativar
 
                                 </a>
-                                {% elif usuario.status == 'administrador' %}
-                                <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                    class="acoesUsuario botaoAtivar">
-
-                                    Ativar
-
-                                </a>
 
                                 {% endif %}
 
@@ -384,6 +377,7 @@
                                     class="acoesUsuario botaoTornarAdm">Usuário</a>
 
                                 {% endif %}
+                            </div>
                         </td>
 
                     </tr>
@@ -393,7 +387,8 @@
                     <!-- NENHUM USUÁRIO -->
                     <tr class="linhaTabela">
 
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
+
 
                             <h5 class="tituloTabela">
                                 Nenhum usuário encontrado.

@@ -1,5 +1,7 @@
 import atexit
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 from flask import Flask, session, redirect, url_for
 from flask_login import LoginManager, current_user, logout_user
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,11 +15,13 @@ from routes.usuarios import usuarios_bp
 from routes.impressoras import impressoras_bp
 from services.impressoras_services import ImpressorasService
 
+# Carrega variaveis do arquivo .env
+load_dotenv()
 
 app = Flask(__name__)
 
 # Configurações
-app.config['SECRET_KEY'] = 'sua-chave-secreta'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-padrao-desenvolvimento-trocar-em-producao')
 
 # Banco principal (Chamados, Usuários, Impressoras)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chamados.db'
@@ -118,13 +122,14 @@ scheduler.add_job(
     next_run_time=datetime.now()
 )
 
-scheduler.start()
-
 # Garante o encerramento limpo do scheduler ao finalizar a aplicação
-atexit.register(lambda: scheduler.shutdown(wait=False))
+atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler.running else None)
 
 
 if __name__ == '__main__':
+    scheduler.start()
     from waitress import serve
-    print("Servidor iniciado em http://0.0.0.0:5000")
-    serve(app, host='0.0.0.0', port=5000)
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Servidor iniciado em http://{host}:{port}")
+    serve(app, host=host, port=port)
