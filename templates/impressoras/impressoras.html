@@ -22,18 +22,27 @@
         <!-- AÇÕES -->
         <div class="d-flex gap-2 flex-wrap">
 
-            <a href="{{ url_for('impressoras.nova_impressora') }}"
-               class="btn botaoPrimario">
+            <a href="{{ url_for('impressoras.relatorio_paginas_pdf') }}" class="btn botaoSecundario"
+                title="Exportar documento PDF com a contagem de páginas de todas as impressoras">
+                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                Exportar PDF Relatório
+            </a>
+
+            <button type="button" class="btn botaoSecundario" data-bs-toggle="modal"
+                data-bs-target="#modalEnviarEmailRelatorio" title="Enviar relatório em PDF por e-mail (Outlook)">
+                <i class="bi bi-envelope-at text-info me-1"></i>
+                Enviar por E-mail
+            </button>
+
+            <a href="{{ url_for('impressoras.nova_impressora') }}" class="btn botaoPrimario">
                 Nova Impressora
             </a>
 
-            <a href="{{ url_for('impressoras.sincronizar') }}"
-               class="btn botaoSecundario">
+            <a href="{{ url_for('impressoras.sincronizar') }}" class="btn botaoSecundario">
                 Descobrir Impressoras
             </a>
 
-            <a href="{{ url_for('impressoras.atualizar_status') }}"
-               class="btn botaoPrimario">
+            <a href="{{ url_for('impressoras.atualizar_status') }}" class="btn botaoPrimario">
                 Atualizar Status
             </a>
 
@@ -49,47 +58,68 @@
 
         <!-- TOTAL -->
         <div class="col-md-4">
-            <div class="cardMetrica p-4">
-                <div class="cardMetricaTitulo">
-                    Total de Impressoras
+            <a href="{{ url_for('impressoras.index', page=1) }}" class="text-decoration-none d-block cardMetricaLink" title="Ver todas as impressoras">
+                <div class="cardMetrica p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="cardMetricaTitulo">
+                            Total de Impressoras
+                        </div>
+                        <div class="cardMetricaValor my-1">
+                            {{ total_impressoras }}
+                        </div>
+                        <div class="subtituloCard small">
+                            Equipamentos no parque
+                        </div>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(56, 189, 248, 0.12); width: 56px; height: 56px;">
+                        <i class="bi bi-printer-fill fs-3" style="color: #38bdf8;"></i>
+                    </div>
                 </div>
-                <div class="cardMetricaValor">
-                    {{ total_impressoras }}
-                </div>
-                <div class="subtituloCard small">
-                    Equipamentos no parque
-                </div>
-            </div>
+            </a>
         </div>
 
         <!-- ONLINE -->
         <div class="col-md-4">
-            <div class="cardMetrica p-4">
-                <div class="cardMetricaTitulo">
-                    Monitoramento
+            <a href="{{ url_for('impressoras.index', page=1, status='online') }}" class="text-decoration-none d-block cardMetricaLink" title="Ir para Página 1: Impressoras Online">
+                <div class="cardMetrica p-4 d-flex justify-content-between align-items-center {% if pagination.page == 1 %}cardMetricaAtivoOnline{% endif %}">
+                    <div>
+                        <div class="cardMetricaTitulo" style="color: #4ade80;">
+                            Monitoramento Ativo
+                        </div>
+                        <div class="cardMetricaValor my-1" style="color: #4ade80;">
+                            {{ total_online }}
+                        </div>
+                        <div class="subtituloCard small">
+                            Página 1 • Impressoras online na rede
+                        </div>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(34, 197, 94, 0.12); width: 56px; height: 56px;">
+                        <i class="bi bi-check-circle-fill fs-3" style="color: #4ade80;"></i>
+                    </div>
                 </div>
-                <div class="cardMetricaValor">
-                    {{ total_online }}
-                </div>
-                <div class="subtituloCard small">
-                    Impressoras online
-                </div>
-            </div>
+            </a>
         </div>
 
         <!-- OFFLINE -->
         <div class="col-md-4">
-            <div class="cardMetrica p-4">
-                <div class="cardMetricaTitulo">
-                    Atenção
+            <a href="{{ url_for('impressoras.index', page=2, status='offline') }}" class="text-decoration-none d-block cardMetricaLink" title="Ir para Página 2: Impressoras Offline / Manual">
+                <div class="cardMetrica p-4 d-flex justify-content-between align-items-center {% if pagination.page == 2 %}cardMetricaAtivoOffline{% endif %}">
+                    <div>
+                        <div class="cardMetricaTitulo" style="color: #fbbf24;">
+                            Atenção / Offline
+                        </div>
+                        <div class="cardMetricaValor my-1" style="color: #fbbf24;">
+                            {{ total_offline }}
+                        </div>
+                        <div class="subtituloCard small">
+                            Página 2 • Offline ou controle manual
+                        </div>
+                    </div>
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center" style="background: rgba(245, 158, 11, 0.12); width: 56px; height: 56px;">
+                        <i class="bi bi-exclamation-triangle-fill fs-3" style="color: #fbbf24;"></i>
+                    </div>
                 </div>
-                <div class="cardMetricaValor">
-                    {{ total_offline }}
-                </div>
-                <div class="subtituloCard small">
-                    Impressoras offline
-                </div>
-            </div>
+            </a>
         </div>
 
     </div>
@@ -132,17 +162,18 @@
         <!-- BARRA DE FILTROS E PESQUISA -->
         <div class="px-4 pb-3">
             <form method="GET" action="{{ url_for('impressoras.index') }}" class="row g-2 align-items-center">
+                <!-- Preserva a página ativa (1 = Online, 2 = Offline) -->
+                <input type="hidden" name="page" value="{{ pagination.page }}">
+
                 <!-- Campo de busca geral -->
                 <div class="col-12 col-lg-4">
                     <div class="input-group">
-                        <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <span class="input-group-text bg-transparent border-end-0 text-tema-secundario"
+                            style="border-color: var(--cor-borda);">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text"
-                               name="busca"
-                               class="form-control inputPadrao border-start-0 ps-0"
-                               placeholder="Buscar por nome, IP, modelo, andar, sala..."
-                               value="{{ filtros.busca }}">
+                        <input type="text" name="busca" class="form-control inputPadrao border-start-0 ps-0"
+                            placeholder="Buscar por nome, IP, modelo, andar, sala..." value="{{ filtros.busca }}">
                     </div>
                 </div>
 
@@ -150,17 +181,19 @@
                 <div class="col-6 col-md-3 col-lg-2">
                     <select name="tipo" class="form-select selectPadrao">
                         <option value="">Tipo: Todos</option>
-                        <option value="fisicas" {% if filtros.tipo == 'fisicas' %}selected{% endif %}>Apenas Físicas</option>
-                        <option value="virtuais" {% if filtros.tipo == 'virtuais' %}selected{% endif %}>Virtuais / Software</option>
+                        <option value="fisicas" {% if filtros.tipo=='fisicas' %}selected{% endif %}>Apenas Físicas
+                        </option>
+                        <option value="virtuais" {% if filtros.tipo=='virtuais' %}selected{% endif %}>Virtuais /
+                            Software</option>
                     </select>
                 </div>
 
                 <!-- Filtro de Status de Rede -->
                 <div class="col-6 col-md-3 col-lg-2">
                     <select name="status" class="form-select selectPadrao">
-                        <option value="">Status: Todos</option>
-                        <option value="online" {% if filtros.status == 'online' %}selected{% endif %}>● Online</option>
-                        <option value="offline" {% if filtros.status == 'offline' %}selected{% endif %}>● Offline</option>
+                        <option value="">Status: Ambos</option>
+                        <option value="online" {% if filtros.status=='online' or (not filtros.status and pagination.page==1) %}selected{% endif %}>● Página 1 (Online)</option>
+                        <option value="offline" {% if filtros.status=='offline' or (not filtros.status and pagination.page==2) %}selected{% endif %}>● Página 2 (Offline)</option>
                     </select>
                 </div>
 
@@ -168,8 +201,10 @@
                 <div class="col-6 col-md-3 col-lg-2">
                     <select name="suprimento" class="form-select selectPadrao">
                         <option value="">Insumo: Todos</option>
-                        <option value="vinculado" {% if filtros.suprimento == 'vinculado' %}selected{% endif %}>Com Vínculo</option>
-                        <option value="sem_vinculo" {% if filtros.suprimento == 'sem_vinculo' %}selected{% endif %}>Sem Vínculo</option>
+                        <option value="vinculado" {% if filtros.suprimento=='vinculado' %}selected{% endif %}>Com
+                            Vínculo</option>
+                        <option value="sem_vinculo" {% if filtros.suprimento=='sem_vinculo' %}selected{% endif %}>Sem
+                            Vínculo</option>
                     </select>
                 </div>
 
@@ -179,12 +214,32 @@
                         Filtrar
                     </button>
                     {% if filtros.busca or filtros.status or filtros.suprimento or filtros.tipo %}
-                    <a href="{{ url_for('impressoras.index') }}" class="btn botaoSecundario" title="Limpar Filtros">
+                    <a href="{{ url_for('impressoras.index', page=pagination.page) }}" class="btn botaoSecundario" title="Limpar Filtros">
                         <i class="bi bi-x-circle"></i>
                     </a>
                     {% endif %}
                 </div>
             </form>
+        </div>
+
+        <!-- ABAS DE NAVEGAÇÃO: APENAS 2 PÁGINAS (ONLINE / OFFLINE) -->
+        <div class="px-4 pb-3 pt-2 d-flex justify-content-between align-items-center flex-wrap gap-2 border-top" style="border-color: var(--cor-borda) !important;">
+            <div class="btn-group p-1 rounded-pill" style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--cor-borda);">
+                <a href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                   class="btn btn-sm rounded-pill px-3 py-1 fw-bold {% if pagination.page == 1 %}btn-success text-white shadow-sm{% else %}text-tema-secundario{% endif %}">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Página 1: Online ({{ pagination.total_online }})
+                </a>
+                <a href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                   class="btn btn-sm rounded-pill px-3 py-1 fw-bold {% if pagination.page == 2 %}btn-warning text-dark shadow-sm{% else %}text-tema-secundario{% endif %}">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Página 2: Offline / Manual ({{ pagination.total_offline }})
+                </a>
+            </div>
+
+            <div class="text-tema-secundario small">
+                Exibindo: <strong>{{ pagination.status_nome }}</strong> ({{ impressoras|length }} equipamentos)
+            </div>
         </div>
 
         <!-- TABELA -->
@@ -193,47 +248,17 @@
             <table class="table tabelaPadrao table-hover align-middle mb-0">
 
                 <thead class="cabecalhoTabela">
-
                     <tr>
-
-                        <th scope="col">
-                            Nome
-                        </th>
-
-                        <th scope="col">
-                            IP
-                        </th>
-
-                        <th scope="col">
-                            Localização
-                        </th>
-
-                        <th scope="col">
-                            Status
-                        </th>
-
-                        <th scope="col">
-                            Toner
-                        </th>
-
-                        <th scope="col">
-                            Cilindro
-                        </th>
-
-                        <th scope="col">
-                            Suprimento
-                        </th>
-
-                        <th scope="col">
-                            Última Verificação
-                        </th>
-
-                        <th scope="col" class="text-center">
-                            Ações
-                        </th>
-
+                        <th scope="col">Nome do Equipamento</th>
+                        <th scope="col">IP / Rede</th>
+                        <th scope="col">Localização</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-center">Toner</th>
+                        <th scope="col" class="text-center">Cilindro</th>
+                        <th scope="col">Suprimento</th>
+                        <th scope="col">Última Verificação</th>
+                        <th scope="col" class="text-center">Ações</th>
                     </tr>
-
                 </thead>
 
 
@@ -246,35 +271,56 @@
                         <!-- NOME -->
                         <td>
                             <div class="d-flex align-items-center flex-wrap gap-1">
-                                <strong>{{ imp.nome }}</strong>
+                                <span class="fw-bold text-white fs-6">{{ imp.nome }}</span>
                                 {% if imp.is_virtual %}
-                                <span class="badge" style="background: rgba(255, 255, 255, 0.08); color: var(--cor-texto-secundario); border: 1px solid var(--cor-borda); font-size: 0.72rem; font-weight: 500;" title="Fila virtual / software (não é impressora física)">
+                                <span class="badge"
+                                    style="background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.72rem; font-weight: 500;"
+                                    title="Fila virtual / software (não é impressora física)">
                                     <i class="bi bi-display me-1"></i>Virtual
                                 </span>
                                 {% endif %}
                             </div>
-                            {% if imp.modelo %}
-                            <div class="small text-tema-secundario">{{ imp.modelo }}</div>
-                            {% endif %}
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                {% if imp.modelo %}
+                                <span class="small" style="color: #94a3b8;"><i class="bi bi-cpu me-1 opacity-75"></i>{{ imp.modelo }}</span>
+                                {% endif %}
+                                {% if imp.serial %}
+                                <span class="badge" style="background: rgba(255, 255, 255, 0.06); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.72rem; font-weight: 500;" title="Número de Série">
+                                    <i class="bi bi-upc-scan me-1 text-warning opacity-75"></i>S/N: {{ imp.serial }}
+                                </span>
+                                {% endif %}
+                            </div>
                         </td>
 
 
                         <!-- IP -->
                         <td>
-                            <span class="ipImpressora">
-                                {{ imp.ip }}
+                            {% if imp.ip %}
+                            <span class="ipImpressora" title="Endereço IP na rede local">
+                                <i class="bi bi-hdd-network me-1 opacity-75"></i>{{ imp.ip }}
                             </span>
+                            {% else %}
+                            <span class="badgeManualIP" title="Equipamento externo / controle manual (sem IP de rede local)">
+                                <i class="bi bi-pencil-fill me-1"></i>Manual (Sem IP)
+                            </span>
+                            {% endif %}
                         </td>
 
 
                         <!-- LOCALIZAÇÃO -->
                         <td>
-                            {% if (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
-                                <span class="badgeStatus">
-                                    {{ imp.andar }} - {{ imp.sala }}
-                                </span>
+                            {% if imp.local and imp.local.strip() %}
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-geo-alt-fill text-info opacity-75"></i>
+                                <span class="fw-medium text-light">{{ imp.local }}</span>
+                            </div>
+                            {% elif (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-geo-alt-fill text-info opacity-75"></i>
+                                <span class="fw-medium text-light">{{ imp.andar }} - {{ imp.sala }}</span>
+                            </div>
                             {% else %}
-                                <span class="text-tema-secundario opacity-75 small">Não informado</span>
+                            <span class="text-secondary opacity-75 small fst-italic">Não informado</span>
                             {% endif %}
                         </td>
 
@@ -282,41 +328,39 @@
                         <!-- STATUS -->
                         <td>
                             {% if imp.online %}
-                            <span class="badgeStatus statusImpressoraOnline">
-                                ● Online
+                            <span class="badgeStatus badgeStatus--online">
+                                <span class="pontoStatus pontoStatus--online"></span> Online
                             </span>
                             {% else %}
-                            <span class="badgeStatus statusImpressoraOffline">
-                                ● Offline
+                            <span class="badgeStatus badgeStatus--offline">
+                                <span class="pontoStatus pontoStatus--offline"></span> Offline
                             </span>
                             {% endif %}
                         </td>
 
 
                         <!-- TONER -->
-                        <td>
+                        <td class="text-center">
                             {% if imp.toner_preto is not none %}
-                            <span class="badgeStatus {% if imp.toner_preto <= 15 %}statusFechado{% else %}statusAtivo{% endif %}">
-                                {{ imp.toner_preto }}%
+                            <span
+                                class="badgeNivel {% if imp.toner_preto <= 15 %}badgeNivel--critico{% elif imp.toner_preto <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                <i class="bi bi-droplet-fill me-1 small"></i>{{ imp.toner_preto }}%
                             </span>
                             {% else %}
-                            <span class="badgeStatus">
-                                —
-                            </span>
+                            <span class="text-secondary opacity-50 px-2">—</span>
                             {% endif %}
                         </td>
 
 
                         <!-- CILINDRO -->
-                        <td>
+                        <td class="text-center">
                             {% if imp.cilindro is not none %}
-                            <span class="badgeStatus {% if imp.cilindro <= 15 %}statusFechado{% else %}statusAtivo{% endif %}">
-                                {{ imp.cilindro }}%
+                            <span
+                                class="badgeNivel {% if imp.cilindro <= 15 %}badgeNivel--critico{% elif imp.cilindro <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                <i class="bi bi-disc-fill me-1 small"></i>{{ imp.cilindro }}%
                             </span>
                             {% else %}
-                            <span class="badgeStatus">
-                                —
-                            </span>
+                            <span class="text-secondary opacity-50 px-2">—</span>
                             {% endif %}
                         </td>
 
@@ -324,39 +368,46 @@
                         <!-- SUPRIMENTO VINCULADO -->
                         <td>
                             {% if imp.suprimento %}
-                            <span class="badgeStatus statusAtivo" title="Toner: {{ imp.suprimento.quantidade_toner }} | Cilindro: {{ imp.suprimento.quantidade_cilindro }}">
-                                {{ imp.suprimento.nome_familia }}
+                            <span class="badgeSuprimento"
+                                title="Toner em Estoque: {{ imp.suprimento.quantidade_toner }} | Cilindro em Estoque: {{ imp.suprimento.quantidade_cilindro }}">
+                                <i class="bi bi-box-seam me-1 text-info"></i>{{ imp.suprimento.nome_familia }}
                             </span>
                             {% else %}
-                            <span class="text-tema-secundario opacity-75 small">Sem vínculo</span>
+                            <span class="badgeSemVinculo" title="Nenhuma família de suprimento vinculada a esta impressora">
+                                <i class="bi bi-dash-circle me-1 opacity-50"></i>Sem vínculo
+                            </span>
                             {% endif %}
                         </td>
 
 
-                        <!-- ÚLTIMA VERIFICAÇÃO -->
+                        <!-- ÚLTIMA VERIFICAÇÃO / CONTADOR -->
                         <td>
-                            <span class="ultimaVerificacao">
-                                {{ imp.ultimo_check.strftime('%d/%m/%Y %H:%M') if imp.ultimo_check else '—' }}
-                            </span>
+                            <div class="ultimaVerificacao d-flex align-items-center gap-1">
+                                <i class="bi bi-clock opacity-75"></i>
+                                <span>{{ imp.ultimo_check.strftime('%d/%m/%Y %H:%M') if imp.ultimo_check else '—' }}</span>
+                            </div>
+                            {% if imp.paginas_impressas is not none and imp.paginas_impressas > 0 %}
+                            <div class="badgeContador mt-1" title="Contador total de páginas impressas">
+                                <i class="bi bi-speedometer2 text-warning me-1"></i>
+                                <strong>{{ "{:,}".format(imp.paginas_impressas).replace(',', '.') }}</strong>
+                                <span class="small opacity-75 ms-1">págs</span>
+                            </div>
+                            {% endif %}
                         </td>
 
 
                         <!-- AÇÕES -->
                         <td class="text-center">
                             <div class="d-flex gap-1 justify-content-center flex-wrap">
-                                <button type="button"
-                                        class="btn btn-sm botaoSecundario py-1 px-2"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalVincular{{ imp.id }}"
-                                        title="Vincular Localização e Suprimento">
-                                    <i class="bi bi-geo-alt"></i> Vincular
+                                <button type="button" class="btnAcaoTabela btnAcaoTabela--editar" data-bs-toggle="modal"
+                                    data-bs-target="#modalVincular{{ imp.id }}"
+                                    title="Editar localização, suprimento e contador manual de páginas">
+                                    <i class="bi bi-pencil-square"></i> Editar / Contador
                                 </button>
 
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-warning py-1 px-2"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalRetirar{{ imp.id }}"
-                                        title="Retirar Insumo de Estoque">
+                                <button type="button" class="btnAcaoTabela btnAcaoTabela--retirar"
+                                    data-bs-toggle="modal" data-bs-target="#modalRetirar{{ imp.id }}"
+                                    title="Retirar Insumo de Estoque">
                                     <i class="bi bi-box-arrow-up-right"></i> Retirar
                                 </button>
                             </div>
@@ -366,55 +417,108 @@
 
 
                     <!-- ==========================================
-                         MODAL VINCULAR LOCALIZAÇÃO / SUPRIMENTO
+                         MODAL EDITAR / VINCULAR / CONTADOR MANUAL
                          ========================================== -->
-                    <div class="modal fade" id="modalVincular{{ imp.id }}" tabindex="-1" aria-labelledby="modalVincularLabel{{ imp.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal fade" id="modalVincular{{ imp.id }}" tabindex="-1"
+                        aria-labelledby="modalVincularLabel{{ imp.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content modalTema">
-                                <div class="modal-header">
+                                <div class="modal-header border-bottom border-secondary">
                                     <h5 class="modal-title fw-bold text-tema" id="modalVincularLabel{{ imp.id }}">
-                                        <i class="bi bi-geo-alt text-primary me-1"></i> Vincular: {{ imp.nome }}
+                                        <i class="bi bi-pencil-square text-primary me-2"></i>Editar Impressora: {{ imp.nome }}
                                     </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
-                                <form method="POST" action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
+                                <form method="POST"
+                                    action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
                                     <div class="modal-body p-4 text-start">
-                                        <div class="mb-3">
-                                            <label class="form-label labelCampo">Andar</label>
-                                            <input type="text"
-                                                   name="andar"
-                                                   class="form-control inputPadrao"
-                                                   value="{{ imp.andar if imp.andar != 'Não Informado' else '' }}"
-                                                   placeholder="Ex: 1º Andar, Térreo">
-                                        </div>
 
-                                        <div class="mb-3">
-                                            <label class="form-label labelCampo">Sala / Setor</label>
-                                            <input type="text"
-                                                   name="sala"
-                                                   class="form-control inputPadrao"
-                                                   value="{{ imp.sala if imp.sala != 'Não Informado' else '' }}"
-                                                   placeholder="Ex: Sala 102, Financeiro">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label labelCampo">Família de Suprimento (Estoque)</label>
-                                            <select name="suprimento_id" class="form-select selectPadrao">
-                                                <option value="">-- Nenhum / Desvincular --</option>
-                                                {% for fam in familias %}
-                                                <option value="{{ fam.id }}" {% if imp.suprimento_id == fam.id %}selected{% endif %}>
-                                                    {{ fam.nome_familia }} (Toner: {{ fam.quantidade_toner }} | Cilindro: {{ fam.quantidade_cilindro }})
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                            <small class="text-tema-secundario mt-1 d-block">
-                                                Vincula esta impressora a um grupo de suprimentos para facilitar trocas de insumos.
+                                        <!-- DESTAQUE CONTADOR MANUAL DE PÁGINAS -->
+                                        <div class="p-3 rounded mb-4 border border-primary border-opacity-50" style="background: rgba(13, 110, 253, 0.08);">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <label class="form-label labelCampo fw-bold text-primary mb-0 fs-6">
+                                                    <i class="bi bi-speedometer2 me-1"></i>Contador Total de Páginas Impressas
+                                                </label>
+                                                <span class="badge bg-primary text-white">Manual / Físico</span>
+                                            </div>
+                                            <div class="input-group mt-2">
+                                                <input type="number" name="paginas_impressas" class="form-control inputPadrao fs-5 fw-bold"
+                                                    value="{{ imp.paginas_impressas or 0 }}" min="0" step="1" required>
+                                                <span class="input-group-text bg-transparent text-tema" style="border-color: var(--cor-borda);">páginas</span>
+                                            </div>
+                                            <small class="text-tema-secundario mt-2 d-block">
+                                                <i class="bi bi-info-circle me-1"></i>Insira a leitura física do visor da impressora. Esse contador alimentará diretamente a <strong>Página 1</strong> do relatório em PDF e o e-mail oficial.
                                             </small>
                                         </div>
+
+                                        <!-- IDENTIFICAÇÃO E NÚMERO DE SÉRIE -->
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Número de Série (Serial)</label>
+                                                <input type="text" name="serial" class="form-control inputPadrao"
+                                                    value="{{ imp.serial or '' }}" placeholder="Ex: D4N714867, K3N553363">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Contato / Responsável</label>
+                                                <input type="text" name="contato" class="form-control inputPadrao"
+                                                    value="{{ imp.contato or '' }}" placeholder="Ex: Robson (61 98111-2098)">
+                                            </div>
+                                        </div>
+
+                                        <!-- LOCALIZAÇÃO -->
+                                        <div class="mb-3">
+                                            <label class="form-label labelCampo">Local Principal (Exibido no Relatório)</label>
+                                            <input type="text" name="local" class="form-control inputPadrao"
+                                                value="{{ imp.local or '' }}" placeholder="Ex: Luger - Asa Norte, Luger - Taguatinga, Lavanderia Braslav">
+                                            <small class="text-tema-secundario">Define a identificação de local exibida no PDF exportado.</small>
+                                        </div>
+
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Andar / Unidade</label>
+                                                <input type="text" name="andar" class="form-control inputPadrao"
+                                                    value="{{ imp.andar if imp.andar != 'Não Informado' else '' }}"
+                                                    placeholder="Ex: Asa Norte, Taguatinga, Térreo">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Sala / Setor Interno</label>
+                                                <input type="text" name="sala" class="form-control inputPadrao"
+                                                    value="{{ imp.sala if imp.sala != 'Não Informado' else '' }}"
+                                                    placeholder="Ex: Recepção, Administrativo">
+                                            </div>
+                                        </div>
+
+                                        <!-- SUPRIMENTO E STATUS -->
+                                        <div class="row g-3 mb-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Família de Suprimento (Estoque)</label>
+                                                <select name="suprimento_id" class="form-select selectPadrao">
+                                                    <option value="">-- Nenhum / Desvincular --</option>
+                                                    {% for fam in familias %}
+                                                    <option value="{{ fam.id }}" {% if imp.suprimento_id==fam.id %}selected{% endif %}>
+                                                        {{ fam.nome_familia }} (Toner: {{ fam.quantidade_toner }} | Cilindro: {{ fam.quantidade_cilindro }})
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label labelCampo">Status no Relatório</label>
+                                                <select name="online" class="form-select selectPadrao">
+                                                    <option value="1" {% if imp.online %}selected{% endif %}>● Ativa / Monitorada (Página 1 do Relatório)</option>
+                                                    <option value="0" {% if not imp.online %}selected{% endif %}>○ Desativada / Sem Comunicação (Página 2)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn botaoPrimario">Salvar Vínculo</button>
+                                    <div class="modal-footer border-top border-secondary">
+                                        <button type="button" class="btn botaoSecundario"
+                                            data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn botaoPrimario">
+                                            <i class="bi bi-check2-circle me-1"></i>Salvar Alterações
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -425,35 +529,45 @@
                     <!-- ==========================================
                          MODAL RETIRAR INSUMO
                          ========================================== -->
-                    <div class="modal fade" id="modalRetirar{{ imp.id }}" tabindex="-1" aria-labelledby="modalRetirarLabel{{ imp.id }}" aria-hidden="true">
+                    <div class="modal fade" id="modalRetirar{{ imp.id }}" tabindex="-1"
+                        aria-labelledby="modalRetirarLabel{{ imp.id }}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content modalTema">
                                 <div class="modal-header">
                                     <h5 class="modal-title fw-bold text-tema" id="modalRetirarLabel{{ imp.id }}">
-                                        <i class="bi bi-box-arrow-up-right text-warning me-1"></i> Retirar Insumo: {{ imp.nome }}
+                                        <i class="bi bi-box-arrow-up-right text-warning me-1"></i> Retirar Insumo: {{
+                                        imp.nome }}
                                     </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
                                 </div>
                                 {% if imp.suprimento %}
-                                <form method="POST" action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
+                                <form method="POST"
+                                    action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
                                     <div class="modal-body p-4 text-start">
                                         <div class="alert alert-info py-2 px-3 mb-3 small" role="alert">
                                             <strong>Família vinculada:</strong> {{ imp.suprimento.nome_familia }}<br>
-                                            <strong>Estoque disponível:</strong> Toners: {{ imp.suprimento.quantidade_toner }} | Cilindros: {{ imp.suprimento.quantidade_cilindro }}
+                                            <strong>Estoque disponível:</strong> Toners: {{
+                                            imp.suprimento.quantidade_toner }} | Cilindros: {{
+                                            imp.suprimento.quantidade_cilindro }}
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label labelCampo">Insumo a ser retirado</label>
                                             <select name="tipo_insumo" class="form-select selectPadrao" required>
-                                                <option value="toner">Toner (Estoque: {{ imp.suprimento.quantidade_toner }})</option>
-                                                <option value="cilindro">Cilindro (Estoque: {{ imp.suprimento.quantidade_cilindro }})</option>
+                                                <option value="toner">Toner (Estoque: {{ imp.suprimento.quantidade_toner
+                                                    }})</option>
+                                                <option value="cilindro">Cilindro (Estoque: {{
+                                                    imp.suprimento.quantidade_cilindro }})</option>
                                             </select>
                                         </div>
                                         <p class="text-tema-secundario small mb-0">
-                                            Ao confirmar, 1 unidade do item selecionado será abatida do estoque e registrada no histórico em seu nome.
+                                            Ao confirmar, 1 unidade do item selecionado será abatida do estoque e
+                                            registrada no histórico em seu nome.
                                         </p>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn botaoSecundario"
+                                            data-bs-dismiss="modal">Cancelar</button>
                                         <button type="submit" class="btn btn-warning">Confirmar Retirada</button>
                                     </div>
                                 </form>
@@ -462,18 +576,17 @@
                                     <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-3"></i>
                                     <h6 class="fw-bold text-tema">Impressora sem suprimento vinculado</h6>
                                     <p class="text-tema-secundario small mb-3">
-                                        Para registrar a retirada de um insumo diretamente por esta tela, vincule primeiro esta impressora a uma família de suprimentos.
+                                        Para registrar a retirada de um insumo diretamente por esta tela, vincule
+                                        primeiro esta impressora a uma família de suprimentos.
                                     </p>
-                                    <button type="button"
-                                            class="btn botaoPrimario btn-sm"
-                                            data-bs-dismiss="modal"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modalVincular{{ imp.id }}">
+                                    <button type="button" class="btn botaoPrimario btn-sm" data-bs-dismiss="modal"
+                                        data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}">
                                         Vincular Agora
                                     </button>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                                    <button type="button" class="btn botaoSecundario"
+                                        data-bs-dismiss="modal">Fechar</button>
                                 </div>
                                 {% endif %}
                             </div>
@@ -488,13 +601,24 @@
 
                         <td colspan="9" class="text-center py-5">
 
+                            <i class="bi bi-printer text-tema-secundario fs-1 d-block mb-2"></i>
                             <h5 class="tituloTabela">
-                                Nenhuma impressora encontrada.
+                                Nenhuma impressora {{ pagination.status_nome|lower }} encontrada.
                             </h5>
 
-                            <p class="text-tema-secundario mb-0">
-                                Não existem impressoras cadastradas no sistema.
+                            <p class="text-tema-secundario small mb-3">
+                                Não há impressoras com status {{ pagination.status_nome|lower }} correspondentes aos filtros selecionados.
                             </p>
+
+                            {% if pagination.page == 1 and pagination.total_offline > 0 %}
+                            <a href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                                <i class="bi bi-arrow-right-circle me-1"></i> Ver Página 2: Offline / Manual ({{ pagination.total_offline }} itens)
+                            </a>
+                            {% elif pagination.page == 2 and pagination.total_online > 0 %}
+                            <a href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                <i class="bi bi-arrow-left-circle me-1"></i> Ver Página 1: Online ({{ pagination.total_online }} itens)
+                            </a>
+                            {% endif %}
 
                         </td>
 
@@ -508,45 +632,45 @@
 
         </div>
 
-        <!-- RODAPÉ DE PAGINAÇÃO -->
+        <!-- RODAPÉ DE PAGINAÇÃO: EXATAMENTE 2 PÁGINAS (ONLINE / OFFLINE) -->
         {% if pagination and pagination.total > 0 %}
         <div class="paginacaoContainer">
             <div class="text-tema-secundario small">
-                Exibindo <strong>{{ impressoras|length }}</strong> de <strong>{{ pagination.total }}</strong> impressora(s)
-                (Página {{ pagination.page }} de {{ pagination.pages }})
+                Exibindo <strong>{{ impressoras|length }}</strong> impressora(s) {{ pagination.status_nome|lower }}
+                (Página <strong>{{ pagination.page }}</strong> de <strong>2</strong> — {{ pagination.status_nome }})
             </div>
 
-            {% if pagination.pages > 1 %}
             <nav aria-label="Navegação de páginas">
                 <ul class="pagination paginacaoTema mb-0">
                     <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.prev_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
-                            <i class="bi bi-chevron-left"></i> Anterior
+                        <a class="page-link"
+                            href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
+                            <i class="bi bi-chevron-left"></i> Anterior (Online)
                         </a>
                     </li>
 
-                    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-                        {% if p %}
-                            <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                                <a class="page-link" href="{{ url_for('impressoras.index', page=p, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
-                                    {{ p }}
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">…</span>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
+                    <li class="page-item {% if pagination.page == 1 %}active{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
+                            <i class="bi bi-check-circle-fill me-1 text-success"></i> 1 - Online ({{ pagination.total_online }})
+                        </a>
+                    </li>
+
+                    <li class="page-item {% if pagination.page == 2 %}active{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
+                            <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i> 2 - Offline ({{ pagination.total_offline }})
+                        </a>
+                    </li>
 
                     <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{{ url_for('impressoras.index', page=pagination.next_num, busca=filtros.busca, status=filtros.status, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
-                            Próximo <i class="bi bi-chevron-right"></i>
+                        <a class="page-link"
+                            href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}">
+                            Próximo (Offline) <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>
                 </ul>
             </nav>
-            {% endif %}
         </div>
         {% endif %}
 
@@ -576,8 +700,7 @@
 
                 </div>
 
-                <a href="{{ url_for('impressoras.gerenciar_estoque') }}"
-                   class="btn botaoPrimario px-4">
+                <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="btn botaoPrimario px-4">
                     Acessar Estoque
                 </a>
 
@@ -595,8 +718,356 @@
 
         </div>
 
+        <!-- =====================================================
+         MODAL ENVIAR RELATÓRIO POR E-MAIL (OUTLOOK / EXCHANGE)
+         ===================================================== -->
+        <div class="modal fade" id="modalEnviarEmailRelatorio" tabindex="-1"
+            aria-labelledby="modalEnviarEmailRelatorioLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                <div class="modal-content modalTema">
+                    <div class="modal-header border-bottom border-secondary">
+                        <h5 class="modal-title fw-bold text-tema" id="modalEnviarEmailRelatorioLabel">
+                            <i class="bi bi-envelope-paper text-info me-2"></i>Enviar Relatório por E-mail
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('impressoras.enviar_relatorio_email') }}"
+                        id="formEnviarEmailRelatorio">
+                        <div class="modal-body p-4 text-start">
+
+                            <!-- REMETENTE E DESTINATÁRIOS -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Remetente (Enviar Como)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-secondary text-info">
+                                            <i class="bi bi-envelope-paper-fill"></i>
+                                        </span>
+                                        <input type="text" class="form-control inputPadrao"
+                                            value="{{ email_config.mail_from_name }} &lt;{{ email_config.mail_from_address }}&gt;"
+                                            readonly disabled>
+                                    </div>
+                                    <small class="text-tema-secundario">
+                                        Conta autenticada: <code>{{ email_config.user }}</code>
+                                    </small>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo" for="destinatariosEmail">
+                                        Destinatário(s) <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark border-secondary text-tema-secundario">
+                                            <i class="bi bi-envelope-at"></i>
+                                        </span>
+                                        <input type="text" id="destinatariosEmail" name="destinatarios"
+                                            class="form-control inputPadrao"
+                                            placeholder="ex: gestor@brasfort.com.br, equipe@brasfort.com.br"
+                                            value="{{ email_config.default_recipient if email_config and email_config.default_recipient else '' }}"
+                                            required>
+                                    </div>
+                                    <small class="text-tema-secundario">
+                                        Separe múltiplos e-mails por vírgula.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- ASSUNTO -->
+                            <div class="mb-3">
+                                <label class="form-label labelCampo" for="assuntoEmail">
+                                    Assunto do E-mail <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary text-warning">
+                                        <i class="bi bi-tag-fill"></i>
+                                    </span>
+                                    <input type="text" id="assuntoEmail" name="assunto" class="form-control inputPadrao"
+                                        value="{{ default_assunto }}" required>
+                                </div>
+                            </div>
+
+                            <!-- ABAS DE NAVEGAÇÃO: EDITAR X PRÉ-VISUALIZAR -->
+                            <ul class="nav nav-tabs border-secondary mb-3" id="emailModalTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-tema fw-semibold" id="tab-editar-btn"
+                                        data-bs-toggle="tab" data-bs-target="#tab-editar" type="button" role="tab"
+                                        aria-controls="tab-editar" aria-selected="true">
+                                        <i class="bi bi-pencil-square me-1 text-primary"></i> 1. Editar Mensagem
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-tema fw-semibold" id="tab-preview-btn"
+                                        data-bs-toggle="tab" data-bs-target="#tab-preview" type="button" role="tab"
+                                        aria-controls="tab-preview" aria-selected="false">
+                                        <i class="bi bi-eye-fill me-1 text-info"></i> 2. Pré-visualizar E-mail Completo
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="emailModalTabsContent">
+
+                                <!-- ABA 1: EDITAR MENSAGEM -->
+                                <div class="tab-pane fade show active" id="tab-editar" role="tabpanel"
+                                    aria-labelledby="tab-editar-btn">
+
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label labelCampo mb-0" for="emailMensagemInput">
+                                                Corpo da Mensagem (Texto de Abertura)
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-outline-info py-0 px-2"
+                                                id="btnIrParaPreview">
+                                                <i class="bi bi-eye me-1"></i>Ver Pré-visualização
+                                            </button>
+                                        </div>
+                                        <textarea name="mensagem" id="emailMensagemInput"
+                                            class="form-control inputPadrao" rows="5"
+                                            placeholder="Digite aqui o texto que acompanhará o relatório...">{{ default_mensagem }}</textarea>
+                                        <small class="text-tema-secundario mt-1 d-block">
+                                            Você pode alterar a saudação, instruções ou adicionar observações sobre as
+                                            contagens de páginas.
+                                        </small>
+                                    </div>
+
+                                    <!-- OPÇÕES DO DISPARO -->
+                                    <div class="p-3 rounded border border-secondary bg-dark mb-3">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" name="incluir_tabela"
+                                                id="checkIncluirTabela" value="1" checked>
+                                            <label class="form-check-label text-tema" for="checkIncluirTabela">
+                                                <strong>Incluir tabela resumo com contadores das impressoras</strong> no
+                                                corpo do e-mail
+                                            </label>
+                                            <div class="text-tema-secundario small ms-4">
+                                                Insere tabela com as {{ impressoras_com_contagem|length }} impressoras
+                                                monitoradas e o total de páginas impressas.
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="checkAnexarPdf" checked
+                                                disabled>
+                                            <label class="form-check-label text-tema" for="checkAnexarPdf">
+                                                <strong>Anexar Relatório Oficial em PDF</strong> (2 páginas completas
+                                                com MAC, local e contadores)
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- ABA 2: PRÉ-VISUALIZAÇÃO COMPLETA DO E-MAIL -->
+                                <div class="tab-pane fade" id="tab-preview" role="tabpanel"
+                                    aria-labelledby="tab-preview-btn">
+
+                                    <div
+                                        class="alert alert-secondary py-2 px-3 mb-2 small d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-info-circle text-info me-1"></i>
+                                            <strong>Pré-visualização fiel:</strong> Esta é a visualização de como a
+                                            mensagem chegará no Outlook/leitor de e-mail.
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0"
+                                            id="btnVoltarEditar">
+                                            <i class="bi bi-pencil me-1"></i>Editar Texto
+                                        </button>
+                                    </div>
+
+                                    <!-- CONTAINER ESTILO CLIENTE DE E-MAIL -->
+                                    <div class="border rounded shadow-sm overflow-hidden"
+                                        style="background-color: #f1f5f9; font-family: 'Segoe UI', Arial, sans-serif;">
+
+                                        <!-- CABEÇALHO DO E-MAIL -->
+                                        <div class="p-3 text-white"
+                                            style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                                            <h5 class="mb-1 fw-bold text-light" id="previewTituloAssunto">
+                                                Relatório de Contagem de Páginas
+                                            </h5>
+                                            <p class="mb-0 small text-light opacity-75">
+                                                {{ email_config.mail_from_name }} — Grupo Brasfort
+                                            </p>
+                                        </div>
+
+                                        <!-- CORPO DA MENSAGEM DO E-MAIL -->
+                                        <div class="p-3 bg-white text-dark" style="font-size: 14px;">
+
+                                            <!-- PARÁGRAFOS DA MENSAGEM EDITÁVEL -->
+                                            <div id="previewCorpoMensagem" class="mb-3 text-secondary"
+                                                style="line-height: 1.6;">
+                                                <!-- Preenchido via JavaScript -->
+                                            </div>
+
+                                            <!-- TABELA RESUMO DE CONTADORES -->
+                                            <div id="previewTabelaPrinters" class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <h6 class="mb-0 fw-bold text-dark small text-uppercase">
+                                                        Resumo dos Equipamentos Monitorados ({{
+                                                        impressoras_com_contagem|length }})
+                                                    </h6>
+                                                    <span class="badge bg-light text-dark border">Atualizado</span>
+                                                </div>
+
+                                                <div class="table-responsive border rounded">
+                                                    <table class="table table-sm table-striped table-hover mb-0"
+                                                        style="font-size: 12.5px;">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Impressora</th>
+                                                                <th>Nº Série</th>
+                                                                <th>Local</th>
+                                                                <th class="text-end">Total Páginas</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for imp in impressoras_com_contagem %}
+                                                            <tr>
+                                                                <td class="fw-semibold">{{ imp.nome }}</td>
+                                                                <td class="text-muted">{{ imp.serial or '-' }}</td>
+                                                                <td class="text-muted">{{ imp.local or imp.sala or '-'
+                                                                    }}</td>
+                                                                <td class="text-end fw-bold text-dark">
+                                                                    {{ "{:,}".format(imp.paginas_impressas or
+                                                                    0).replace(",", ".") }}
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            <!-- AVISO DE DOCUMENTO ANEXO -->
+                                            <div class="p-2 px-3 rounded border-start border-4 border-success bg-light mb-3"
+                                                style="background-color: #f0fdf4 !important; border-color: #16a34a !important;">
+                                                <p class="mb-0 small text-success">
+                                                    📎 <strong>Documento Completo em Anexo:</strong> O relatório
+                                                    detalhado de 2 páginas (com endereços MAC, contatos e equipamentos
+                                                    offline) está anexado a esta mensagem em formato PDF.
+                                                </p>
+                                            </div>
+
+                                            <p class="text-muted small mb-0" style="font-size: 11.5px;">
+                                                Mensagem gerada pelo sistema Central de Chamados & Monitoramento
+                                                Brasfort.
+                                            </p>
+                                        </div>
+
+                                        <!-- RODAPÉ DO E-MAIL -->
+                                        <div class="p-2 text-center text-muted small bg-light border-top"
+                                            style="font-size: 11.5px;">
+                                            Enviado por <strong>{{ email_config.mail_from_address }}</strong> | Grupo
+                                            Brasfort
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            {% if not email_config or not email_config.password %}
+                            <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>Atenção:</strong> A variável <code>SMTP_PASSWORD</code> não está configurada no
+                                arquivo <code>.env</code>. Configure sua senha para habilitar o envio pelo Exchange.
+                            </div>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="modal-footer border-top border-secondary">
+                            <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn botaoPrimario" id="btnConfirmarEnvioEmail">
+                                <i class="bi bi-send me-1"></i> Enviar Relatório
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formEmail = document.getElementById("formEnviarEmailRelatorio");
+            const btnEnviar = document.getElementById("btnConfirmarEnvioEmail");
+            const textareaMensagem = document.getElementById("emailMensagemInput");
+            const previewCorpo = document.getElementById("previewCorpoMensagem");
+            const checkTabela = document.getElementById("checkIncluirTabela");
+            const previewTabela = document.getElementById("previewTabelaPrinters");
+            const btnIrPreview = document.getElementById("btnIrParaPreview");
+            const btnVoltarEditar = document.getElementById("btnVoltarEditar");
+            const tabPreviewBtn = document.getElementById("tab-preview-btn");
+            const tabEditarBtn = document.getElementById("tab-editar-btn");
 
-{% endblock %}
+            function atualizarPreviewMensagem() {
+                if (!textareaMensagem || !previewCorpo) return;
+                const texto = textareaMensagem.value.trim();
+                if (!texto) {
+                    previewCorpo.innerHTML = '<p class="text-muted fst-italic mb-0">Nenhuma mensagem inserida.</p>';
+                    return;
+                }
+                const paragrafos = texto.split('\n');
+                let html = '';
+                let bloco = [];
+                paragrafos.forEach(function (linha) {
+                    const l = linha.trim();
+                    if (!l) {
+                        if (bloco.length > 0) {
+                            html += '<p class="mb-2">' + bloco.join('<br>') + '</p>';
+                            bloco = [];
+                        }
+                    } else {
+                        bloco.push(l);
+                    }
+                });
+                if (bloco.length > 0) {
+                    html += '<p class="mb-2">' + bloco.join('<br>') + '</p>';
+                }
+                previewCorpo.innerHTML = html;
+            }
+
+            if (textareaMensagem) {
+                textareaMensagem.addEventListener("input", atualizarPreviewMensagem);
+                atualizarPreviewMensagem();
+            }
+
+            if (checkTabela && previewTabela) {
+                checkTabela.addEventListener("change", function () {
+                    previewTabela.style.display = checkTabela.checked ? "block" : "none";
+                });
+            }
+
+            if (btnIrPreview && tabPreviewBtn) {
+                btnIrPreview.addEventListener("click", function () {
+                    atualizarPreviewMensagem();
+                    tabPreviewBtn.click();
+                });
+            }
+
+            if (btnVoltarEditar && tabEditarBtn) {
+                btnVoltarEditar.addEventListener("click", function () {
+                    tabEditarBtn.click();
+                });
+            }
+
+            if (tabPreviewBtn) {
+                tabPreviewBtn.addEventListener("shown.bs.tab", function () {
+                    atualizarPreviewMensagem();
+                });
+            }
+
+            if (formEmail && btnEnviar) {
+                formEmail.addEventListener("submit", function () {
+                    btnEnviar.disabled = true;
+                    btnEnviar.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Enviando...';
+                });
+            }
+        });
+    </script>
+
+    {% endblock %}

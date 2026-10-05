@@ -18,6 +18,9 @@ from pysnmp.hlapi.v3arch.asyncio import (
 
 OID_SERIAL = "1.3.6.1.2.1.43.5.1.1.17.1"
 OID_PAGINAS = "1.3.6.1.2.1.43.10.2.1.4.1.1"
+OID_CONTACT = "1.3.6.1.2.1.1.4.0"
+OID_LOCATION = "1.3.6.1.2.1.1.6.0"
+OID_BASE_IF_PHYS = "1.3.6.1.2.1.2.2.1.6"
 
 # Base da tabela de descrições de suprimentos (Printer-MIB / RFC 3805)
 # Formato completo de cada linha: 1.3.6.1.2.1.43.11.1.1.6.1.<indice>
@@ -26,6 +29,21 @@ OID_BASE_DESCRICAO = "1.3.6.1.2.1.43.11.1.1.6.1"
 # Colunas de nível/capacidade máxima (mesma tabela, mesmo índice)
 OID_BASE_NIVEL = "1.3.6.1.2.1.43.11.1.1.9.1"
 OID_BASE_MAX = "1.3.6.1.2.1.43.11.1.1.8.1"
+
+def _obter_mac_arp(ip):
+    """Fallback para obter o MAC via cache ARP local do sistema operacional."""
+    try:
+        import subprocess, re
+        res = subprocess.run(["arp", "-a", ip], capture_output=True, text=True, timeout=1)
+        match = re.search(
+            r"([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})",
+            res.stdout
+        )
+        if match:
+            return match.group(1).replace("-", ":").upper()
+    except Exception:
+        pass
+    return None
 
 # Valores "sentinela" definidos pela RFC 3805 para prtMarkerSuppliesLevel
 NIVEL_NAO_DISPONIVEL = -1   # não foi possível obter o nível
@@ -166,16 +184,8 @@ async def consultar_impressora_async(ip_address, community="public"):
             snmp_engine, community, transport, context
         )
 
-        indice_toner = indices["toner"]
-        indice_cilindro = indices["cilindro"]
-
-        if not indice_toner and not indice_cilindro:
-            return {
-                "erro": (
-                    "Não foi possível localizar os índices de "
-                    "toner/cilindro via SNMP nesta impressora."
-                )
-            }
+        indice_toner = indices.get("toner")
+        indice_cilindro = indices.get("cilindro")
 
         # ----------------------------------------------------------
         # 2. Monta a lista de OIDs a consultar em UMA única PDU
@@ -184,6 +194,8 @@ async def consultar_impressora_async(ip_address, community="public"):
         var_binds_solicitados = [
             ("serial", OID_SERIAL),
             ("paginas", OID_PAGINAS),
+            ("contato", OID_CONTACT),
+            ("local", OID_LOCATION),
         ]
 
         if indice_toner:
@@ -215,14 +227,34 @@ async def consultar_impressora_async(ip_address, community="public"):
             *object_types,
         )
 
-        if error_indication or error_status:
-            return {
-                "erro": f"Erro SNMP: {error_indication or error_status}"
-            }
-
         resultados = {}
-        for (chave, _), var_bind in zip(var_binds_solicitados, var_binds):
-            resultados[chave] = var_bind[1].prettyPrint()
+        if not (error_indication or error_status) and var_binds:
+            for (chave, _), var_bind in zip(var_binds_solicitados, var_binds):
+                val_str = var_bind[1].prettyPrint().strip()
+                if val_str and "noSuchInstance" not in val_str and "noSuchObject" not in val_str:
+                    resultados[chave] = val_str
+
+        # ----------------------------------------------------------
+        # 3. Consulta Endereço MAC (SNMP e fallback ARP)
+        # ----------------------------------------------------------
+        mac_address = None
+        try:
+            err_ind, err_stat, err_idx, v_binds = await next_cmd(
+                snmp_engine,
+                CommunityData(community, mpModel=1),
+                transport,
+                context,
+                ObjectType(ObjectIdentity(OID_BASE_IF_PHYS)),
+            )
+            if not (err_ind or err_stat) and v_binds:
+                octetos = v_binds[0][1].asNumbers()
+                if len(octetos) == 6:
+                    mac_address = ":".join(f"{b:02X}" for b in octetos)
+        except Exception:
+            pass
+
+        if not mac_address:
+            mac_address = _obter_mac_arp(ip_address)
 
     except Exception as e:
         return {"erro": str(e)}
@@ -245,6 +277,9 @@ async def consultar_impressora_async(ip_address, community="public"):
             resultados.get("cilindro_nivel"),
             resultados.get("cilindro_max"),
         ),
+        "contato": resultados.get("contato") or None,
+        "local": resultados.get("local") or None,
+        "mac_address": mac_address or None,
     }
 
     return dados_formatados
@@ -256,15 +291,18 @@ async def consultar_impressora_async(ip_address, community="public"):
 
 async def consultar_impressoras_async(lista_ips, community="public"):
     """
-    Consulta várias impressoras EM PARALELO (asyncio.gather), em vez
-    de uma por uma. O tempo total passa a ser aproximadamente o da
-    impressora mais lenta, e não a SOMA do tempo de todas.
-
+    Consulta impressoras em paralelo controlado (máximo 4 simultâneas)
+    para evitar MemoryError e exaustão de descritores no PySNMP.
     Retorna um dicionário {ip: dados_formatados}.
     """
+    semaforo = asyncio.Semaphore(4)
+
+    async def _consultar_com_limite(ip):
+        async with semaforo:
+            return await consultar_impressora_async(ip, community)
 
     tarefas = [
-        consultar_impressora_async(ip, community)
+        _consultar_com_limite(ip)
         for ip in lista_ips
     ]
 

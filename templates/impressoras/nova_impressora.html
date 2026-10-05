@@ -25,36 +25,118 @@
             <form method="POST">
 
                 <div class="mb-3">
-                    <label for="nome" class="form-label labelCampo">Nome da Impressora / Identificador</label>
+                    <label for="nome" class="form-label labelCampo">Nome da Impressora / Identificador <span class="text-danger">*</span></label>
                     <input
                         type="text"
                         class="form-control inputPadrao"
                         id="nome"
                         name="nome"
-                        placeholder="Ex: Impressora Recepção, Financeiro HP"
+                        placeholder="Ex: Brother DCP-8112 (Luger - Asa Norte)"
                         required
                         autofocus>
                 </div>
 
-                <div class="mb-3">
-                    <label for="ip" class="form-label labelCampo">Endereço IP</label>
-                    <input
-                        type="text"
-                        class="form-control inputPadrao"
-                        id="ip"
-                        name="ip"
-                        placeholder="Ex: 10.90.1.25"
-                        required>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="ip" class="form-label labelCampo">Endereço IP</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="ip"
+                            name="ip"
+                            placeholder="Ex: 10.90.1.25 (Deixe em branco se for manual)">
+                        <small class="text-tema-secundario">Deixe em branco para impressoras externas fora da rede.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="modelo" class="form-label labelCampo">Modelo do Equipamento</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="modelo"
+                            name="modelo"
+                            placeholder="Ex: Brother DCP-8112, HP M404">
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <label for="modelo" class="form-label labelCampo">Modelo do Equipamento</label>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="serial" class="form-label labelCampo">Número de Série (S/N)</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="serial"
+                            name="serial"
+                            placeholder="Ex: D4N714867">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="contato" class="form-label labelCampo">Contato / Responsável</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="contato"
+                            name="contato"
+                            placeholder="Ex: Robson (61 98111-2098)">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="local" class="form-label labelCampo">Local Principal (Exibido no Relatório)</label>
                     <input
                         type="text"
                         class="form-control inputPadrao"
-                        id="modelo"
-                        name="modelo"
-                        placeholder="Ex: HP LaserJet Pro M404, Kyocera ECOSYS">
+                        id="local"
+                        name="local"
+                        placeholder="Ex: Luger - Asa Norte, Lavanderia Braslav">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="andar" class="form-label labelCampo">Andar / Unidade</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="andar"
+                            name="andar"
+                            placeholder="Ex: Asa Norte, Taguatinga, 1º Andar">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="sala" class="form-label labelCampo">Sala / Setor Interno</label>
+                        <input
+                            type="text"
+                            class="form-control inputPadrao"
+                            id="sala"
+                            name="sala"
+                            placeholder="Ex: Recepção, Administrativo">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="paginas_impressas" class="form-label labelCampo">Contador Inicial de Páginas</label>
+                        <input
+                            type="number"
+                            class="form-control inputPadrao"
+                            id="paginas_impressas"
+                            name="paginas_impressas"
+                            value="0"
+                            min="0"
+                            placeholder="Ex: 241419">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="suprimento_id" class="form-label labelCampo">Família de Suprimento</label>
+                        <select id="suprimento_id" name="suprimento_id" class="form-select selectPadrao">
+                            <option value="">-- Nenhum / Vincular Depois --</option>
+                            {% for fam in familias %}
+                            <option value="{{ fam.id }}">
+                                {{ fam.nome_familia }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
