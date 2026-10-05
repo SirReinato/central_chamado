@@ -391,9 +391,9 @@ body {
 }
 
 .botaoSecundario {
-    border: 1px solid var(--cor-autenticacao);
+    border: 1px solid var(--cor-cinza-claro);
 
-    color: var(--cor-autenticacao);
+    color: var(--cor-cinza-claro);
 
     background: transparent;
 }
@@ -404,6 +404,13 @@ body {
     color: var(--cor-texto);
 }
 
+.botaoTerceario {
+    color: var(--cor-autenticacao);
+
+    border: 1px solid var(--cor-autenticacao);
+
+    background: var(--cor-cinza-claro);
+}
 
 /* =============================================================
    TABELAS
@@ -411,35 +418,69 @@ body {
 
 .tabelaPadrao {
     color: var(--cor-texto);
+    --bs-table-color: var(--cor-texto);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: rgba(255, 255, 255, 0.08);
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .cabecalhoTabela {
-    --bs-table-bg: var(--cor-card-1);
-    --bs-table-color: var(--cor-texto);
+    --bs-table-bg: #202b36;
+    --bs-table-color: #cbd5e1;
+    background-color: #202b36;
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.cabecalhoTabela th {
+    padding: 14px 16px;
+    background-color: #202b36;
+    color: #cbd5e1;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.12);
 }
 
 .linhaTabela {
-    --bs-table-bg: var(--cor-cinza-claro);
+    --bs-table-bg: #283543;
+    --bs-table-color: var(--cor-texto);
+    background-color: #283543 !important;
+    color: var(--cor-texto) !important;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
 
-    background: var(--cor-cinza-claro) !important;
-    color: var(--cor-texto-escuro);
+.linhaTabela td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--cor-texto);
+}
+
+/* Zebra striping elegante para facilitar a leitura das linhas */
+.linhaTabela:nth-of-type(even) {
+    --bs-table-bg: #222f3e;
+    background-color: #222f3e !important;
+}
+
+.linhaTabela:hover,
+.linhaTabela:hover td {
+    --bs-table-bg: #334355 !important;
+    background-color: #334355 !important;
 }
 
 .botaoDetalhes {
-    /* border: 1px solid var(--cor-azul-escuro); */
-
     color: var(--cor-cinza-claro);
-
     background: var(--cor-alerta-texto);
-
     font-weight: 600;
-
     transition: 0.2s ease;
 }
 
 .botaoDetalhes:hover {
     background: var(--cor-card-1);
-
     color: var(--cor-texto);
 }
 
@@ -621,15 +662,25 @@ body {
 .badgeAdministrador {
     background: rgba(var(--cor-info-rgb), 0.20);
     color: var(--cor-info-texto);
-
     border-color: rgba(var(--cor-info-rgb), 0.4);
+}
+
+.perfilOperador {
+    background: rgba(194, 165, 109, 0.20);
+    color: #e2c07a;
+    border-color: rgba(194, 165, 109, 0.4);
+}
+
+.perfilTecnicoImpressora {
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.4);
 }
 
 .perfilUsuario,
 .badgeUsuario {
     background: var(--cor-autenticacao);
     color: var(--cor-texto-secundario);
-
     border-color: var(--cor-borda);
 }
 
@@ -645,43 +696,38 @@ body {
 .statusAberto,
 .statusAtivo,
 .statusImpressoraOnline {
-    background: rgba(var(--cor-sucesso-rgb), 0.20);
-    color: var(--cor-azul-escuro);
-
-    border: 1px solid rgba(var(--cor-sucesso-rgb), 0.4);
+    background: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.4);
 }
 
 .statusAndamento,
 .statusPendente {
-    background: rgba(var(--cor-alerta-rgb), 0.20);
-    color: var(--cor-alerta-texto);
-
-    border: 1px solid rgba(var(--cor-alerta-rgb), 0.4);
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .statusResolvido {
-    background: rgba(var(--cor-info-rgb), 0.20);
-    color: var(--cor-info-texto);
-
-    border: 1px solid rgba(var(--cor-info-rgb), 0.4);
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
 }
 
 .statusFechado,
 .statusReprovado,
 .statusBloqueado,
 .statusImpressoraOffline {
-    background: rgba(var(--cor-perigo-rgb), 0.20);
-    color: var(--cor-perigo-texto);
-
-    border: 1px solid rgba(var(--cor-perigo-rgb), 0.4);
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 .statusIndefinido,
 .statusPadrao {
-    background: var(--cor-fundo-input);
-    color: var(--cor-texto-secundario);
-
-    border: 1px solid var(--cor-borda);
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 
@@ -792,31 +838,185 @@ body {
 
 .ipImpressora {
     display: inline-flex;
-
     align-items: center;
-    justify-content: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 6px;
+    color: #38bdf8;
+    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
 
-    min-width: 120px;
-    height: 30px;
-
-    padding: 0 12px;
-
-    background: var(--cor-fundo-input);
-
-    border: 1px solid var(--cor-borda);
-
-    border-radius: 8px;
-
-    color: var(--cor-autenticacao);
-
-    font-family: monospace;
-    font-size: 0.85rem;
+.badgeManualIP {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 6px;
+    color: #fbbf24;
+    font-size: 0.78rem;
+    font-weight: 600;
 }
 
 .ultimaVerificacao {
-    color: var(--cor-autenticacao);
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
 
-    font-size: 0.9rem;
+/* Badges de níveis de insumo (Toner / Cilindro) */
+.badgeNivel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 55px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.badgeNivel--normal {
+    background: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.badgeNivel--alerta {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badgeNivel--critico {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+/* Badge de Suprimento Vinculado */
+.badgeSuprimento {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(84, 122, 149, 0.25);
+    color: #e2e8f0;
+    border: 1px solid rgba(84, 122, 149, 0.45);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.badgeSemVinculo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 0.78rem;
+}
+
+/* Contador de Páginas */
+.badgeContador {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+
+.badgeContador strong {
+    color: #ffffff;
+    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+}
+
+/* Botões de Ação na Tabela de Impressoras */
+.btnAcaoTabela {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btnAcaoTabela--editar {
+    background: rgba(84, 122, 149, 0.25);
+    color: #e2e8f0;
+    border: 1px solid rgba(84, 122, 149, 0.45);
+}
+
+.btnAcaoTabela--editar:hover {
+    background: #547A95;
+    color: #ffffff;
+    border-color: #547A95;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(84, 122, 149, 0.4);
+}
+
+.btnAcaoTabela--retirar {
+    background: rgba(194, 165, 109, 0.15);
+    color: #e2c07a;
+    border: 1px solid rgba(194, 165, 109, 0.4);
+}
+
+.btnAcaoTabela--retirar:hover {
+    background: #C2A56D;
+    color: #202b36;
+    border-color: #C2A56D;
+    font-weight: 700;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(194, 165, 109, 0.4);
+}
+
+/* Ponto Luminoso de Status */
+.pontoStatus {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.pontoStatus--online {
+    background-color: #4ade80;
+    box-shadow: 0 0 6px #4ade80;
+}
+
+.pontoStatus--offline {
+    background-color: #f87171;
+    box-shadow: 0 0 6px #f87171;
+}
+
+.badgeStatus--online {
+    background: rgba(34, 197, 94, 0.18) !important;
+    color: #4ade80 !important;
+    border: 1px solid rgba(34, 197, 94, 0.35) !important;
+}
+
+.badgeStatus--offline {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #fca5a5 !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
 }
 
 /* =============================================================
@@ -1135,4 +1335,29 @@ body {
     background-color: var(--cor-card-2);
     border-color: var(--cor-dourado);
     color: var(--cor-dourado);
+}
+
+/* =============================================================
+   PÁGINAS / ABAS DE IMPRESSORAS (ONLINE / OFFLINE)
+   ============================================================= */
+
+.cardMetricaLink {
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.cardMetricaLink:hover .cardMetrica {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
+}
+
+.cardMetricaAtivoOnline {
+    border: 2px solid #4ade80 !important;
+    background: rgba(34, 197, 94, 0.08) !important;
+}
+
+.cardMetricaAtivoOffline {
+    border: 2px solid #fbbf24 !important;
+    background: rgba(245, 158, 11, 0.08) !important;
 }

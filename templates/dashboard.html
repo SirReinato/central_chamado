@@ -333,9 +333,14 @@
 
                                 {% elif usuario.perfil == 'operador' %}
 
-                                <span class="badge badgePerfil badgeAdministrador">
+                                <span class="badge badgePerfil perfilOperador">
                                     Operador
+                                </span>
 
+                                {% elif usuario.perfil == 'tecnicoImpressora' %}
+
+                                <span class="badge badgePerfil perfilTecnicoImpressora">
+                                    Técnico Impressora
                                 </span>
 
                                 {% else %}

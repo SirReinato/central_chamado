@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
@@ -49,6 +49,8 @@ def _ranking(query, coluna, limite=None):
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
 
     query = Chamado.query
 

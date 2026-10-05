@@ -73,6 +73,8 @@ def lista_de_chamados():
 @chamados_bp.route('/home')
 @login_required
 def home():
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
 
     total = query_chamados().count()
 
@@ -119,6 +121,9 @@ def home():
 @chamados_bp.route('/chamados')
 @login_required
 def listar_chamados():
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
+
     busca = request.args.get('busca', '').strip()
     status = request.args.get('status', '').strip()
     prioridade = request.args.get('prioridade', '').strip()
@@ -193,6 +198,8 @@ def listar_chamados():
 @chamados_bp.route('/chamados/novo', methods=['GET', 'POST'])
 @login_required
 def novo_chamado():
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
 
     if request.method == 'POST':
 
@@ -215,6 +222,8 @@ def novo_chamado():
 @chamados_bp.route('/chamados/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_chamado(id):
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
 
     chamado = buscar_chamado_por_id(id)
 
@@ -281,6 +290,8 @@ def excluir_chamado(id):
 @chamados_bp.route('/chamados/detalhes/<int:id>')
 @login_required
 def detalhes_chamado(id):
+    if current_user.is_tecnico_impressora:
+        return redirect(url_for('impressoras.index'))
 
     chamado = buscar_chamado_por_id(id)
 
