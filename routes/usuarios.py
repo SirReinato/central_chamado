@@ -7,9 +7,10 @@ from services.usuario_service import (
     aprovar_usuario,
     bloquear_usuario,
     ativar_usuario,
-    tornar_adm,
-    tornar_usuario,
-    tornar_operador,
+    tornar_adm as servico_tornar_adm,
+    tornar_usuario as servico_tornar_usuario,
+    tornar_operador as servico_tornar_operador,
+    tornar_tecnico_impressora as servico_tornar_tecnico_impressora,
 )
 from utils.decorator import admin_required
 
@@ -73,8 +74,8 @@ def ativar(id):
 @usuarios_bp.route('/tornar_adm/<int:id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def rota_tornar_adm(id):
-    usuario = tornar_adm(id)
+def tornar_adm(id):
+    usuario = servico_tornar_adm(id)
     flash(f"Usuário '{usuario.nome}' agora é Administrador.", "success")
     return _redirecionar_origem()
 
@@ -82,13 +83,13 @@ def rota_tornar_adm(id):
 @usuarios_bp.route('/tornar_usuario/<int:id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def rota_tornar_usuario(id):
+def tornar_usuario(id):
     total_admins = Usuario.query.filter_by(perfil='admin', status='ativo').count()
     if current_user.id == id and total_admins <= 1:
         flash("Operação negada: o sistema precisa ter pelo menos um administrador ativo.", "danger")
         return _redirecionar_origem()
 
-    usuario = tornar_usuario(id)
+    usuario = servico_tornar_usuario(id)
     flash(f"Usuário '{usuario.nome}' agora é Usuário comum.", "info")
     return _redirecionar_origem()
 
@@ -96,13 +97,27 @@ def rota_tornar_usuario(id):
 @usuarios_bp.route('/tornar_operador/<int:id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def rota_tornar_operador(id):
+def tornar_operador(id):
     total_admins = Usuario.query.filter_by(perfil='admin', status='ativo').count()
     if current_user.id == id and total_admins <= 1:
         flash("Operação negada: o sistema precisa ter pelo menos um administrador ativo.", "danger")
         return _redirecionar_origem()
 
-    usuario = tornar_operador(id)
+    usuario = servico_tornar_operador(id)
     flash(f"Usuário '{usuario.nome}' agora é Operador.", "info")
+    return _redirecionar_origem()
+
+
+@usuarios_bp.route('/tornar_tecnico_impressora/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def tornar_tecnico_impressora(id):
+    total_admins = Usuario.query.filter_by(perfil='admin', status='ativo').count()
+    if current_user.id == id and total_admins <= 1:
+        flash("Operação negada: o sistema precisa ter pelo menos um administrador ativo.", "danger")
+        return _redirecionar_origem()
+
+    usuario = servico_tornar_tecnico_impressora(id)
+    flash(f"Usuário '{usuario.nome}' agora é Técnico de Impressoras.", "info")
     return _redirecionar_origem()
 

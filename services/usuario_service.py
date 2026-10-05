@@ -52,6 +52,17 @@ def tornar_operador(id):
 
     return usuario
 
+
+def tornar_tecnico_impressora(id):
+
+    usuario = Usuario.query.get_or_404(id)
+
+    usuario.perfil = 'tecnicoImpressora'
+
+    db.session.commit()
+
+    return usuario
+
 def ativar_usuario(id):
 
     usuario = Usuario.query.get_or_404(id)

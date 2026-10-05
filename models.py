@@ -58,7 +58,7 @@ class Usuario(UserMixin, db.Model):
         nullable=False
     )
     perfil = db.Column(
-        db.String(20), 
+        db.String(30), 
         nullable=False, 
         default='usuario'
     )
@@ -75,6 +75,10 @@ class Usuario(UserMixin, db.Model):
     @property
     def is_operador(self):
         return self.perfil == 'operador'
+    
+    @property
+    def is_tecnico_impressora(self):
+        return self.perfil == 'tecnicoImpressora'
     
     
 class Impressora(db.Model):
@@ -165,6 +169,21 @@ class Impressora(db.Model):
     necessita_atencao = db.Column(
         db.Boolean,
         default=False
+    )
+
+    mac_address = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
+    contato = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    local = db.Column(
+        db.String(100),
+        nullable=True
     )
 
     @property
