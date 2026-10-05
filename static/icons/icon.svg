@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#0b0f19" />
+    </linearGradient>
+    <linearGradient id="primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)" stroke="#38bdf8" stroke-width="4" stroke-opacity="0.3"/>
+  <!-- Headset -->
+  <path d="M 156 220 A 100 100 0 0 1 356 220" fill="none" stroke="url(#primary)" stroke-width="20" stroke-linecap="round"/>
+  <rect x="136" y="210" width="28" height="65" rx="12" fill="#2563eb" stroke="#38bdf8" stroke-width="3"/>
+  <rect x="348" y="210" width="28" height="65" rx="12" fill="#2563eb" stroke="#38bdf8" stroke-width="3"/>
+  <!-- Mic -->
+  <path d="M 362 265 L 340 330 L 280 330" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="260" y="322" width="24" height="16" rx="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+  <!-- Ticket Card -->
+  <rect x="186" y="195" width="140" height="105" rx="16" fill="#1e293b" stroke="#38bdf8" stroke-width="5"/>
+  <circle cx="206" cy="216" r="6" fill="#22c55e"/>
+  <rect x="220" y="212" width="85" height="9" rx="4" fill="#f8fafc"/>
+  <rect x="206" y="235" width="100" height="8" rx="4" fill="#94a3b8"/>
+  <rect x="206" y="252" width="70" height="8" rx="4" fill="#64748b"/>
+  <!-- Badge -->
+  <rect x="275" y="268" width="40" height="22" rx="6" fill="#2563eb"/>
+  <path d="M 283 279 L 289 285 L 302 273" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
