@@ -28,15 +28,32 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-padrao-desenvolvi
 
 # Banco de dados unificado (Chamados, Usuários, Impressoras, Estoque e Histórico)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///chamados.db')
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'connect_args': {
+        'timeout': 30,
+        'check_same_thread': False
+    }
+}
 # manter a sessão ativa mesmo após fechar o navegador, falso
 app.config['SESSION_PERMANENT'] = False
- 
-
 
 # Banco de dados
 db.init_app(app)
+
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+    except Exception:
+        pass
+    cursor.close()
 
 # Flask-Login
 login_manager = LoginManager()
@@ -117,18 +134,49 @@ scheduler.add_job(
     trigger="interval",
     hours=1,
     id="job_atualizar_impressoras",
-    replace_existing=True,
-    next_run_time=datetime.now()
+    replace_existing=True
 )
+
+import sys
+
+# Inicia o agendador em segundo plano apenas quando o servidor web estiver em execução
+is_server_process = (
+    __name__ == '__main__' or
+    any(arg.lower() == 'run' for arg in sys.argv)
+)
+
+if is_server_process and not scheduler.running:
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or 'WERKZEUG_RUN_MAIN' not in os.environ:
+        try:
+            scheduler.start()
+            logger.info("Agendador APScheduler iniciado com sucesso.")
+        except Exception as e:
+            logger.warning(f"Aviso ao iniciar agendador: {e}")
 
 # Garante o encerramento limpo do scheduler ao finalizar a aplicação
 atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler.running else None)
 
 
 if __name__ == '__main__':
-    scheduler.start()
     from waitress import serve
+    from scripts.get_ip import get_network_ip
+
     host = os.environ.get('HOST', '0.0.0.0')
     port = int(os.environ.get('PORT', 5000))
-    logger.info(f"Servidor iniciado em http://{host}:{port}")
-    serve(app, host=host, port=port)
+    network_ip = get_network_ip()
+
+    print("\n" + "=" * 70)
+    print("           CENTRAL DE CHAMADOS BRASFORT - SERVIDOR DE REDE")
+    print("=" * 70)
+    print("  * Servidor WSGI:     Waitress (Multi-thread, Producao)")
+    print("  * Threads Ativas:    8 conexoes simultaneas")
+    print("  * Acesso Local:      http://127.0.0.1:5000  ou  http://localhost:5000")
+    print(f"  * Acesso na Rede:    http://{network_ip}:{port}")
+    print("  --------------------------------------------------------------------")
+    print(f"  COMPARTILHE ESTE LINK NA SUA REDE: http://{network_ip}:{port}")
+    print("  --------------------------------------------------------------------")
+    print("  Pressione Ctrl + C para encerrar o servidor.")
+    print("=" * 70 + "\n")
+
+    logger.info(f"Servidor iniciado em http://{host}:{port} (Rede: http://{network_ip}:{port})")
+    serve(app, host=host, port=port, threads=8)
