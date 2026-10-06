@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao">
+
+    <!-- =============================================================
+         1. CABEÇALHO DO EDITOR
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
+                            <i class="bi bi-book me-1"></i> Base de Conhecimento
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('conhecimento.admin_dashboard') }}" class="text-decoration-none text-warning">
+                            Administração
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-tema" aria-current="page">
+                        {{ 'Editar Artigo' if artigo else 'Novo Artigo' }}
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="tituloPrincipal mb-1">
+                <i class="bi bi-markdown text-warning me-2"></i>
+                {{ 'Editar Artigo' if artigo else 'Criar Novo Artigo' }}
+            </h1>
+            <p class="tituloSecundario mb-0">
+                Redija tutoriais, manuais e guias operacionais padronizados em formato Markdown.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            {% if artigo %}
+            <a href="{{ url_for('conhecimento.ver_artigo', slug=artigo.slug) }}" class="btn botaoSecundario" target="_blank" title="Visualizar publicação atual">
+                <i class="bi bi-eye me-1"></i> Visualizar Artigo
+            </a>
+            {% endif %}
+            <a href="{{ url_for('conhecimento.admin_dashboard') }}" class="btn botaoSecundario">
+                <i class="bi bi-x-circle me-1"></i> Cancelar
+            </a>
+        </div>
+    </div>
+
+    <!-- Se originado de uma solicitação de usuário pendente -->
+    {% if solicitacao %}
+    <div class="calloutKb calloutKbImportant mb-4">
+        <div class="calloutKbHeader">
+            <i class="bi bi-person-check me-2"></i> Atendendo à Solicitação #{{ solicitacao.id }}
+        </div>
+        <div class="calloutKbBody">
+            <strong>Solicitante:</strong> {{ solicitacao.solicitante.nome if solicitacao.solicitante else 'Colaborador' }}<br>
+            <strong>Demanda:</strong> {{ solicitacao.descricao }}<br>
+            {% if solicitacao.justificativa %}<strong>Justificativa:</strong> {{ solicitacao.justificativa }}{% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- =============================================================
+         2. FORMULÁRIO DO ARTIGO COM EDITOR MARKDOWN
+         ============================================================= -->
+    <form method="POST" action="{{ url_for('conhecimento.editar_artigo', artigo_id=artigo.id) if artigo else url_for('conhecimento.novo_artigo') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="row g-4">
+            
+            <!-- Coluna Principal: Título, Resumo e Conteúdo MD -->
+            <div class="col-lg-8">
+                <div class="cardPadrao p-4 mb-4">
+                    
+                    <!-- Título -->
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label text-tema fw-semibold">
+                            Título do Artigo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control inputPadrao" 
+                               id="titulo" 
+                               name="titulo" 
+                               required 
+                               value="{{ artigo.titulo if artigo else (solicitacao.titulo if solicitacao else '') }}"
+                               placeholder="Ex: Como Configurar IP Fixo na Impressora Brother DCP-L5652DN"
+                               autocomplete="off">
+                    </div>
+
+                    <!-- Resumo / TL;DR -->
+                    <div class="mb-3">
+                        <label for="resumo" class="form-label text-tema fw-semibold">
+                            Resumo Breve (Exibido nos cards e na busca)
+                        </label>
+                        <textarea class="form-control inputPadrao" 
+                                  id="resumo" 
+                                  name="resumo" 
+                                  rows="2" 
+                                  placeholder="Ex: Guia passo a passo com comandos do painel touch e web para fixar IP e evitar perda de conexão no DHCP.">{{ artigo.resumo if artigo else '' }}</textarea>
+                    </div>
+
+                    <!-- BARRA DE FERRAMENTAS DO MARKDOWN -->
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="conteudo_md" class="form-label text-tema fw-semibold mb-0">
+                                Conteúdo em Markdown <span class="text-danger">*</span>
+                            </label>
+                            <span class="small text-tema-secundario">
+                                Suporta callouts, ToC automático e tabelas
+                            </span>
+                        </div>
+
+                        <!-- Barra de Ferramentas / Toolbar -->
+                        <div class="d-flex flex-wrap gap-1 p-2 rounded-2 mb-2" style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--cor-borda);">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirMd('**', '**')" title="Negrito">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirMd('*', '*')" title="Itálico">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirLinha('## ')" title="Título H2">
+                                <strong>H2</strong>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirLinha('### ')" title="Subtítulo H3">
+                                <strong>H3</strong>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirLinha('- ')" title="Lista com marcadores">
+                                <i class="bi bi-list-ul"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirLinha('1. ')" title="Lista numerada">
+                                <i class="bi bi-list-ol"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirBloco('```bash\n', '\n```')" title="Bloco de Código">
+                                <i class="bi bi-code-slash"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="inserirTabela()" title="Tabela">
+                                <i class="bi bi-table"></i>
+                            </button>
+
+                            <div class="vr mx-1 my-1 opacity-25"></div>
+
+                            <!-- Botões de Callouts Especiais -->
+                            <button type="button" class="btn btn-sm btn-outline-info py-1 px-2" onclick="inserirBloco('> [!NOTE]\n> ', '')" title="Aviso Informativo">
+                                <i class="bi bi-info-circle me-1"></i> Nota
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2" onclick="inserirBloco('> [!TIP]\n> ', '')" title="Dica">
+                                <i class="bi bi-lightbulb me-1"></i> Dica
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning py-1 px-2" onclick="inserirBloco('> [!WARNING]\n> ', '')" title="Alerta / Atenção">
+                                <i class="bi bi-exclamation-triangle me-1"></i> Atenção
+                            </button>
+                        </div>
+
+                        <!-- Área de Texto Markdown -->
+                        <textarea class="form-control inputPadrao font-monospace" 
+                                  id="conteudo_md" 
+                                  name="conteudo_md" 
+                                  rows="18" 
+                                  required 
+                                  style="font-size: 0.92rem; line-height: 1.6;" 
+                                  placeholder="# Título do Tópico&#10;&#10;Breve introdução...&#10;&#10;## 1. Passo Inicial&#10;&#10;Execute os comandos abaixo:&#10;```powershell&#10;ipconfig /all&#10;```&#10;&#10;> [!NOTE]&#10;> Lembre-se de anotar o endereço IPv4.">{{ artigo.conteudo_md if artigo else '' }}</textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Coluna Lateral: Publicação, Categoria, Tags e Ajuda -->
+            <div class="col-lg-4">
+                <div class="d-flex flex-column gap-4">
+                    
+                    <!-- Configurações de Publicação -->
+                    <div class="cardPadrao p-4">
+                        <h2 class="h6 fw-bold text-tema mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-sliders text-warning"></i> Publicação & Metadados
+                        </h2>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label text-tema fw-semibold small">Status do Artigo</label>
+                            <select class="form-select selectPadrao" id="status" name="status">
+                                <option value="publicado" {% if artigo and artigo.status == 'publicado' %}selected{% elif not artigo %}selected{% endif %}>
+                                    🟢 Publicado (Visível a todos)
+                                </option>
+                                <option value="rascunho" {% if artigo and artigo.status == 'rascunho' %}selected{% endif %}>
+                                    🟡 Rascunho (Somente administradores)
+                                </option>
+                                <option value="arquivado" {% if artigo and artigo.status == 'arquivado' %}selected{% endif %}>
+                                    ⚪ Arquivado (Desativado)
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Categoria -->
+                        <div class="mb-3">
+                            <label for="categoria_id" class="form-label text-tema fw-semibold small">
+                                Categoria <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select selectPadrao" id="categoria_id" name="categoria_id" required>
+                                {% for cat in categorias %}
+                                <option value="{{ cat.id }}" 
+                                    {% if artigo and artigo.categoria_id == cat.id %}selected
+                                    {% elif solicitacao and solicitacao.categoria_id == cat.id %}selected{% endif %}>
+                                    {{ cat.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-4">
+                            <label for="tags" class="form-label text-tema fw-semibold small">Tags (separadas por vírgula)</label>
+                            <input type="text" 
+                                   class="form-control inputPadrao" 
+                                   id="tags" 
+                                   name="tags" 
+                                   value="{{ tags_string if tags_string is defined else '' }}" 
+                                   placeholder="rede, windows, ip, brother"
+                                   autocomplete="off">
+                            <div class="form-text text-tema-secundario small">Ex: vpn, roteador, toner, tutorial</div>
+                        </div>
+
+                        <!-- Botão de Salvar -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn botaoPrimario py-2 d-inline-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-cloud-arrow-up-fill fs-5"></i>
+                                <span class="fw-bold">{{ 'Atualizar Artigo' if artigo else 'Publicar Artigo' }}</span>
+                            </button>
+                            <a href="{{ url_for('conhecimento.admin_dashboard') }}" class="btn botaoSecundario text-center">
+                                Voltar ao Painel
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Guia Rápido de Callouts Markdown -->
+                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cor-borda);">
+                        <div class="small fw-bold text-warning text-uppercase mb-2 d-flex align-items-center gap-2">
+                            <i class="bi bi-question-circle"></i> Sintaxe Suportada
+                        </div>
+                        <ul class="list-unstyled small text-tema-secundario mb-0" style="line-height: 1.8;">
+                            <li><code>> [!NOTE]</code> Caixa de informação azul</li>
+                            <li><code>> [!TIP]</code> Caixa de dica verde</li>
+                            <li><code>> [!WARNING]</code> Caixa de atenção amarela</li>
+                            <li><code>> [!IMPORTANT]</code> Caixa dourada importante</li>
+                            <li><code>> [!CAUTION]</code> Caixa vermelha de risco</li>
+                            <li><code>```bash ... ```</code> Blocos com destaque e cópia</li>
+                            <li><code>## Seção</code> Gera sumário ToC automaticamente</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+<!-- Funções Utilitárias para Inserção no Editor Markdown -->
+<script>
+function inserirMd(inicio, fim) {
+    const textarea = document.getElementById('conteudo_md');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const textoSel = textarea.value.substring(start, end) || 'texto';
+    const novoTexto = inicio + textoSel + fim;
+    textarea.setRangeText(novoTexto, start, end, 'select');
+    textarea.focus();
+}
+
+function inserirLinha(prefixo) {
+    const textarea = document.getElementById('conteudo_md');
+    const start = textarea.selectionStart;
+    textarea.setRangeText(prefixo, start, start, 'end');
+    textarea.focus();
+}
+
+function inserirBloco(inicio, fim) {
+    const textarea = document.getElementById('conteudo_md');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const textoSel = textarea.value.substring(start, end) || 'conteudo';
+    const novoTexto = inicio + textoSel + fim;
+    textarea.setRangeText(novoTexto, start, end, 'select');
+    textarea.focus();
+}
+
+function inserirTabela() {
+    const tabelaMd = "\n| Parâmetro | Tipo | Descrição |\n| :--- | :--- | :--- |\n| Exemplo 1 | Texto | Configuração inicial |\n| Exemplo 2 | Número | Porta de rede |\n\n";
+    const textarea = document.getElementById('conteudo_md');
+    const start = textarea.selectionStart;
+    textarea.setRangeText(tabelaMd, start, start, 'end');
+    textarea.focus();
+}
+</script>
+{% endblock %}

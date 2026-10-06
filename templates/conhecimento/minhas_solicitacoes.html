@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao">
+
+    <!-- =============================================================
+         1. CABEÇALHO
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
+                            <i class="bi bi-book me-1"></i> Base de Conhecimento
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-tema" aria-current="page">
+                        Minhas Solicitações
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="tituloPrincipal mb-1">
+                Minhas Sugestões de Conteúdo
+            </h1>
+            <p class="tituloSecundario mb-0">
+                Acompanhe o andamento das suas solicitações de tutoriais e procedimentos.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-circle"></i>
+                <span>Nova Solicitação</span>
+            </a>
+            <a href="{{ url_for('conhecimento.index') }}" class="btn botaoSecundario">
+                <i class="bi bi-arrow-left me-1"></i> Voltar à Base
+            </a>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. TABELA DE SOLICITAÇÕES
+         ============================================================= -->
+    {% if solicitacoes %}
+    <div class="cardPadrao p-0 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="color: var(--cor-cinza-claro);">
+                <thead style="background: rgba(255, 255, 255, 0.05); border-bottom: 2px solid var(--cor-borda);">
+                    <tr class="small text-uppercase text-tema-secundario">
+                        <th class="ps-4 py-3">Título / Descrição</th>
+                        <th class="py-3">Categoria</th>
+                        <th class="py-3">Prioridade</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3">Data de Envio</th>
+                        <th class="pe-4 py-3 text-end">Ações / Retorno</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sol in solicitacoes %}
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.06);">
+                        <td class="ps-4 py-3" style="max-width: 320px;">
+                            <div class="fw-bold text-tema mb-1">{{ sol.titulo }}</div>
+                            <div class="small text-tema-secundario text-truncate" title="{{ sol.descricao }}">
+                                {{ sol.descricao }}
+                            </div>
+                        </td>
+                        <td class="py-3">
+                            {% if sol.categoria %}
+                            <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary border-opacity-25">
+                                {{ sol.categoria.nome }}
+                            </span>
+                            {% else %}
+                            <span class="text-tema-secundario small">Geral</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if sol.prioridade == 'urgente' %}
+                            <span class="badge bg-danger">Urgente</span>
+                            {% elif sol.prioridade == 'alta' %}
+                            <span class="badge bg-warning text-dark">Alta</span>
+                            {% elif sol.prioridade == 'baixa' %}
+                            <span class="badge bg-secondary">Baixa</span>
+                            {% else %}
+                            <span class="badge bg-info text-dark">Normal</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if sol.status == 'pendente' %}
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25 px-2 py-1">
+                                <i class="bi bi-clock me-1"></i> Em Análise
+                            </span>
+                            {% elif sol.status == 'aprovada' %}
+                            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 px-2 py-1">
+                                <i class="bi bi-gear me-1"></i> Em Produção
+                            </span>
+                            {% elif sol.status == 'concluida' %}
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2 py-1">
+                                <i class="bi bi-check-circle-fill me-1"></i> Concluída
+                            </span>
+                            {% elif sol.status == 'rejeitada' %}
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                <i class="bi bi-x-circle me-1"></i> Recusada
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small text-tema-secundario">
+                            {{ sol.data_envio.strftime('%d/%m/%Y às %H:%M') }}
+                        </td>
+                        <td class="pe-4 py-3 text-end">
+                            {% if sol.artigo_gerado %}
+                            <a href="{{ url_for('conhecimento.ver_artigo', slug=sol.artigo_gerado.slug) }}" class="btn btn-sm btn-success">
+                                <i class="bi bi-book-half me-1"></i> Ver Artigo
+                            </a>
+                            {% elif sol.resposta_admin %}
+                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalResposta{{ sol.id }}">
+                                <i class="bi bi-chat-left-text me-1"></i> Ver Parecer
+                            </button>
+                            {% else %}
+                            <span class="text-tema-secundario small fst-italic">Aguardando parecer</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <!-- Modal Parecer do Admin -->
+                    {% if sol.resposta_admin %}
+                    <div class="modal fade" id="modalResposta{{ sol.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
+                                <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                                    <h5 class="modal-title text-tema fw-bold">
+                                        <i class="bi bi-info-circle text-info me-2"></i>Parecer da TI sobre #{{ sol.id }}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                </div>
+                                <div class="modal-body py-4">
+                                    <div class="mb-3">
+                                        <div class="text-tema-secundario small mb-1">Título da sua sugestão:</div>
+                                        <div class="fw-bold text-tema">{{ sol.titulo }}</div>
+                                    </div>
+                                    <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.08);">
+                                        <div class="text-warning small fw-bold mb-1">Resposta do Administrador:</div>
+                                        <div class="text-light small" style="white-space: pre-wrap;">{{ sol.resposta_admin }}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+                                    <button type="button" class="btn btn-sm botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="p-5 text-center rounded-3 mb-4" style="background: var(--cor-card-1); border: 1px dashed var(--cor-borda);">
+        <div class="d-inline-flex p-3 rounded-circle mb-3" style="background: rgba(var(--cor-dourado-rgb), 0.1); color: var(--cor-dourado);">
+            <i class="bi bi-inbox fs-1"></i>
+        </div>
+        <h3 class="fw-bold text-tema mb-2">Você ainda não enviou solicitações</h3>
+        <p class="text-tema-secundario mb-4" style="max-width: 450px; margin: 0 auto;">
+            Tem dúvidas sobre processos da empresa ou quer que algum sistema seja documentado? Envie sua primeira sugestão agora.
+        </p>
+        <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="btn botaoPrimario">
+            <i class="bi bi-plus-circle me-1"></i> Enviar Sugestão de Conteúdo
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

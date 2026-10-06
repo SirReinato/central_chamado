@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao">
+
+    <!-- =============================================================
+         1. CABEÇALHO DO PAINEL ADMINISTRATIVO
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
+                            <i class="bi bi-book me-1"></i> Base de Conhecimento
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-warning" aria-current="page">
+                        Administração
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="tituloPrincipal mb-1">
+                <i class="bi bi-gear-fill text-warning me-2"></i>Gestão da Base de Conhecimento
+            </h1>
+            <p class="tituloSecundario mb-0">
+                Métricas de uso, triagem de sugestões e governança de artigos e categorias.
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn botaoSecundario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovaCategoria">
+                <i class="bi bi-folder-plus text-warning"></i>
+                <span>Nova Categoria</span>
+            </button>
+            <a href="{{ url_for('conhecimento.novo_artigo') }}" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-plus-fill"></i>
+                <span>Novo Artigo</span>
+            </a>
+            <a href="{{ url_for('conhecimento.index') }}" class="btn botaoSecundario" title="Ver Hub de Artigos">
+                <i class="bi bi-eye me-1"></i> Ver Base
+            </a>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. KPIS ANALÍTICOS (DASHBOARD)
+         ============================================================= -->
+    <div class="row g-3 mb-4">
+        
+        <!-- Total de Artigos -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="cardMetrica p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cardMetricaTitulo">Total de Artigos</span>
+                    <i class="bi bi-journal-text fs-4 text-warning"></i>
+                </div>
+                <div class="cardMetricaValor mb-1">{{ kpis.total_artigos }}</div>
+                <div class="small text-tema-secundario">
+                    <span class="text-success fw-semibold">{{ kpis.artigos_publicados }}</span> publicados • 
+                    <span class="text-secondary">{{ kpis.artigos_rascunho }}</span> rascunhos
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Visualizações -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="cardMetrica p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cardMetricaTitulo">Visualizações</span>
+                    <i class="bi bi-eye-fill fs-4 text-info"></i>
+                </div>
+                <div class="cardMetricaValor mb-1">{{ kpis.total_visualizacoes }}</div>
+                <div class="small text-tema-secundario">
+                    Consultas registradas pelos colaboradores
+                </div>
+            </div>
+        </div>
+
+        <!-- Taxa de Aprovação / Utilidade -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="cardMetrica p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cardMetricaTitulo">Índice de Utilidade</span>
+                    <i class="bi bi-hand-thumbs-up-fill fs-4 text-success"></i>
+                </div>
+                <div class="cardMetricaValor mb-1 text-success">{{ kpis.taxa_aprovacao }}%</div>
+                <div class="small text-tema-secundario">
+                    {{ kpis.total_feedbacks }} avaliações registradas (👍 / 👎)
+                </div>
+            </div>
+        </div>
+
+        <!-- Solicitações Pendentes -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="cardMetrica p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="cardMetricaTitulo">Fila de Sugestões</span>
+                    <i class="bi bi-inbox-fill fs-4 {% if kpis.solicitacoes_pendentes > 0 %}text-danger{% else %}text-secondary{% endif %}"></i>
+                </div>
+                <div class="cardMetricaValor mb-1 {% if kpis.solicitacoes_pendentes > 0 %}text-warning{% endif %}">
+                    {{ kpis.solicitacoes_pendentes }}
+                </div>
+                <div class="small text-tema-secundario">
+                    Aguardando análise da equipe técnica
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =============================================================
+         3. FILA DE TRIAGEM DE SOLICITAÇÕES PENDENTES
+         ============================================================= -->
+    <div class="cardPadrao p-0 overflow-hidden mb-4">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-warning fs-5"></i>
+                <h2 class="h6 mb-0 text-tema fw-bold">Fila de Solicitações Pendentes dos Usuários</h2>
+                <span class="badge bg-warning bg-opacity-25 text-warning rounded-pill">{{ solicitacoes_pendentes|length }}</span>
+            </div>
+        </div>
+
+        {% if solicitacoes_pendentes %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="color: var(--cor-cinza-claro);">
+                <thead style="background: rgba(255, 255, 255, 0.04); font-size: 0.8rem; text-transform: uppercase;">
+                    <tr>
+                        <th class="ps-3 py-3">Título / Justificativa</th>
+                        <th class="py-3">Solicitante</th>
+                        <th class="py-3">Categoria</th>
+                        <th class="py-3">Prioridade</th>
+                        <th class="py-3">Data</th>
+                        <th class="pe-3 py-3 text-end">Ações de Triagem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sol in solicitacoes_pendentes %}
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                        <td class="ps-3 py-3" style="max-width: 320px;">
+                            <div class="fw-bold text-tema mb-1">{{ sol.titulo }}</div>
+                            <div class="small text-tema-secundario text-truncate" title="{{ sol.descricao }}">
+                                {{ sol.descricao }}
+                            </div>
+                            {% if sol.justificativa %}
+                            <div class="small text-warning text-truncate mt-1" style="font-size: 0.75rem;" title="{{ sol.justificativa }}">
+                                <i class="bi bi-lightbulb"></i> {{ sol.justificativa }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small text-tema">
+                            {{ sol.solicitante.nome if sol.solicitante else 'Usuário' }}
+                        </td>
+                        <td class="py-3 small">
+                            {{ sol.categoria.nome if sol.categoria else 'Geral' }}
+                        </td>
+                        <td class="py-3">
+                            {% if sol.prioridade == 'urgente' %}
+                            <span class="badge bg-danger">Urgente</span>
+                            {% elif sol.prioridade == 'alta' %}
+                            <span class="badge bg-warning text-dark">Alta</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Normal</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small text-tema-secundario">
+                            {{ sol.data_envio.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td class="pe-3 py-3 text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('conhecimento.novo_artigo') }}?solicitacao_id={{ sol.id }}" class="btn btn-primary" title="Escrever artigo para atender este pedido">
+                                    <i class="bi bi-pencil-fill me-1"></i> Redigir Artigo
+                                </a>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalTriagem{{ sol.id }}" title="Mudar status ou responder">
+                                    <i class="bi bi-check2-circle"></i> Triar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Modal de Triagem -->
+                    <div class="modal fade" id="modalTriagem{{ sol.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
+                                <form method="POST" action="{{ url_for('conhecimento.atualizar_solicitacao', id=sol.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                                        <h5 class="modal-title text-tema fw-bold">
+                                            Triar Solicitação #{{ sol.id }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body py-4">
+                                        <div class="mb-3">
+                                            <div class="fw-bold text-tema">{{ sol.titulo }}</div>
+                                            <div class="small text-tema-secundario">{{ sol.descricao }}</div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label text-tema fw-semibold small">Novo Status</label>
+                                            <select name="status" class="form-select selectPadrao">
+                                                <option value="aprovada">Aprovar (Em Produção)</option>
+                                                <option value="concluida">Concluir (Já Documentado)</option>
+                                                <option value="rejeitada">Rejeitar (Não Aplicável)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label text-tema fw-semibold small">Resposta / Parecer para o Solicitante</label>
+                                            <textarea name="resposta" class="form-control inputPadrao" rows="3" placeholder="Explique o motivo da aprovação ou recusa..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+                                        <button type="button" class="btn btn-sm botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-sm botaoPrimario">Salvar Parecer</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-tema-secundario small">
+            <i class="bi bi-check2-circle text-success fs-3 d-block mb-1"></i>
+            Nenhuma solicitação pendente no momento. Todas foram atendidas ou revisadas!
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- =============================================================
+         4. GESTÃO COMPLETA DE ARTIGOS
+         ============================================================= -->
+    <div class="cardPadrao p-0 overflow-hidden mb-4">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-text text-warning fs-5"></i>
+                <h2 class="h6 mb-0 text-tema fw-bold">Artigos Cadastrados</h2>
+                <span class="badge bg-secondary bg-opacity-50 text-light rounded-pill">{{ artigos_recentes|length }}</span>
+            </div>
+            <a href="{{ url_for('conhecimento.novo_artigo') }}" class="btn btn-sm botaoPrimario">
+                <i class="bi bi-plus"></i> Novo Artigo
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="color: var(--cor-cinza-claro);">
+                <thead style="background: rgba(255, 255, 255, 0.04); font-size: 0.8rem; text-transform: uppercase;">
+                    <tr>
+                        <th class="ps-3 py-3">Artigo</th>
+                        <th class="py-3">Categoria</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3">Visualizações</th>
+                        <th class="py-3">Útil (%)</th>
+                        <th class="py-3">Atualizado Em</th>
+                        <th class="pe-3 py-3 text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for art in artigos_recentes %}
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                        <td class="ps-3 py-3">
+                            <a href="{{ url_for('conhecimento.ver_artigo', slug=art.slug) }}" class="fw-bold text-decoration-none text-tema hover-dourado d-block">
+                                {{ art.titulo }}
+                            </a>
+                            <span class="small text-tema-secundario">{{ art.tempo_leitura_min }} min • Autor: {{ art.autor.nome if art.autor else 'TI' }}</span>
+                        </td>
+                        <td class="py-3 small">
+                            <span class="badge bg-secondary bg-opacity-25 text-light border border-secondary border-opacity-25">
+                                {{ art.categoria.nome }}
+                            </span>
+                        </td>
+                        <td class="py-3">
+                            {% if art.status == 'publicado' %}
+                            <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">Publicado</span>
+                            {% elif art.status == 'rascunho' %}
+                            <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">Rascunho</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Arquivado</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small text-tema-secundario">
+                            <i class="bi bi-eye me-1"></i>{{ art.visualizacoes }}
+                        </td>
+                        <td class="py-3 small">
+                            {% if art.total_votos > 0 %}
+                            <span class="text-success fw-bold">{{ art.percentual_util }}%</span>
+                            <span class="text-tema-secundario">({{ art.votos_util }}/{{ art.total_votos }})</span>
+                            {% else %}
+                            <span class="text-secondary">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small text-tema-secundario">
+                            {{ art.data_atualizacao.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td class="pe-3 py-3 text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('conhecimento.ver_artigo', slug=art.slug) }}" class="btn btn-outline-secondary" title="Ver artigo">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('conhecimento.editar_artigo', artigo_id=art.id) }}" class="btn btn-outline-warning" title="Editar artigo">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ art.id }}" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Modal Confirmação de Exclusão -->
+                    <div class="modal fade" id="modalExcluir{{ art.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
+                                <form method="POST" action="{{ url_for('conhecimento.excluir_artigo', artigo_id=art.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                                        <h5 class="modal-title text-danger fw-bold">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Excluir Artigo
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body py-4">
+                                        Tem certeza que deseja excluir permanentemente o artigo <strong>"{{ art.titulo }}"</strong>?
+                                        <p class="text-secondary small mt-2 mb-0">Esta ação não poderá ser desfeita.</p>
+                                    </div>
+                                    <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+                                        <button type="button" class="btn btn-sm botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-sm btn-danger px-3">Confirmar Exclusão</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal para Criação de Nova Categoria -->
+<div class="modal fade" id="modalNovaCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
+            <form method="POST" action="{{ url_for('conhecimento.nova_categoria') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <h5 class="modal-title text-tema fw-bold">
+                        <i class="bi bi-folder-plus text-warning me-2"></i>Nova Categoria
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label text-tema fw-semibold small">Nome da Categoria <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control inputPadrao" required placeholder="Ex: Softwares Corporativos">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-tema fw-semibold small">Ícone Bootstrap Icons</label>
+                        <input type="text" name="icone" class="form-control inputPadrao" value="bi-journal-bookmark" placeholder="Ex: bi-printer, bi-shield-check, bi-wifi">
+                        <div class="form-text text-tema-secundario">Classe do ícone do Bootstrap Icons (ex: bi-pc-display).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-tema fw-semibold small">Descrição Curta</label>
+                        <textarea name="descricao" class="form-control inputPadrao" rows="2" placeholder="Breve resumo dos tópicos abordados nesta categoria..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <button type="button" class="btn btn-sm botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm botaoPrimario">Salvar Categoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

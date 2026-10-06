@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao">
+
+    <!-- =============================================================
+         1. BREADCRUMB & BARRA DE AÇÕES SUPERIOR
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
+                        <i class="bi bi-book me-1"></i> Base de Conhecimento
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('conhecimento.index', categoria=artigo.categoria.slug) }}" class="text-decoration-none text-warning">
+                        {{ artigo.categoria.nome }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active text-truncate text-tema" style="max-width: 280px;" aria-current="page">
+                    {{ artigo.titulo }}
+                </li>
+            </ol>
+        </nav>
+
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm botaoSecundario" id="btnCopiarLinkArtigo" title="Copiar link permanente">
+                <i class="bi bi-link-45deg me-1"></i> Copiar Link
+            </button>
+            <button type="button" class="btn btn-sm botaoSecundario d-none d-sm-inline-flex" onclick="window.print()" title="Imprimir / Exportar PDF">
+                <i class="bi bi-printer me-1"></i> Imprimir
+            </button>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('conhecimento.editar_artigo', artigo_id=artigo.id) }}" class="btn btn-sm botaoPrimario" title="Editar este artigo">
+                <i class="bi bi-pencil-square me-1"></i> Editar Artigo
+            </a>
+            {% endif %}
+            <a href="{{ url_for('conhecimento.index') }}" class="btn btn-sm botaoSecundario" title="Voltar para a lista">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. CORPO DO ARTIGO (DUAS COLUNAS: CONTEÚDO + NAVEGAÇÃO LATERAL)
+         ============================================================= -->
+    <div class="row g-4">
+        
+        <!-- Coluna Principal do Artigo -->
+        <div class="col-lg-8 col-xl-9">
+            <article class="kbArticleContainer">
+                
+                <!-- Cabeçalho do Artigo -->
+                <header class="kbArticleHeader">
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                        <span class="cardKbCategoriaBadge">
+                            <i class="bi {{ artigo.categoria.icone or 'bi-folder' }} me-1"></i>
+                            {{ artigo.categoria.nome }}
+                        </span>
+                        <span class="cardKbReadingTime">
+                            <i class="bi bi-clock"></i> Tempo de leitura: {{ artigo.tempo_leitura_min }} min
+                        </span>
+                        <span class="text-tema-secundario small ms-auto d-flex align-items-center gap-1">
+                            <i class="bi bi-eye"></i> {{ artigo.visualizacoes }} visualizações
+                        </span>
+                    </div>
+
+                    <h1 class="tituloPrincipal mb-3" style="font-size: 2rem; line-height: 1.3;">
+                        {{ artigo.titulo }}
+                    </h1>
+
+                    {% if artigo.resumo %}
+                    <p class="lead text-tema-secundario mb-3" style="font-size: 1.05rem;">
+                        {{ artigo.resumo }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Metadados de Autoria e Atualização -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top" 
+                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.85rem;">
+                        <div class="text-tema-secundario">
+                            <span>Publicado por: <strong class="text-tema">{{ artigo.autor.nome or 'Equipe Técnica Brasfort' }}</strong></span>
+                            <span class="mx-2">•</span>
+                            <span>Atualizado em: <strong class="text-tema">{{ artigo.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</strong></span>
+                        </div>
+
+                        {% if artigo.tags %}
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for tag in artigo.tags %}
+                            <a href="{{ url_for('conhecimento.index', tag=tag.slug) }}" class="badgeTagKb">
+                                #{{ tag.nome }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </header>
+
+                <!-- Conteúdo Renderizado a partir do Markdown -->
+                <div class="kbMarkdownContent" id="kbConteudoArtigo">
+                    {{ conteudo_html|safe }}
+                </div>
+
+                <!-- =========================================================
+                     3. CAIXA DE AVALIAÇÃO / FEEDBACK (ÚTIL / NÃO ÚTIL)
+                     ========================================================= -->
+                <section class="kbFeedbackBox">
+                    <h3 class="h5 fw-bold text-tema mb-2">
+                        Este artigo resolveu o seu problema?
+                    </h3>
+                    <p class="text-tema-secundario small mb-4">
+                        Sua avaliação ajuda a equipe de TI a aprimorar nossos tutoriais e procedimentos.
+                    </p>
+
+                    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+                        <!-- Formulário de Feedback Útil -->
+                        <form method="POST" action="{{ url_for('conhecimento.feedback_artigo', artigo_id=artigo.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="util" value="1">
+                            <button type="submit" class="btn btnFeedbackKb btnFeedbackSim">
+                                <i class="bi bi-hand-thumbs-up-fill fs-5"></i>
+                                <span>Sim, resolveu!</span>
+                                {% if artigo.votos_util > 0 %}
+                                <span class="badge bg-success bg-opacity-50 text-white rounded-pill ms-1">{{ artigo.votos_util }}</span>
+                                {% endif %}
+                            </button>
+                        </form>
+
+                        <!-- Botão Não Resolveu (Abre colapso com campo de melhoria) -->
+                        <button type="button" class="btn btnFeedbackKb btnFeedbackNao" data-bs-toggle="collapse" data-bs-target="#collapseFeedbackNao" aria-expanded="false" aria-controls="collapseFeedbackNao">
+                            <i class="bi bi-hand-thumbs-down-fill fs-5"></i>
+                            <span>Não resolveu</span>
+                            {% if artigo.votos_inutil > 0 %}
+                            <span class="badge bg-danger bg-opacity-50 text-white rounded-pill ms-1">{{ artigo.votos_inutil }}</span>
+                            {% endif %}
+                        </button>
+                    </div>
+
+                    <!-- Colapso para Feedback Negativo com Comentário Construtivo -->
+                    <div class="collapse mt-4 text-start" id="collapseFeedbackNao">
+                        <form method="POST" action="{{ url_for('conhecimento.feedback_artigo', artigo_id=artigo.id) }}" 
+                              class="p-3 rounded-3" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--cor-borda);">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="util" value="0">
+                            
+                            <label for="feedbackComentario" class="form-label small text-tema fw-semibold mb-1">
+                                O que faltou ou poderia ser melhorado neste artigo? (Opcional)
+                            </label>
+                            <textarea name="comentario" id="feedbackComentario" class="form-control mb-3" rows="3" 
+                                      placeholder="Ex: O comando não funcionou no Windows 11, o link está desatualizado, etc." 
+                                      style="background: rgba(255, 255, 255, 0.05); color: #fff; border-color: var(--cor-borda);"></textarea>
+                            
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#collapseFeedbackNao">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-sm btn-danger px-3">
+                                    Enviar Comentário
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Links de Sugestão de Melhoria e Solicitação -->
+                    <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top" 
+                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.85rem;">
+                        <a href="{{ url_for('conhecimento.solicitar_artigo') }}?artigo_origem={{ artigo.id }}" class="text-decoration-none text-tema-secundario hover-dourado">
+                            <i class="bi bi-pencil me-1"></i> Sugerir melhoria neste artigo
+                        </a>
+                        <span class="text-secondary">•</span>
+                        <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="text-decoration-none text-tema-secundario hover-dourado">
+                            <i class="bi bi-plus-circle me-1"></i> Solicitar novo tutorial
+                        </a>
+                    </div>
+                </section>
+
+            </article>
+        </div>
+
+        <!-- Coluna Lateral de Apoio (Sumário ToC, Relacionados, Suporte) -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="d-flex flex-column gap-4">
+                
+                <!-- 1. Table of Contents / Sumário Flutuante -->
+                {% if toc_html and toc_html.strip() != '<div class="toc">\n<ul>\n</ul>\n</div>' %}
+                <div class="kbTocWrapper">
+                    <div class="kbTocTitle d-flex align-items-center gap-2">
+                        <i class="bi bi-list-nested"></i>
+                        <span>Nesta Página</span>
+                    </div>
+                    <div class="tocNav">
+                        {{ toc_html|safe }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 2. Artigos Relacionados -->
+                {% if artigos_relacionados %}
+                <div class="p-3 rounded-3" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
+                    <div class="d-flex align-items-center gap-2 mb-3 text-warning fw-bold small text-uppercase">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>Artigos Relacionados</span>
+                    </div>
+                    <div class="d-flex flex-column gap-2">
+                        {% for rel in artigos_relacionados %}
+                        <a href="{{ url_for('conhecimento.ver_artigo', slug=rel.slug) }}" 
+                           class="p-2 rounded-2 text-decoration-none d-block" 
+                           style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); transition: all 0.2s ease;">
+                            <div class="fw-semibold text-tema small mb-1 text-truncate">
+                                {{ rel.titulo }}
+                            </div>
+                            <div class="d-flex justify-content-between text-tema-secundario" style="font-size: 0.72rem;">
+                                <span><i class="bi bi-clock"></i> {{ rel.tempo_leitura_min }} min</span>
+                                <span><i class="bi bi-eye"></i> {{ rel.visualizacoes }} views</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 3. Precisa de Ajuda Adicional? -->
+                <div class="p-4 rounded-3 text-center" style="background: rgba(var(--cor-azul-escuro-rgb), 0.5); border: 1px dashed var(--cor-borda);">
+                    <i class="bi bi-headset fs-1 text-warning mb-2 d-inline-block"></i>
+                    <h4 class="h6 fw-bold text-tema mb-2">Não encontrou a solução?</h4>
+                    <p class="text-tema-secundario small mb-3">
+                        Nossa equipe técnica de suporte pode te atender diretamente via chamado.
+                    </p>
+                    <a href="{{ url_for('chamados.novo_chamado') }}" class="btn btn-sm botaoPrimario w-100">
+                        <i class="bi bi-ticket-perforated me-1"></i> Abrir Chamado TI
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Script Dinâmico para Cópia de Código e Link -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Adiciona botão "Copiar" em blocos de código <pre>
+    const codeBlocks = document.querySelectorAll('#kbConteudoArtigo pre');
+    codeBlocks.forEach(function(pre) {
+        // Envolve em container se necessário ou adiciona botão
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 py-0 px-2';
+        copyBtn.style.fontSize = '0.75rem';
+        copyBtn.style.zIndex = '5';
+        copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+        
+        pre.style.position = 'relative';
+        pre.appendChild(copyBtn);
+
+        copyBtn.addEventListener('click', function() {
+            const code = pre.querySelector('code');
+            const textToCopy = code ? code.innerText : pre.innerText;
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                copyBtn.innerHTML = '<i class="bi bi-check2 text-success"></i> Copiado!';
+                setTimeout(function() {
+                    copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Falha ao copiar código:', err);
+            });
+        });
+    });
+
+    // 2. Copiar Link do Artigo
+    const btnCopiarLink = document.getElementById('btnCopiarLinkArtigo');
+    if (btnCopiarLink) {
+        btnCopiarLink.addEventListener('click', function() {
+            navigator.clipboard.writeText(window.location.href).then(function() {
+                const originalHtml = btnCopiarLink.innerHTML;
+                btnCopiarLink.innerHTML = '<i class="bi bi-check2 text-success me-1"></i> Link Copiado!';
+                setTimeout(function() {
+                    btnCopiarLink.innerHTML = originalHtml;
+                }, 2000);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao" style="max-width: 900px;">
+
+    <!-- =============================================================
+         1. CABEÇALHO DA SOLICITAÇÃO
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
+                            <i class="bi bi-book me-1"></i> Base de Conhecimento
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active text-tema" aria-current="page">
+                        Solicitar Conteúdo
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="tituloPrincipal mb-1">
+                <i class="bi bi-plus-circle text-warning me-2"></i>Sugerir Novo Procedimento / Artigo
+            </h1>
+            <p class="tituloSecundario mb-0">
+                Identificou uma dúvida recorrente ou processo sem manual? Envie uma sugestão para a equipe técnica documentar.
+            </p>
+        </div>
+
+        <div>
+            <a href="{{ url_for('conhecimento.minhas_solicitacoes') }}" class="btn botaoSecundario d-inline-flex align-items-center gap-2">
+                <i class="bi bi-inbox"></i>
+                <span>Minhas Solicitações</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. CARD COM FORMULÁRIO DE SOLICITAÇÃO
+         ============================================================= -->
+    <div class="cardPadrao p-4 p-md-5 mb-4">
+        
+        <!-- Alerta Informativo sobre o Fluxo -->
+        <div class="calloutKb calloutKbTip mt-0 mb-4">
+            <div class="calloutKbHeader">
+                <i class="bi bi-info-circle me-2"></i> Como funciona a fila de documentação?
+            </div>
+            <div class="calloutKbBody">
+                Após o envio, sua solicitação será analisada pela equipe de TI/Administração. Caso aprovada, os técnicos elaborarão um tutorial oficial em Markdown e você será notificado com o link direto da solução.
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('conhecimento.solicitar_artigo') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-4">
+                
+                <!-- Título da Solicitação -->
+                <div class="col-12">
+                    <label for="titulo" class="form-label text-tema fw-semibold">
+                        Título do Conteúdo Desejado <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           class="form-control inputPadrao" 
+                           id="titulo" 
+                           name="titulo" 
+                           required 
+                           placeholder="Ex: Como configurar assinatura corporativa no novo Outlook, Troca de toner Kyocera..."
+                           autocomplete="off">
+                    <div class="form-text text-tema-secundario">Seja claro e específico sobre o que precisa ser ensinado.</div>
+                </div>
+
+                <!-- Categoria -->
+                <div class="col-md-6">
+                    <label for="categoria_id" class="form-label text-tema fw-semibold">
+                        Categoria Relacionada
+                    </label>
+                    <select class="form-select selectPadrao" id="categoria_id" name="categoria_id">
+                        <option value="">-- Selecione uma categoria (opcional) --</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat.id }}">{{ cat.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Prioridade -->
+                <div class="col-md-6">
+                    <label for="prioridade" class="form-label text-tema fw-semibold">
+                        Prioridade Estimada
+                    </label>
+                    <select class="form-select selectPadrao" id="prioridade" name="prioridade">
+                        <option value="baixa">Baixa (Dica ou melhoria secundária)</option>
+                        <option value="normal" selected>Normal (Processo padrão do dia a dia)</option>
+                        <option value="alta">Alta (Impacta vários colaboradores)</option>
+                        <option value="urgente">Urgente (Bloqueio crítico operacional)</option>
+                    </select>
+                </div>
+
+                <!-- Descrição do Problema / Dúvida -->
+                <div class="col-12">
+                    <label for="descricao" class="form-label text-tema fw-semibold">
+                        Descrição do Problema ou Procedimento <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control inputPadrao" 
+                              id="descricao" 
+                              name="descricao" 
+                              rows="4" 
+                              required 
+                              placeholder="Descreva detalhadamente qual é a dúvida ou o passo a passo que está faltando no sistema..."></textarea>
+                </div>
+
+                <!-- Justificativa -->
+                <div class="col-12">
+                    <label for="justificativa" class="form-label text-tema fw-semibold">
+                        Justificativa / Benefício Esperado (Opcional)
+                    </label>
+                    <textarea class="form-control inputPadrao" 
+                              id="justificativa" 
+                              name="justificativa" 
+                              rows="2" 
+                              placeholder="Ex: Reduzirá cerca de 10 chamados semanais de novos funcionários; economia de tempo da equipe..."></textarea>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="col-12 d-flex justify-content-end gap-2 pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+                    <a href="{{ url_for('conhecimento.index') }}" class="btn botaoSecundario px-4">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn botaoPrimario px-4 d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-send-fill"></i>
+                        <span>Enviar Solicitação</span>
+                    </button>
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}

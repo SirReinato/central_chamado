@@ -55,6 +55,8 @@
                 <span>Service Desk</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Novo Chamado</span>
             {% elif request.endpoint in ('chamados.listar_chamados', 'chamados.detalhes_chamado', 'chamados.editar_chamado') %}
                 <span>Service Desk</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Fila de Chamados</span>
+            {% elif request.endpoint and request.endpoint.startswith('conhecimento.') %}
+                <span>Conhecimento</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Base de Conhecimento</span>
             {% elif request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}
                 <span>Parque Gráfico</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Impressoras</span>
             {% elif request.endpoint == 'impressoras.gerenciar_estoque' %}
@@ -134,7 +136,7 @@
     <aside class="appSidebar" id="appSidebar">
         <div class="sidebarNavWrapper">
             {% if current_user.is_tecnico_impressora %}
-            <!-- Perfil Técnico de Impressoras: Exclusivamente Impressoras e Estoque -->
+            <!-- Perfil Técnico de Impressoras: Impressoras, Estoque e Base de Conhecimento -->
             <div class="sidebarGroupTitle">PARQUE GRÁFICO</div>
             <a href="{{ url_for('impressoras.index') }}" class="sidebarItem {% if request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}active{% endif %}" title="Monitoramento de Impressoras">
                 <i class="bi bi-printer-fill sidebarIcon"></i>
@@ -143,6 +145,12 @@
             <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="sidebarItem {% if request.endpoint == 'impressoras.gerenciar_estoque' %}active{% endif %}" title="Controle de Estoque & Suprimentos">
                 <i class="bi bi-box-seam-fill sidebarIcon"></i>
                 <span class="sidebarLabel">Estoque & Insumos</span>
+            </a>
+
+            <div class="sidebarGroupTitle">CONHECIMENTO</div>
+            <a href="{{ url_for('conhecimento.index') }}" class="sidebarItem {% if request.endpoint in ('conhecimento.index', 'conhecimento.ver_artigo') %}active{% endif %}" title="Base de Conhecimento">
+                <i class="bi bi-journal-text sidebarIcon text-info"></i>
+                <span class="sidebarLabel">Base de Conhecimento</span>
             </a>
 
             {% else %}
@@ -170,6 +178,27 @@
                 <i class="bi bi-ticket-detailed-fill sidebarIcon"></i>
                 <span class="sidebarLabel">Fila de Chamados</span>
             </a>
+
+            <!-- BASE DE CONHECIMENTO -->
+            <div class="sidebarGroupTitle">CONHECIMENTO</div>
+            <a href="{{ url_for('conhecimento.index') }}" class="sidebarItem {% if request.endpoint in ('conhecimento.index', 'conhecimento.ver_artigo') %}active{% endif %}" title="Base de Conhecimento & Procedimentos">
+                <i class="bi bi-journal-text sidebarIcon text-info"></i>
+                <span class="sidebarLabel">Base de Conhecimento</span>
+            </a>
+            <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="sidebarItem {% if request.endpoint == 'conhecimento.solicitar_artigo' %}active{% endif %}" title="Solicitar Novo Artigo ou Tutorial">
+                <i class="bi bi-file-earmark-plus sidebarIcon"></i>
+                <span class="sidebarLabel">Solicitar Artigo</span>
+            </a>
+            <a href="{{ url_for('conhecimento.minhas_solicitacoes') }}" class="sidebarItem {% if request.endpoint == 'conhecimento.minhas_solicitacoes' %}active{% endif %}" title="Acompanhar Minhas Solicitações">
+                <i class="bi bi-clock-history sidebarIcon"></i>
+                <span class="sidebarLabel">Minhas Solicitações</span>
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('conhecimento.admin_dashboard') }}" class="sidebarItem {% if request.endpoint in ('conhecimento.admin_dashboard', 'conhecimento.novo_artigo', 'conhecimento.editar_artigo') %}active{% endif %}" title="Painel de Gestão da Base">
+                <i class="bi bi-gear-wide-connected sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Gestão da Base</span>
+            </a>
+            {% endif %}
 
             <!-- PARQUE GRÁFICO (Admin e Operador) -->
             {% if current_user.is_admin or current_user.is_operador %}

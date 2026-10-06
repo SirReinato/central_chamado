@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="containerPadrao">
+
+    <!-- =============================================================
+         1. HERO DE BUSCA GLOBAL E AÇÕES RÁPIDAS
+         ============================================================= -->
+    <div class="kbHeroContainer mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-7">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge rounded-pill" style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); border: 1px solid rgba(var(--cor-dourado-rgb), 0.4); font-size: 0.75rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-book-half me-1"></i> WIKI & PROCEDIMENTOS
+                    </span>
+                    <span class="text-tema-secundario small">Documentação Interna TI</span>
+                </div>
+                <h1 class="tituloPrincipal mb-2" style="font-size: 1.85rem;">
+                    Base de Conhecimento
+                </h1>
+                <p class="tituloSecundario mb-0" style="font-size: 0.95rem; max-width: 600px;">
+                    Encontre tutoriais passo a passo, resoluções de problemas frequentes, manuais e procedimentos operacionais padronizados.
+                </p>
+            </div>
+
+            <div class="col-lg-5 text-lg-end d-flex flex-wrap justify-content-lg-end gap-2">
+                <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="btn botaoSecundario d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-plus-circle text-warning"></i>
+                    <span>Sugerir Conteúdo</span>
+                </a>
+                <a href="{{ url_for('conhecimento.minhas_solicitacoes') }}" class="btn botaoSecundario d-inline-flex align-items-center gap-2" title="Minhas Sugestões">
+                    <i class="bi bi-inbox"></i>
+                    <span>Minhas Solicitações</span>
+                </a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('conhecimento.admin_dashboard') }}" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-gear-fill"></i>
+                    <span>Painel Admin</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Barra de Busca Instantânea -->
+        <div class="mt-4">
+            <form method="GET" action="{{ url_for('conhecimento.index') }}" class="kbSearchWrapper">
+                {% if filtros.categoria %}<input type="hidden" name="categoria" value="{{ filtros.categoria }}">{% endif %}
+                {% if filtros.tag %}<input type="hidden" name="tag" value="{{ filtros.tag }}">{% endif %}
+                {% if filtros.ordem %}<input type="hidden" name="ordem" value="{{ filtros.ordem }}">{% endif %}
+                {% if filtros.view %}<input type="hidden" name="view" value="{{ filtros.view }}">{% endif %}
+                
+                <i class="bi bi-search kbSearchIcon"></i>
+                <input type="text" 
+                       name="busca" 
+                       class="form-control kbSearchInput" 
+                       placeholder="Pesquise por procedimentos, impressoras, VPN, erros, comandos..." 
+                       value="{{ filtros.busca }}" 
+                       autocomplete="off">
+            </form>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. CHIPS DE CATEGORIAS
+         ============================================================= -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="kbCategoryChips flex-grow-1 me-3">
+            <a href="{{ url_for('conhecimento.index', busca=filtros.busca, ordem=filtros.ordem, view=filtros.view) }}" 
+               class="kbCategoryChip {% if not filtros.categoria %}active{% endif %}">
+                <i class="bi bi-grid-fill"></i>
+                <span>Todas as Categorias</span>
+            </a>
+            {% for cat in categorias %}
+            <a href="{{ url_for('conhecimento.index', categoria=cat.slug, busca=filtros.busca, ordem=filtros.ordem, view=filtros.view) }}" 
+               class="kbCategoryChip {% if filtros.categoria == cat.slug %}active{% endif %}"
+               title="{{ cat.descricao or cat.nome }}">
+                <i class="bi {{ cat.icone or 'bi-folder' }}"></i>
+                <span>{{ cat.nome }}</span>
+                <span class="badge rounded-pill bg-dark bg-opacity-50 text-secondary ms-1" style="font-size: 0.7rem;">
+                    {{ cat.artigos.filter_by(status='publicado').count() }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- =============================================================
+         3. BARRA DE CONTROLE (ORDENAÇÃO & MODO DE EXIBIÇÃO)
+         ============================================================= -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 mb-4 rounded-3" 
+         style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cor-borda);">
+        
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-tema-secundario small">
+                <strong class="text-tema">{{ artigos|length }}</strong> artigo(s) encontrado(s)
+                {% if categoria_ativa %}em <strong class="text-warning">{{ categoria_ativa.nome }}</strong>{% endif %}
+                {% if filtros.tag %}com tag <strong class="text-info">#{{ filtros.tag }}</strong>{% endif %}
+            </span>
+
+            {% if filtros.busca or filtros.categoria or filtros.tag %}
+            <a href="{{ url_for('conhecimento.index') }}" class="btn btn-sm btn-outline-secondary py-0 px-2 ms-2" style="font-size: 0.75rem;">
+                <i class="bi bi-x"></i> Limpar filtros
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center gap-3 ms-auto">
+            <!-- Ordenação -->
+            <div class="dropdown">
+                <button class="btn btn-sm botaoSecundario dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-arrow-down-up text-warning"></i>
+                    <span>
+                        {% if filtros.ordem == 'uteis' %}Mais Úteis
+                        {% elif filtros.ordem == 'acessos' %}Mais Acessados
+                        {% elif filtros.ordem == 'recentes' %}Mais Recentes
+                        {% else %}Relevância
+                        {% endif %}
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                    <li><a class="dropdown-item {% if filtros.ordem == 'relevancia' %}active{% endif %}" href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem='relevancia', view=filtros.view) }}"><i class="bi bi-star me-2"></i>Maior Relevância</a></li>
+                    <li><a class="dropdown-item {% if filtros.ordem == 'uteis' %}active{% endif %}" href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem='uteis', view=filtros.view) }}"><i class="bi bi-hand-thumbs-up me-2"></i>Mais Úteis (Avaliações)</a></li>
+                    <li><a class="dropdown-item {% if filtros.ordem == 'acessos' %}active{% endif %}" href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem='acessos', view=filtros.view) }}"><i class="bi bi-eye me-2"></i>Mais Visualizados</a></li>
+                    <li><a class="dropdown-item {% if filtros.ordem == 'recentes' %}active{% endif %}" href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem='recentes', view=filtros.view) }}"><i class="bi bi-clock-history me-2"></i>Atualizados Recentemente</a></li>
+                </ul>
+            </div>
+
+            <!-- Toggle Visualização (Cards vs Lista) -->
+            <div class="btn-group btn-group-sm" role="group" aria-label="Modo de Visualização">
+                <a href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem=filtros.ordem, view='cards') }}" 
+                   class="btn {% if filtros.view != 'lista' %}botaoPrimario{% else %}botaoSecundario{% endif %}" 
+                   title="Visualização em Grade">
+                    <i class="bi bi-grid"></i>
+                </a>
+                <a href="{{ url_for('conhecimento.index', busca=filtros.busca, categoria=filtros.categoria, tag=filtros.tag, ordem=filtros.ordem, view='lista') }}" 
+                   class="btn {% if filtros.view == 'lista' %}botaoPrimario{% else %}botaoSecundario{% endif %}" 
+                   title="Visualização em Lista">
+                    <i class="bi bi-list-ul"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         4. LISTAGEM DE ARTIGOS (GRID OU LISTA)
+         ============================================================= -->
+    {% if artigos %}
+        {% if filtros.view == 'lista' %}
+            <!-- Modo de Visualização: Lista Avançada -->
+            <div class="d-flex flex-column gap-2 mb-4">
+                {% for art in artigos %}
+                <a href="{{ url_for('conhecimento.ver_artigo', slug=art.slug) }}" class="cardKbListaItem">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center justify-content-center rounded-3 p-2" 
+                             style="width: 44px; height: 44px; background: rgba(var(--cor-dourado-rgb), 0.12); color: var(--cor-dourado);">
+                            <i class="bi {{ art.categoria.icone or 'bi-file-earmark-text' }} fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <span class="cardKbCategoriaBadge">{{ art.categoria.nome }}</span>
+                                <span class="cardKbReadingTime"><i class="bi bi-clock"></i> {{ art.tempo_leitura_min }} min</span>
+                                {% if art.percentual_util > 0 %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25" style="font-size: 0.7rem;">
+                                    <i class="bi bi-hand-thumbs-up-fill me-1"></i>{{ art.percentual_util }}% útil
+                                </span>
+                                {% endif %}
+                            </div>
+                            <h3 class="cardKbTitulo mb-0 text-truncate" style="font-size: 1rem;">
+                                {{ art.titulo }}
+                            </h3>
+                            {% if art.resumo %}
+                            <p class="text-tema-secundario small mb-0 text-truncate" style="max-width: 650px;">
+                                {{ art.resumo }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-4 text-tema-secundario small text-nowrap d-none d-md-flex">
+                        <span title="Visualizações"><i class="bi bi-eye me-1"></i> {{ art.visualizacoes }}</span>
+                        <span title="Última atualização"><i class="bi bi-calendar3 me-1"></i> {{ art.data_atualizacao.strftime('%d/%m/%Y') }}</span>
+                        <i class="bi bi-chevron-right text-warning"></i>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Modo de Visualização: Cards Modernos (Grid) -->
+            <div class="row g-4 mb-4">
+                {% for art in artigos %}
+                <div class="col-lg-4 col-md-6">
+                    <a href="{{ url_for('conhecimento.ver_artigo', slug=art.slug) }}" class="cardKbItem">
+                        <div class="cardKbHeader">
+                            <span class="cardKbCategoriaBadge">
+                                <i class="bi {{ art.categoria.icone or 'bi-folder' }} me-1"></i>
+                                {{ art.categoria.nome }}
+                            </span>
+                            <span class="cardKbReadingTime">
+                                <i class="bi bi-clock"></i> {{ art.tempo_leitura_min }} min
+                            </span>
+                        </div>
+
+                        <h3 class="cardKbTitulo">
+                            {{ art.titulo }}
+                        </h3>
+
+                        <div class="cardKbResumo">
+                            {{ art.resumo or 'Clique para ler as instruções completas, comandos técnicos e procedimentos passo a passo.' }}
+                        </div>
+
+                        {% if art.tags %}
+                        <div class="mb-3 d-flex flex-wrap gap-1">
+                            {% for tag in art.tags[:4] %}
+                            <span class="badgeTagKb">#{{ tag.nome }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="cardKbFooter">
+                            <div class="cardKbStats">
+                                <span title="Visualizações">
+                                    <i class="bi bi-eye me-1"></i>{{ art.visualizacoes }}
+                                </span>
+                                {% if art.votos_util > 0 %}
+                                <span title="Votos úteis" class="text-success">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>{{ art.votos_util }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <span class="text-tema-secundario" style="font-size: 0.75rem;">
+                                {{ art.data_atualizacao.strftime('%d/%m/%Y') }}
+                            </span>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State amigável -->
+        <div class="p-5 text-center rounded-3 mb-4" style="background: var(--cor-card-1); border: 1px dashed var(--cor-borda);">
+            <div class="d-inline-flex p-3 rounded-circle mb-3" style="background: rgba(var(--cor-dourado-rgb), 0.1); color: var(--cor-dourado);">
+                <i class="bi bi-search fs-1"></i>
+            </div>
+            <h3 class="fw-bold text-tema mb-2">Nenhum artigo encontrado</h3>
+            <p class="text-tema-secundario mb-4" style="max-width: 480px; margin: 0 auto;">
+                Não localizamos conteúdos correspondentes aos termos ou filtros selecionados. Deseja solicitar que a equipe técnica produza esse tutorial?
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('conhecimento.index') }}" class="btn botaoSecundario">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Limpar Filtros
+                </a>
+                <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="btn botaoPrimario">
+                    <i class="bi bi-plus-circle me-1"></i> Sugerir Novo Artigo
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- =============================================================
+         5. SEÇÃO POPULAR / ATALHOS RÁPIDOS (CASO NÃO HAJA FILTRO ATIVO)
+         ============================================================= -->
+    {% if not filtros.busca and not filtros.categoria and artigos_populares %}
+    <div class="mt-5 pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h5 mb-0 text-tema fw-bold d-flex align-items-center gap-2">
+                <i class="bi bi-fire text-warning"></i> Artigos Mais Acessados
+            </h2>
+            <span class="text-tema-secundario small">Soluções mais consultadas pelos usuários</span>
+        </div>
+        <div class="row g-3">
+            {% for pop in artigos_populares %}
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('conhecimento.ver_artigo', slug=pop.slug) }}" 
+                   class="p-3 rounded-3 d-block text-decoration-none h-100" 
+                   style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cor-borda); transition: all 0.2s ease;">
+                    <div class="text-warning small mb-1 fw-semibold">
+                        <i class="bi {{ pop.categoria.icone or 'bi-bookmark' }} me-1"></i>{{ pop.categoria.nome }}
+                    </div>
+                    <div class="fw-bold text-tema text-truncate mb-2" style="font-size: 0.92rem;">
+                        {{ pop.titulo }}
+                    </div>
+                    <div class="d-flex justify-content-between text-tema-secundario small" style="font-size: 0.75rem;">
+                        <span><i class="bi bi-eye"></i> {{ pop.visualizacoes }} views</span>
+                        <span><i class="bi bi-clock"></i> {{ pop.tempo_leitura_min }} min</span>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

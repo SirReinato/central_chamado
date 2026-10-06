@@ -245,4 +245,120 @@ class HistoricoSuprimento(db.Model):
     quantidade = db.Column(db.Integer, nullable=False, default=-1)
     usuario_responsavel = db.Column(db.String(100), nullable=False)
     data_retirada = db.Column(db.DateTime, default=datetime.now)
+
+
+# =========================================================
+# BASE DE CONHECIMENTO (KNOWLEDGE BASE / WIKI / PROCEDIMENTOS)
+# =========================================================
+
+class KbCategoria(db.Model):
+    __tablename__ = 'kb_categorias'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(80), unique=True, nullable=False)
+    slug = db.Column(db.String(80), unique=True, nullable=False)
+    icone = db.Column(db.String(40), default='bi-journal-bookmark')
+    descricao = db.Column(db.String(255), nullable=True)
+    ordem = db.Column(db.Integer, default=0)
+    ativo = db.Column(db.Boolean, default=True)
+
+    artigos = db.relationship('KbArtigo', backref='categoria', lazy='dynamic')
+
+
+# Tabela associativa many-to-many entre Artigos e Tags
+artigo_tags = db.Table(
+    'kb_artigo_tags',
+    db.Column('artigo_id', db.Integer, db.ForeignKey('kb_artigos.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('kb_tags.id', ondelete='CASCADE'), primary_key=True)
+)
+
+
+class KbTag(db.Model):
+    __tablename__ = 'kb_tags'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(50), unique=True, nullable=False)
+    slug = db.Column(db.String(50), unique=True, nullable=False)
+
+
+class KbArtigo(db.Model):
+    __tablename__ = 'kb_artigos'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False, index=True)
+    slug = db.Column(db.String(200), unique=True, nullable=False, index=True)
+    resumo = db.Column(db.String(350), nullable=True)
+    conteudo_md = db.Column(db.Text, nullable=False)
+
+    categoria_id = db.Column(db.Integer, db.ForeignKey('kb_categorias.id'), nullable=False)
+    autor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+
+    status = db.Column(db.String(20), default='publicado')  # 'rascunho', 'publicado', 'arquivado'
+    tempo_leitura_min = db.Column(db.Integer, default=3)
+    visualizacoes = db.Column(db.Integer, default=0)
+
+    # Avaliações
+    votos_util = db.Column(db.Integer, default=0)
+    votos_inutil = db.Column(db.Integer, default=0)
+
+    data_criacao = db.Column(db.DateTime, default=datetime.now)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    # Relacionamentos
+    autor = db.relationship('Usuario', backref='artigos_kb')
+    tags = db.relationship('KbTag', secondary=artigo_tags, backref=db.backref('artigos', lazy='dynamic'))
+    feedbacks = db.relationship('KbFeedback', backref='artigo', cascade='all, delete-orphan', lazy='dynamic')
+
+    @property
+    def total_votos(self):
+        return (self.votos_util or 0) + (self.votos_inutil or 0)
+
+    @property
+    def percentual_util(self):
+        total = self.total_votos
+        if total == 0:
+            return 100
+        return int(round((self.votos_util / total) * 100))
+
+    @property
+    def score_relevancia(self):
+        # Ponderação: visualizações + (votos úteis * 5) - (votos inúteis * 3)
+        return (self.visualizacoes or 0) + ((self.votos_util or 0) * 5) - ((self.votos_inutil or 0) * 3)
+
+
+class KbFeedback(db.Model):
+    __tablename__ = 'kb_feedbacks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    artigo_id = db.Column(db.Integer, db.ForeignKey('kb_artigos.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
+    util = db.Column(db.Boolean, nullable=False)  # True = 👍, False = 👎
+    comentario = db.Column(db.Text, nullable=True)
+    data = db.Column(db.DateTime, default=datetime.now)
+
+    usuario = db.relationship('Usuario', backref='feedbacks_kb')
+
+
+class KbSolicitacao(db.Model):
+    __tablename__ = 'kb_solicitacoes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    categoria_id = db.Column(db.Integer, db.ForeignKey('kb_categorias.id'), nullable=True)
+    descricao = db.Column(db.Text, nullable=False)
+    justificativa = db.Column(db.Text, nullable=True)
+    prioridade = db.Column(db.String(20), default='normal')  # 'baixa', 'normal', 'alta'
+
+    solicitante_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    status = db.Column(db.String(20), default='pendente')  # 'pendente', 'aprovada', 'rejeitada', 'concluida'
+    resposta_admin = db.Column(db.Text, nullable=True)
+    artigo_gerado_id = db.Column(db.Integer, db.ForeignKey('kb_artigos.id'), nullable=True)
+
+    data_envio = db.Column(db.DateTime, default=datetime.now)
+    data_resolucao = db.Column(db.DateTime, nullable=True)
+
+    solicitante = db.relationship('Usuario', foreign_keys=[solicitante_id], backref='solicitacoes_kb')
+    categoria = db.relationship('KbCategoria', foreign_keys=[categoria_id])
+    artigo_gerado = db.relationship('KbArtigo', foreign_keys=[artigo_gerado_id])
+
 
