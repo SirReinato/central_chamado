@@ -28,6 +28,7 @@
         {% endif %}
 
         <form method="POST" id="formRegistro" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Nome Completo -->
             <div class="mb-3">
@@ -93,9 +94,14 @@
 
             <!-- Senha -->
             <div class="mb-4">
-                <label class="form-label labelCampo">
-                    Senha
-                </label>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label labelCampo mb-0">
+                        Senha
+                    </label>
+                    <span class="small text-white-50" style="font-size: 0.72rem;">
+                        Mínimo de 6 caracteres
+                    </span>
+                </div>
                 <div class="input-group">
                     <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
                         <i class="bi bi-lock"></i>
@@ -105,7 +111,8 @@
                         name="senha"
                         id="senhaInput"
                         class="form-control inputPadrao border-start-0 ps-0"
-                        placeholder="Crie uma senha segura"
+                        placeholder="Mínimo de 6 caracteres"
+                        minlength="6"
                         required
                         autocomplete="new-password">
                     <button class="btn btn-outline-secondary border-start-0" type="button" id="btnToggleSenha" style="border-color: var(--cor-borda); color: var(--cor-texto-secundario);" title="Mostrar/ocultar senha">

@@ -41,6 +41,7 @@
                 </div>
                 <div class="card-body p-4">
                     <form action="{{ url_for('impressoras.criar_familia') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label for="nome_familia" class="form-label labelCampo">Nome da Família / Modelo</label>
                             <input type="text" class="form-control inputPadrao" id="nome_familia" name="nome_familia"
@@ -152,6 +153,7 @@
                                 </div>
                                 <form action="{{ url_for('impressoras.adicionar_estoque', familia_id=fam.id) }}"
                                     method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="modal-body">
                                         <div class="mb-3">
                                             <label class="form-label labelCampo">Adicionar Toners (Qtd a somar)</label>
@@ -186,6 +188,7 @@
                                 </div>
                                 <form action="{{ url_for('impressoras.ajustar_estoque', familia_id=fam.id) }}"
                                     method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="modal-body">
                                         <div class="mb-3">
                                             <label class="form-label labelCampo">Insumo</label>

@@ -23,6 +23,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16x16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+    <!-- Proteção CSRF Token Global para Requisições Assíncronas -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
 <body class="bg-dark">
@@ -207,7 +210,7 @@
                 </div>
                 <div class="modal-body py-4">
                     <p class="text-tema-secundario mb-3">
-                        Como você está acessando pela rede local (<code class="text-info">http://172.16.50.5:5000</code>), o navegador requer a instalação rápida pelo menu do navegador:
+                        Como você está acessando pela rede (<code class="text-info" id="pwaModalHost">rede local</code>), o navegador requer a instalação rápida pelo menu do navegador:
                     </p>
 
                     <!-- Google Chrome -->
@@ -318,6 +321,8 @@
                 // Se acessado por IP HTTP de rede local (onde o navegador bloqueia prompt automático),
                 // abre o modal explicativo mostrando como instalar em 2 cliques
                 const modalEl = document.getElementById('modalInstalarPwa');
+                const pwaHostEl = document.getElementById('pwaModalHost');
+                if (pwaHostEl) pwaHostEl.textContent = window.location.origin;
                 if (modalEl) {
                     const modalInstancia = new bootstrap.Modal(modalEl);
                     modalInstancia.show();

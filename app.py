@@ -23,8 +23,17 @@ app = Flask(__name__)
 setup_logging(app)
 logger = get_logger('central_chamados')
 
-# Configurações
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chave-padrao-desenvolvimento-trocar-em-producao')
+# Configurações de Segurança e Sessão
+secret_key_env = os.environ.get('SECRET_KEY')
+if not secret_key_env or secret_key_env == 'chave-padrao-desenvolvimento-trocar-em-producao':
+    import secrets
+    app.config['SECRET_KEY'] = secrets.token_hex(32)
+else:
+    app.config['SECRET_KEY'] = secret_key_env
+
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('true', '1')
 
 # Banco de dados unificado (Chamados, Usuários, Impressoras, Estoque e Histórico)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///chamados.db')
@@ -37,6 +46,10 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 # manter a sessão ativa mesmo após fechar o navegador, falso
 app.config['SESSION_PERMANENT'] = False
+
+# Proteção CSRF Global
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
 
 # Banco de dados
 db.init_app(app)
@@ -99,6 +112,13 @@ def verificar_usuario_ativo():
             url_for('auth.login')
         )
 
+@app.after_request
+def adicionar_cabecalhos_seguranca(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 # Registra os blueprints
 app.register_blueprint(auth_bp)

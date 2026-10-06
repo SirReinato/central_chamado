@@ -432,6 +432,7 @@
                                 </div>
                                 <form method="POST"
                                     action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="modal-body p-4 text-start">
 
                                         <!-- DESTAQUE CONTADOR MANUAL DE PÁGINAS -->
@@ -544,6 +545,7 @@
                                 {% if imp.suprimento %}
                                 <form method="POST"
                                     action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <div class="modal-body p-4 text-start">
                                         <div class="alert alert-info py-2 px-3 mb-3 small" role="alert">
                                             <strong>Família vinculada:</strong> {{ imp.suprimento.nome_familia }}<br>
@@ -734,6 +736,7 @@
 
                     <form method="POST" action="{{ url_for('impressoras.enviar_relatorio_email') }}"
                         id="formEnviarEmailRelatorio">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="modal-body p-4 text-start">
 
                             <!-- REMETENTE E DESTINATÁRIOS -->
@@ -763,7 +766,7 @@
                                         </span>
                                         <input type="text" id="destinatariosEmail" name="destinatarios"
                                             class="form-control inputPadrao"
-                                            placeholder="ex: gestor@brasfort.com.br, equipe@brasfort.com.br"
+                                            placeholder="ex: gestor@empresa.com.br, equipe@empresa.com.br"
                                             value="{{ email_config.default_recipient if email_config and email_config.default_recipient else '' }}"
                                             required>
                                     </div>

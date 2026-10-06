@@ -328,31 +328,30 @@
 
                                 {% if usuario.status == 'pendente' %}
 
-                                <a href="{{ url_for('usuarios.aprovar', id=usuario.id) }}"
-                                    class="acoesUsuario botaoAprovar">
-
-                                    Aprovar
-
-                                </a>
+                                <form method="POST" action="{{ url_for('usuarios.aprovar', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoAprovar border-0" style="cursor: pointer;">
+                                        Aprovar
+                                    </button>
+                                </form>
 
                                 {% elif usuario.status == 'ativo' %}
 
-                                <a href="{{ url_for('usuarios.bloquear', id=usuario.id) }}"
-                                    class="acoesUsuario botaoBloquear">
-
-                                    Bloquear
-
-                                </a>
-
+                                <form method="POST" action="{{ url_for('usuarios.bloquear', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoBloquear border-0" style="cursor: pointer;">
+                                        Bloquear
+                                    </button>
+                                </form>
 
                                 {% elif usuario.status == 'bloqueado' %}
 
-                                <a href="{{ url_for('usuarios.ativar', id=usuario.id) }}"
-                                    class="acoesUsuario botaoAtivar">
-
-                                    Ativar
-
-                                </a>
+                                <form method="POST" action="{{ url_for('usuarios.ativar', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoAtivar border-0" style="cursor: pointer;">
+                                        Ativar
+                                    </button>
+                                </form>
 
                                 {% endif %}
 
@@ -364,20 +363,28 @@
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1 flex-wrap">
                                 {% if usuario.perfil != 'admin' %}
-                                <a href="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}"
-                                    class="acoesUsuario botaoTornarAdm">Admin</a>
+                                <form method="POST" action="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoTornarAdm border-0" style="cursor: pointer;">Admin</button>
+                                </form>
                                 {% endif %}
                                 {% if usuario.perfil != 'operador' %}
-                                <a href="{{ url_for('usuarios.tornar_operador', id=usuario.id) }}"
-                                    class="acoesUsuario botaoTornarAdm">Operador</a>
+                                <form method="POST" action="{{ url_for('usuarios.tornar_operador', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoTornarAdm border-0" style="cursor: pointer;">Operador</button>
+                                </form>
                                 {% endif %}
                                 {% if usuario.perfil != 'tecnicoImpressora' %}
-                                <a href="{{ url_for('usuarios.tornar_tecnico_impressora', id=usuario.id) }}"
-                                    class="acoesUsuario botaoTornarAdm" title="Definir perfil como Técnico de Impressoras">Técnico Imp.</a>
+                                <form method="POST" action="{{ url_for('usuarios.tornar_tecnico_impressora', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoTornarAdm border-0" style="cursor: pointer;" title="Definir perfil como Técnico de Impressoras">Técnico Imp.</button>
+                                </form>
                                 {% endif %}
                                 {% if usuario.perfil != 'usuario' %}
-                                <a href="{{ url_for('usuarios.tornar_usuario', id=usuario.id) }}"
-                                    class="acoesUsuario botaoTornarAdm">Usuário</a>
+                                <form method="POST" action="{{ url_for('usuarios.tornar_usuario', id=usuario.id) }}" class="d-inline m-0 p-0">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="acoesUsuario botaoTornarAdm border-0" style="cursor: pointer;">Usuário</button>
+                                </form>
                                 {% endif %}
                             </div>
                         </td>
