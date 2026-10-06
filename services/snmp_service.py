@@ -345,14 +345,8 @@ def consultar_impressoras_bulk(lista_ips, community="public"):
     )
 
 
-# ==================================================================
-# TESTE DIRETO
-# ==================================================================
-
 if __name__ == "__main__":
-
-    resultado = consultar_impressora(
-        "10.90.1.16"
-    )
-
+    import sys
+    ip_teste = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
+    resultado = consultar_impressora(ip_teste)
     print(resultado)

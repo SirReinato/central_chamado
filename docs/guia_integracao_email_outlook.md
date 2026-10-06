@@ -19,7 +19,7 @@ Este guia documenta o passo a passo completo, do zero à produção, para conect
 O foco deste material abrange:
 - Disparo de e-mails em formato HTML corporativo.
 - Envio de anexos binários em memória (ex: PDFs gerados dinamicamente).
-- O padrão **"Enviar Como" (Send As / Envio Delegado)**: autenticar com uma conta pessoal/serviço e enviar em nome de um setor (ex: `dep.ti@brasfort.com.br`).
+- O padrão **"Enviar Como" (Send As / Envio Delegado)**: autenticar com uma conta pessoal/serviço e enviar em nome de um setor (ex: `ti@empresa.com.br`).
 - Exemplos funcionais em **Python** e **Node.js / Next.js / React**.
 
 ---
@@ -42,10 +42,10 @@ sequenceDiagram
     App->>App: Gera PDF em memória (Buffer)
     App->>SMTP: Conecta na porta 587 (STARTTLS)
     App->>SMTP: Autentica com conta pessoal (usuario@empresa.com.br)
-    Note over App,SMTP: Envia cabeçalho From com endereço do setor (dep.ti@empresa.com.br)
+    Note over App,SMTP: Envia cabeçalho From com endereço do setor (ti@empresa.com.br)
     SMTP->>SMTP: Valida permissão "Send As" no Active Directory / Exchange
     SMTP->>Dest: Entrega mensagem com HTML e PDF anexo
-    Dest-->>Dev: Destinatário vê: "Departamento de TI <dep.ti@empresa.com.br>"
+    Dest-->>Dev: Destinatário vê: "Departamento de TI <ti@empresa.com.br>"
 ```
 
 ### 1.2. Servidores e Portas
@@ -61,25 +61,25 @@ sequenceDiagram
 
 ## 🔑 2. O Desafio do "Enviar Como" (Send As vs Send on Behalf)
 
-Em ambientes corporativos, é comum que a aplicação **não conheça a senha da caixa departamental** (como `dep.ti@brasfort.com.br`), mas o seu usuário (`renato.lima@brasfort.com.br`) possui permissão de escrita concedida pelo administrador do Exchange.
+Em ambientes corporativos, é comum que a aplicação **não conheça a senha da caixa departamental** (como `ti@empresa.com.br`), mas o seu usuário (`usuario.rede@empresa.com.br`) possui permissão de escrita concedida pelo administrador do Exchange.
 
 ### 2.1. Como os Cabeçalhos RFC 5322 Devem Ser Configurados
 
 Para evitar que o e-mail caia em caixas de Spam ou seja rejeitado pelo conector SMTP:
 
 1. **`From:`** O que o destinatário visualiza na tela:
-   `Departamento de TI <dep.ti@brasfort.com.br>`
+   `Departamento de TI <ti@empresa.com.br>`
 2. **`Sender:`** O usuário técnico que realmente disparou o e-mail:
-   `renato.lima@brasfort.com.br` (indica autenticidade ao servidor).
+   `usuario.rede@empresa.com.br` (indica autenticidade ao servidor).
 3. **`Reply-To:`** Para onde voltam as respostas caso o destinatário responda:
-   `dep.ti@brasfort.com.br`.
+   `ti@empresa.com.br`.
 4. **Envelope Sender (`MAIL FROM` no protocolo SMTP):**
-   Deve-se tentar enviar o envelope com `dep.ti@brasfort.com.br`. Se o servidor tiver uma regra rígida exigindo que o envelope corresponda exatamente ao usuário autenticado, deve-se realizar fallback para `renato.lima@brasfort.com.br`. O cliente de e-mail (Outlook/Gmail) continuará mostrando o nome de exibição oficial do departamento.
+   Deve-se tentar enviar o envelope com `ti@empresa.com.br`. Se o servidor tiver uma regra rígida exigindo que o envelope corresponda exatamente ao usuário autenticado, deve-se realizar fallback para `usuario.rede@empresa.com.br`. O cliente de e-mail (Outlook/Gmail) continuará mostrando o nome de exibição oficial do departamento.
 
 > [!TIP]
 > **Permissão no Exchange**: O administrador do Exchange precisa conceder a permissão **"Send As" (Enviar Como)** na caixa compartilhada para a sua conta através do comando PowerShell:
 > ```powershell
-> Add-RecipientPermission -Identity "dep.ti@empresa.com.br" -Trustee "seu.usuario@empresa.com.br" -AccessRights SendAs
+> Add-RecipientPermission -Identity "ti@empresa.com.br" -Trustee "seu.usuario@empresa.com.br" -AccessRights SendAs
 > ```
 
 ---
@@ -90,19 +90,19 @@ Crie um arquivo `.env` na raiz da aplicação. Essa convenção de nomenclatura 
 
 ```env
 # Servidor SMTP (Exchange Local ou Microsoft 365 Cloud)
-SMTP_SERVER=correio.brasfort.com.br
+SMTP_SERVER=smtp.empresa.com.br
 SMTP_PORT=587
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
 
 # Credenciais da Conta Autenticada
-SMTP_USER=seu.usuario@brasfort.com.br
+SMTP_USER=seu.usuario@empresa.com.br
 SMTP_PASSWORD=sua-senha-de-rede-ou-app-password
 
 # Identidade de Envio (Send As / Enviar Como)
-MAIL_FROM_ADDRESS=dep.ti@brasfort.com.br
+MAIL_FROM_ADDRESS=ti@empresa.com.br
 MAIL_FROM_NAME=Departamento de TI
-MAIL_DEFAULT_RECIPIENT=dep.ti@brasfort.com.br
+MAIL_DEFAULT_RECIPIENT=ti@empresa.com.br
 ```
 
 > [!WARNING]
@@ -135,7 +135,7 @@ class EmailService:
         from_name = os.environ.get("MAIL_FROM_NAME") or "Departamento de TI"
 
         return {
-            "server": os.environ.get("SMTP_SERVER", "correio.brasfort.com.br"),
+            "server": os.environ.get("SMTP_SERVER", "smtp.empresa.com.br"),
             "port": int(os.environ.get("SMTP_PORT", 587)),
             "user": user,
             "password": os.environ.get("SMTP_PASSWORD", ""),
@@ -252,7 +252,7 @@ export interface EnviarEmailOptions {
 export async function enviarEmailCorporativo(options: EnviarEmailOptions) {
   const { destinatarios, assunto, corpoHtml, anexoBuffer, nomeAnexo = 'relatorio.pdf' } = options;
 
-  const server = process.env.SMTP_SERVER || 'correio.brasfort.com.br';
+  const server = process.env.SMTP_SERVER || 'smtp.empresa.com.br';
   const port = Number(process.env.SMTP_PORT) || 587;
   const user = process.env.SMTP_USER || '';
   const password = process.env.SMTP_PASSWORD || '';
@@ -349,7 +349,7 @@ export async function POST(req: NextRequest) {
             </div>
           </div>
           <div style="background: #f1f5f9; padding: 12px; text-align: center; font-size: 12px; color: #64748b;">
-            Enviado por Grupo Brasfort
+            Enviado pelo Sistema Corporativo
           </div>
         </div>
       </div>
@@ -449,14 +449,14 @@ Para garantir que o e-mail renderize perfeitamente no **Outlook Desktop**, **Out
 - **Solução**: Certifique-se de que `servidor.login(usuario, senha)` ou `auth: { user, pass }` está sendo executado antes do `sendmail`.
 
 ### ❌ Erro: `550 5.7.60 SMTP; Client does not have permissions to send on behalf of the from address`
-- **Causa**: Você tentou enviar como `dep.ti@brasfort.com.br`, mas a conta logada não tem permissão de "Send As" concedida no Exchange.
+- **Causa**: Você tentou enviar como `ti@empresa.com.br`, mas a conta logada não tem permissão de "Send As" concedida no Exchange.
 - **Solução**: Solicite ao time de infraestrutura a permissão `SendAs` via PowerShell ou use o fallback de envelope sender detalhado na Seção 4.
 
 ### ❌ Erro: `Timeout de Conexão (ETIMEDOUT / TimeoutError)`
 - **Causa**: Bloqueio de firewall na porta 587 ou DNS que não resolve o nome interno da rede corporativa.
 - **Diagnóstico rápido via PowerShell**:
   ```powershell
-  Test-NetConnection -ComputerName correio.brasfort.com.br -Port 587
+  Test-NetConnection -ComputerName smtp.empresa.com.br -Port 587
   ```
   Se retornar `TcpTestSucceeded: True`, a rede e porta estão abertas e liberadas.
 

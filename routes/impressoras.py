@@ -217,9 +217,8 @@ def atualizar_status():
 @login_required
 @printer_staff_required
 def teste_web():
-    resultado = ImpressorasService.consultar_interface_web(
-        "10.90.1.16"
-    )
+    ip = request.args.get("ip", "127.0.0.1")
+    resultado = ImpressorasService.consultar_interface_web(ip)
     return resultado
 
 
