@@ -40,7 +40,7 @@ def listar():
     )
 
 
-@usuarios_bp.route('/aprovar/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/aprovar/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def aprovar(id):
@@ -49,7 +49,7 @@ def aprovar(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/bloquear/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/bloquear/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def bloquear(id):
@@ -62,7 +62,7 @@ def bloquear(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/ativar/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/ativar/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def ativar(id):
@@ -71,7 +71,7 @@ def ativar(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/tornar_adm/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/tornar_adm/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def tornar_adm(id):
@@ -80,7 +80,7 @@ def tornar_adm(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/tornar_usuario/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/tornar_usuario/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def tornar_usuario(id):
@@ -94,7 +94,7 @@ def tornar_usuario(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/tornar_operador/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/tornar_operador/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def tornar_operador(id):
@@ -108,7 +108,7 @@ def tornar_operador(id):
     return _redirecionar_origem()
 
 
-@usuarios_bp.route('/tornar_tecnico_impressora/<int:id>', methods=['GET', 'POST'])
+@usuarios_bp.route('/tornar_tecnico_impressora/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def tornar_tecnico_impressora(id):

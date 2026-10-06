@@ -270,7 +270,7 @@ def editar_chamado(id):
 # EXCLUIR CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/excluir/<int:id>', methods=['POST', 'GET'])
+@chamados_bp.route('/chamados/excluir/<int:id>', methods=['POST'])
 @login_required
 @admin_required
 def excluir_chamado(id):
@@ -312,7 +312,7 @@ def detalhes_chamado(id):
 # RESOLVER CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/resolver/<int:id>', methods=['POST', 'GET'])
+@chamados_bp.route('/chamados/resolver/<int:id>', methods=['POST'])
 @login_required
 @staff_required
 def resolver_chamado(id):
@@ -337,7 +337,7 @@ def resolver_chamado(id):
 # FECHAR CHAMADO
 # =============================================================
 
-@chamados_bp.route('/chamados/fechar/<int:id>', methods=['POST', 'GET'])
+@chamados_bp.route('/chamados/fechar/<int:id>', methods=['POST'])
 @login_required
 @staff_required
 def fechar_chamado(id):
