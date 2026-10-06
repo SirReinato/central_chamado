@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, render_template, request, redirect, session, url_for
 
 from flask_login import (
@@ -6,8 +7,6 @@ from flask_login import (
     login_required,
     current_user
 )
-
-
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -25,8 +24,12 @@ def login():
 
     if request.method == 'POST':
 
-        email = request.form.get('email', '').strip()
+        email = request.form.get('email', '').strip().lower()
         password = request.form.get('senha', '')
+
+        # Se o usuário digitar somente nome.sobrenome, completa com @king.com
+        if email and '@' not in email:
+            email = f"{email}@king.com"
 
         usuario = Usuario.query.filter_by(
             email=email
@@ -47,6 +50,9 @@ def login():
             )
 
         login_user(usuario)
+
+        if usuario.is_tecnico_impressora:
+            return redirect(url_for('impressoras.index'))
 
         return redirect(url_for('chamados.home'))
 
@@ -74,19 +80,64 @@ def aguardando_aprovacao():
         status=status
     )
 
+def validar_email_institucional(email_raw):
+    """
+    Valida e normaliza o e-mail para novos usuários.
+    Padrão institucional obrigatório: nome.sobrenome@king.com
+    (deve conter pelo menos nome e sobrenome separados por ponto).
+    
+    Retorna: (email_normalizado, mensagem_erro)
+    """
+    if not email_raw or not email_raw.strip():
+        return None, "Por favor, informe seu e-mail institucional."
+
+    email = email_raw.strip().lower()
+
+    # Se o usuário digitou apenas "nome.sobrenome" sem o sufixo "@king.com"
+    if '@' not in email:
+        email = f"{email}@king.com"
+
+    # Verifica se termina obrigatoriamente com o domínio @king.com
+    if not email.endswith('@king.com'):
+        return None, "Domínio não permitido. Novos usuários devem utilizar obrigatoriamente o domínio @king.com (exemplo: nome.sobrenome@king.com)."
+
+    # Extrai o nome de usuário local antes do @king.com
+    usuario_local = email[:-len('@king.com')]
+
+    # Valida formato nome.sobrenome (apenas caracteres alfanuméricos e pontos)
+    # Requer pelo menos duas partes separadas por ponto: nome.sobrenome
+    padrao = r'^[a-z0-9]+(?:\.[a-z0-9]+)+$'
+    if not re.match(padrao, usuario_local):
+        return None, "Formato de e-mail inválido! O login deve conter nome e sobrenome separados por ponto no padrão: nome.sobrenome@king.com (exemplo: joao.silva@king.com)."
+
+    return email, None
+
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
 
     if request.method == 'POST':
 
         nome = request.form.get('nome', '').strip()
-        email = request.form.get('email', '').strip().lower()
+        email_raw = request.form.get('email', '').strip()
         senha = request.form.get('senha', '')
 
-        if not nome or not email or not senha:
+        if not nome or not email_raw or not senha:
             return render_template(
                 'auth/register.html',
-                error='Por favor, preencha todos os campos.'
+                error='Por favor, preencha todos os campos.',
+                nome=nome,
+                email=email_raw
+            )
+
+        # Validação estrita do padrão de e-mail institucional
+        email, erro_email = validar_email_institucional(email_raw)
+        if erro_email:
+            return render_template(
+                'auth/register.html',
+                error=erro_email,
+                nome=nome,
+                email=email_raw
             )
 
         admin_existe = Usuario.query.filter_by(
@@ -107,7 +158,9 @@ def register():
         if usuario_existente:
             return render_template(
                 'auth/register.html',
-                error='Este e-mail já está cadastrado.'
+                error='Este e-mail já está cadastrado.',
+                nome=nome,
+                email=email_raw
             )
 
         novo_usuario = Usuario(

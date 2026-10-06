@@ -21,52 +21,102 @@
         </div>
 
         {% if error %}
-        <div class="alert alert-danger mb-4 py-2 text-center" role="alert">
-            {{ error }}
+        <div class="alert alert-danger mb-4 py-2 text-center d-flex align-items-center justify-content-center gap-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+            <span>{{ error }}</span>
         </div>
         {% endif %}
 
-        <form method="POST">
+        <form method="POST" id="formRegistro" novalidate>
 
+            <!-- Nome Completo -->
             <div class="mb-3">
                 <label class="form-label labelCampo">
                     Nome Completo
                 </label>
-                <input
-                    type="text"
-                    name="nome"
-                    class="form-control inputPadrao"
-                    placeholder="Digite seu nome completo"
-                    required
-                    autofocus>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <input
+                        type="text"
+                        name="nome"
+                        id="nomeInput"
+                        class="form-control inputPadrao border-start-0 ps-0"
+                        placeholder="Digite seu nome completo"
+                        value="{{ nome or '' }}"
+                        required
+                        autofocus>
+                </div>
             </div>
 
+            <!-- E-mail Institucional Obrigatório (nome.sobrenome@king.com) -->
             <div class="mb-3">
-                <label class="form-label labelCampo">
-                    E-mail
-                </label>
-                <input
-                    type="email"
-                    name="email"
-                    class="form-control inputPadrao"
-                    placeholder="seu.email@empresa.com"
-                    required>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label labelCampo mb-0">
+                        E-mail Institucional
+                    </label>
+                    <span class="badge" style="background: rgba(212, 160, 23, 0.15); color: var(--cor-dourado); border: 1px solid rgba(212, 160, 23, 0.35); font-size: 0.72rem; font-weight: 600;">
+                        @king.com
+                    </span>
+                </div>
+
+                <!-- Caixa Informativa do Padrão -->
+                <div class="p-2 mb-2 rounded-2" style="background: rgba(212, 160, 23, 0.08); border: 1px dashed rgba(212, 160, 23, 0.4); font-size: 0.82rem;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-shield-check text-warning"></i>
+                        <strong style="color: var(--cor-dourado);">Padrão obrigatório de cadastro:</strong>
+                    </div>
+                    <div style="color: var(--cor-texto-secundario); padding-left: 22px;">
+                        O login deve ser formado por <strong class="text-white">nome.sobrenome</strong> seguido de <strong class="text-warning">@king.com</strong>.<br>
+                        <span class="text-white-50">Exemplo válido:</span> <code class="text-info fw-bold">joao.silva@king.com</code>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <i class="bi bi-envelope-at"></i>
+                    </span>
+                    <input
+                        type="text"
+                        name="email"
+                        id="emailInput"
+                        class="form-control inputPadrao border-start-0 ps-0"
+                        placeholder="nome.sobrenome@king.com"
+                        value="{{ email or '' }}"
+                        required
+                        autocomplete="username"
+                        spellcheck="false">
+                </div>
+                <div id="emailFeedback" class="small mt-1 ps-1" style="display: none; transition: all 0.2s ease;"></div>
             </div>
 
+            <!-- Senha -->
             <div class="mb-4">
                 <label class="form-label labelCampo">
                     Senha
                 </label>
-                <input
-                    type="password"
-                    name="senha"
-                    class="form-control inputPadrao"
-                    placeholder="Crie uma senha segura"
-                    required>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <i class="bi bi-lock"></i>
+                    </span>
+                    <input
+                        type="password"
+                        name="senha"
+                        id="senhaInput"
+                        class="form-control inputPadrao border-start-0 ps-0"
+                        placeholder="Crie uma senha segura"
+                        required
+                        autocomplete="new-password">
+                    <button class="btn btn-outline-secondary border-start-0" type="button" id="btnToggleSenha" style="border-color: var(--cor-borda); color: var(--cor-texto-secundario);" title="Mostrar/ocultar senha">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
             </div>
 
+            <!-- Botão Cadastrar -->
             <div class="d-grid mb-3">
-                <button type="submit" class="btn botaoPrimario py-2 rounded-3">
+                <button type="submit" id="btnSubmit" class="btn botaoPrimario py-2 rounded-3 fw-bold">
                     Cadastrar
                 </button>
             </div>
@@ -85,5 +135,147 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formRegistro');
+    const nomeInput = document.getElementById('nomeInput');
+    const emailInput = document.getElementById('emailInput');
+    const senhaInput = document.getElementById('senhaInput');
+    const emailFeedback = document.getElementById('emailFeedback');
+    const btnToggleSenha = document.getElementById('btnToggleSenha');
+
+    // Alternar visibilidade da senha
+    if (btnToggleSenha && senhaInput) {
+        btnToggleSenha.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (senhaInput.type === 'password') {
+                senhaInput.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                senhaInput.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    }
+
+    // Função de validação do padrão institucional: nome.sobrenome@king.com
+    function analisarEmail(valor) {
+        valor = (valor || '').trim().toLowerCase();
+        if (!valor) {
+            return { valido: false, msg: '', tipo: 'vazio' };
+        }
+
+        let usuarioLocal = valor;
+        let dominio = '';
+
+        if (valor.includes('@')) {
+            const partes = valor.split('@');
+            usuarioLocal = partes[0];
+            dominio = partes.slice(1).join('@');
+
+            if (dominio !== 'king.com') {
+                return {
+                    valido: false,
+                    msg: 'Domínio inválido! Utilize obrigatoriamente <strong>@king.com</strong> (ex: joao.silva@king.com).',
+                    tipo: 'erro'
+                };
+            }
+        }
+
+        // Valida se possui nome e sobrenome separados por ponto (nome.sobrenome)
+        const regexPonto = /^[a-z0-9]+(?:\.[a-z0-9]+)+$/;
+
+        if (!usuarioLocal.includes('.')) {
+            return {
+                valido: false,
+                msg: 'Falta o sobrenome! Informe no padrão <strong>nome.sobrenome</strong> (ex: joao.silva@king.com).',
+                tipo: 'incompleto'
+            };
+        }
+
+        if (!regexPonto.test(usuarioLocal)) {
+            return {
+                valido: false,
+                msg: 'Formato inválido! Use apenas letras e números separados por ponto (ex: joao.silva@king.com).',
+                tipo: 'erro'
+            };
+        }
+
+        const emailCompleto = usuarioLocal + '@king.com';
+        return {
+            valido: true,
+            emailCompleto: emailCompleto,
+            msg: 'E-mail válido: <strong>' + emailCompleto + '</strong>',
+            tipo: 'sucesso'
+        };
+    }
+
+    function atualizarVisualizacao() {
+        const analise = analisarEmail(emailInput.value);
+
+        if (analise.tipo === 'vazio') {
+            emailFeedback.style.display = 'none';
+            emailInput.style.borderColor = 'var(--cor-borda)';
+            return;
+        }
+
+        emailFeedback.style.display = 'block';
+
+        if (analise.valido) {
+            emailFeedback.className = 'small mt-1 ps-1 text-success';
+            emailFeedback.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> ' + analise.msg;
+            emailInput.style.borderColor = '#2ecc71';
+        } else if (analise.tipo === 'incompleto') {
+            emailFeedback.className = 'small mt-1 ps-1 text-warning';
+            emailFeedback.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> ' + analise.msg;
+            emailInput.style.borderColor = '#f39c12';
+        } else {
+            emailFeedback.className = 'small mt-1 ps-1 text-danger';
+            emailFeedback.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> ' + analise.msg;
+            emailInput.style.borderColor = '#e74c3c';
+        }
+    }
+
+    emailInput.addEventListener('input', atualizarVisualizacao);
+
+    // Validação estrita ao submeter o formulário
+    form.addEventListener('submit', function(e) {
+        const nomeValor = (nomeInput.value || '').trim();
+        const senhaValor = (senhaInput.value || '').trim();
+        const analise = analisarEmail(emailInput.value);
+
+        if (!nomeValor) {
+            e.preventDefault();
+            nomeInput.focus();
+            return false;
+        }
+
+        if (!analise.valido) {
+            e.preventDefault();
+            atualizarVisualizacao();
+            emailInput.focus();
+            alert('Atenção: O e-mail deve conter nome e sobrenome separados por ponto no padrão obrigatório: nome.sobrenome@king.com (exemplo: joao.silva@king.com). Por favor, insira um formato válido.');
+            return false;
+        }
+
+        if (!senhaValor) {
+            e.preventDefault();
+            senhaInput.focus();
+            return false;
+        }
+
+        // Se o usuário digitou sem o @king.com, anexa automaticamente antes de enviar
+        if (analise.emailCompleto) {
+            emailInput.value = analise.emailCompleto;
+        }
+    });
+
+    // Se já veio com valor (ex: após erro de backend)
+    if (emailInput.value) {
+        atualizarVisualizacao();
+    }
+});
+</script>
 
 {% endblock %}

@@ -30,16 +30,29 @@
 
             <div class="mb-3">
                 <label class="form-label labelCampo">
-                    E-mail
+                    E-mail Institucional
                 </label>
-                <input type="email" name="email" class="form-control inputPadrao" placeholder="seu.email@empresa.com" required autofocus>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <i class="bi bi-envelope-at"></i>
+                    </span>
+                    <input type="text" name="email" class="form-control inputPadrao border-start-0 ps-0" placeholder="nome.sobrenome@king.com" value="{{ request.form.get('email', '') }}" required autofocus autocomplete="username">
+                </div>
             </div>
 
             <div class="mb-4">
                 <label class="form-label labelCampo">
                     Senha
                 </label>
-                <input type="password" name="senha" class="form-control inputPadrao" placeholder="Digite sua senha" required>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0 text-tema-secundario" style="border-color: var(--cor-borda);">
+                        <i class="bi bi-lock"></i>
+                    </span>
+                    <input type="password" name="senha" id="loginSenha" class="form-control inputPadrao border-start-0 ps-0" placeholder="Digite sua senha" required autocomplete="current-password">
+                    <button class="btn btn-outline-secondary border-start-0" type="button" id="btnToggleLoginSenha" style="border-color: var(--cor-borda); color: var(--cor-texto-secundario);" title="Mostrar/ocultar senha">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="d-grid mb-3">
@@ -62,5 +75,24 @@
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnToggle = document.getElementById('btnToggleLoginSenha');
+    const inputSenha = document.getElementById('loginSenha');
+    if (btnToggle && inputSenha) {
+        btnToggle.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (inputSenha.type === 'password') {
+                inputSenha.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                inputSenha.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}

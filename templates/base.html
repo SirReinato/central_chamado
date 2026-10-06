@@ -8,6 +8,21 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
     <title>Central de Chamados</title>
+
+    <!-- Metatags e Configurações PWA -->
+    <link rel="manifest" href="{{ url_for('main.manifest') }}">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Central Chamados">
+    <meta name="application-name" content="Central de Chamados Brasfort">
+
+    <!-- Ícones e Favicons -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('main.favicon') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
 </head>
 
 <body class="bg-dark">
@@ -17,7 +32,7 @@
         <div class="container-fluid">
 
             <!-- Nome do sistema -->
-            <a class="navbar-brand text-light" href="{{ url_for('main.index') }}">
+            <a class="navbar-brand text-light" href="{{ url_for('impressoras.index') if current_user.is_authenticated and current_user.is_tecnico_impressora else url_for('main.index') }}">
                 Central de Chamados
             </a>
 
@@ -36,6 +51,21 @@
 
                 <ul class="navbar-nav">
 
+                    {% if current_user.is_tecnico_impressora %}
+                    <!-- Perfil Técnico de Impressoras: Exclusivamente Impressoras e Estoque -->
+                    <li class="nav-item">
+                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.index') }}">
+                            <i class="bi bi-printer me-1"></i>Impressoras
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
+                            <i class="bi bi-box-seam me-1"></i>Estoque
+                        </a>
+                    </li>
+
+                    {% else %}
+                    <!-- Demais perfis (admin, operador, usuario comum) -->
                     <!-- Novo chamado -->
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-light fw-semibold"
@@ -52,9 +82,8 @@
                         </a>
                     </li>
 
-                    <!-- Usuários -->
+                    <!-- Usuários / Dashboard -->
                     {% if current_user.is_admin %}
-                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-light fw-semibold"
                             href="{{ url_for('dashboard.dashboard') }}">
@@ -83,8 +112,15 @@
                         </a>
                     </li>
                     {% endif %}
+                    {% endif %}
 
                 </ul>
+
+                <!-- Botão PWA: Instalar Aplicativo (exibido dinamicamente quando suportado) -->
+                <button id="btnInstalarPwa" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1 me-2" title="Instalar Central de Chamados como aplicativo no Windows ou celular">
+                    <i class="bi bi-download"></i>
+                    <span class="d-none d-sm-inline">Instalar App</span>
+                </button>
 
                 <!-- Usuário logado -->
                 <div class="d-flex align-items-center gap-2 ms-auto">
@@ -102,7 +138,14 @@
                 {% else %}
 
                 <!-- Usuário não autenticado -->
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
+
+                    <li class="nav-item me-2">
+                        <button id="btnInstalarPwaPublic" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1" title="Instalar Central de Chamados como aplicativo">
+                            <i class="bi bi-download"></i>
+                            <span class="d-none d-sm-inline">Instalar App</span>
+                        </button>
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link linkNavbar text-dark" href="{{ url_for('auth.login') }}">
@@ -126,6 +169,11 @@
 
     </nav>
 
+    <!-- Indicador de Status Offline do PWA -->
+    <div id="offlineIndicator" class="alert alert-warning py-1 px-3 m-0 position-fixed bottom-0 start-50 translate-middle-x shadow-lg text-center d-none" style="z-index: 9999; border-radius: 20px; font-size: 0.85rem; background: rgba(245, 158, 11, 0.95); color: #000; border: 1px solid #d97706; margin-bottom: 15px !important;">
+        <i class="bi bi-wifi-off me-1"></i> Modo Offline — Conexão com o servidor perdida.
+    </div>
+
     <!-- Conteúdo das páginas -->
     <main class="container containerPadrao mt-4 bg-dark text-light rounded shadow-sm">
         <!-- Alertas Globais do Sistema -->
@@ -146,6 +194,170 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal de Instruções de Instalação do PWA em Rede Local -->
+    <div class="modal fade" id="modalInstalarPwa" tabindex="-1" aria-labelledby="modalInstalarPwaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-light" style="background: var(--cor-card-1, #1e293b); border: 1px solid var(--cor-borda, #334155); border-radius: 16px;">
+                <div class="modal-header border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <h5 class="modal-title d-flex align-items-center gap-2 fw-bold text-tema" id="modalInstalarPwaLabel">
+                        <i class="bi bi-download text-warning"></i> Instalar Central de Chamados
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="text-tema-secundario mb-3">
+                        Como você está acessando pela rede local (<code class="text-info">http://172.16.50.5:5000</code>), o navegador requer a instalação rápida pelo menu do navegador:
+                    </p>
+
+                    <!-- Google Chrome -->
+                    <div class="p-3 mb-3 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="fw-bold mb-2 text-warning d-flex align-items-center gap-2">
+                            <i class="bi bi-browser-chrome fs-5"></i> No Google Chrome:
+                        </div>
+                        <ol class="small mb-0 ps-3 text-light" style="line-height: 1.6;">
+                            <li>Clique nos <strong>3 pontinhos (⋮)</strong> no canto superior direito do Chrome.</li>
+                            <li>Vá em <strong>Salvar e compartilhar</strong> (ou <em>Transmitir, salvar e compartilhar</em>).</li>
+                            <li>Clique em <strong>"Instalar página como aplicativo..."</strong> (ou <em>"Criar atalho..."</em> marcando <em>"Abrir como janela"</em>).</li>
+                        </ol>
+                    </div>
+
+                    <!-- Microsoft Edge -->
+                    <div class="p-3 mb-3 rounded-3" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div class="fw-bold mb-2 text-info d-flex align-items-center gap-2">
+                            <i class="bi bi-browser-edge fs-5"></i> No Microsoft Edge:
+                        </div>
+                        <ol class="small mb-0 ps-3 text-light" style="line-height: 1.6;">
+                            <li>Clique nos <strong>3 pontinhos (…)</strong> no canto superior direito do Edge.</li>
+                            <li>Passe o mouse em <strong>Aplicativos</strong>.</li>
+                            <li>Clique em <strong>"Instalar este site como um aplicativo"</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <!-- Celular -->
+                    <div class="p-3 mb-0 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <div class="fw-bold mb-1 text-light d-flex align-items-center gap-2 small">
+                            <i class="bi bi-phone"></i> No Celular (Android / iOS):
+                        </div>
+                        <div class="small text-secondary ps-4">
+                            Abra o menu do navegador e toque em <strong>"Adicionar à tela inicial"</strong>.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top d-flex justify-content-between" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <span class="small text-secondary">
+                        <i class="bi bi-shield-check"></i> Cria um atalho direto na Área de Trabalho
+                    </span>
+                    <button type="button" class="btn botaoPrimario px-4" data-bs-dismiss="modal">
+                        Entendi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         SCRIPT PWA: SERVICE WORKER & INSTALAÇÃO
+         ========================================== -->
+    <script>
+        // 1. Registro do Service Worker (quando suportado pelo navegador)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then((registration) => {
+                        console.log('[PWA] Service Worker registrado com sucesso (escopo: ' + registration.scope + ')');
+                    })
+                    .catch((error) => {
+                        console.warn('[PWA] Service Worker indisponível (requer HTTPS ou localhost):', error);
+                    });
+            });
+        }
+
+        // 2. Controle do Prompt e Botões de Instalação
+        let deferredPrompt = null;
+        const btnInstalarLogado = document.getElementById('btnInstalarPwa');
+        const btnInstalarPublico = document.getElementById('btnInstalarPwaPublic');
+
+        function exibirBotoesInstalar() {
+            if (btnInstalarLogado) {
+                btnInstalarLogado.classList.remove('d-none');
+                btnInstalarLogado.classList.add('d-inline-flex');
+            }
+            if (btnInstalarPublico) {
+                btnInstalarPublico.classList.remove('d-none');
+                btnInstalarPublico.classList.add('d-inline-flex');
+            }
+        }
+
+        // Quando o navegador permite prompt nativo (localhost, HTTPS ou flag ativada)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            exibirBotoesInstalar();
+        });
+
+        // Mostra o botão sempre caso o site ainda não esteja instalado como aplicativo standalone
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (!isStandalone) {
+            exibirBotoesInstalar();
+        }
+
+        function dispararInstalacao() {
+            if (deferredPrompt) {
+                // Se houver prompt nativo do navegador
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    console.log('[PWA] Escolha do usuário:', choiceResult.outcome);
+                    deferredPrompt = null;
+                    if (choiceResult.outcome === 'accepted') {
+                        if (btnInstalarLogado) btnInstalarLogado.classList.add('d-none');
+                        if (btnInstalarPublico) btnInstalarPublico.classList.add('d-none');
+                    }
+                });
+            } else {
+                // Se acessado por IP HTTP de rede local (onde o navegador bloqueia prompt automático),
+                // abre o modal explicativo mostrando como instalar em 2 cliques
+                const modalEl = document.getElementById('modalInstalarPwa');
+                if (modalEl) {
+                    const modalInstancia = new bootstrap.Modal(modalEl);
+                    modalInstancia.show();
+                }
+            }
+        }
+
+        if (btnInstalarLogado) {
+            btnInstalarLogado.addEventListener('click', dispararInstalacao);
+        }
+        if (btnInstalarPublico) {
+            btnInstalarPublico.addEventListener('click', dispararInstalacao);
+        }
+
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] Central de Chamados Brasfort instalada com sucesso!');
+            if (btnInstalarLogado) {
+                btnInstalarLogado.classList.remove('d-inline-flex');
+                btnInstalarLogado.classList.add('d-none');
+            }
+            if (btnInstalarPublico) {
+                btnInstalarPublico.classList.remove('d-inline-flex');
+                btnInstalarPublico.classList.add('d-none');
+            }
+        });
+
+        // 3. Monitoramento em tempo real de Conexão (Online / Offline)
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        function verificarStatusRede() {
+            if (offlineIndicator) {
+                if (!navigator.onLine) {
+                    offlineIndicator.classList.remove('d-none');
+                } else {
+                    offlineIndicator.classList.add('d-none');
+                }
+            }
+        }
+        window.addEventListener('online', verificarStatusRede);
+        window.addEventListener('offline', verificarStatusRede);
+    </script>
 </body>
 
 </html>
