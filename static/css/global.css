@@ -1361,3 +1361,390 @@ body {
     border: 2px solid #fbbf24 !important;
     background: rgba(245, 158, 11, 0.08) !important;
 }
+
+
+/* =============================================================
+   SISTEMA DE NAVEGAÇÃO MODERNO (TOPBAR SLIM + SIDEBAR RETRÁTIL)
+   Design System: Dark Glassmorphic Enterprise SaaS
+   ============================================================= */
+
+/* TopBar Slim */
+.appTopbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 54px;
+    background: linear-gradient(90deg, #1b242e 0%, var(--cor-azul-escuro) 100%);
+    border-bottom: 1px solid var(--cor-borda);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+}
+
+.appBrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--cor-cinza-claro);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.3px;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.appBrand:hover {
+    color: var(--cor-dourado);
+}
+
+.appBrandBadge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(var(--cor-dourado-rgb), 0.15);
+    color: var(--cor-dourado);
+    border: 1px solid rgba(var(--cor-dourado-rgb), 0.3);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.btnSidebarToggle {
+    background: transparent;
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto-secundario);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.btnSidebarToggle:hover,
+.btnSidebarToggle:focus {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--cor-dourado);
+    border-color: rgba(var(--cor-dourado-rgb), 0.4);
+}
+
+.topbarBreadcrumb {
+    color: var(--cor-texto-secundario);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.topbarBreadcrumb .moduloAtual {
+    color: var(--cor-cinza-claro);
+    font-weight: 600;
+}
+
+/* User chip no topo */
+.topbarUserChip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--cor-borda);
+    border-radius: 20px;
+}
+
+.topbarUserAvatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--cor-card-1);
+    color: var(--cor-dourado);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.topbarUserName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cor-cinza-claro);
+}
+
+.topbarUserRole {
+    font-size: 0.68rem;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.roleAdmin {
+    background: rgba(var(--cor-dourado-rgb), 0.2);
+    color: var(--cor-dourado);
+    border: 1px solid rgba(var(--cor-dourado-rgb), 0.4);
+}
+
+.roleOperador {
+    background: rgba(var(--cor-azul-rgb), 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(var(--cor-azul-rgb), 0.4);
+}
+
+.roleTecnico {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.roleUsuario {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--cor-cinza-claro);
+}
+
+.topbarLogout {
+    border-radius: 8px;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    transition: all 0.2s ease;
+}
+
+/* Sidebar */
+.appSidebar {
+    position: fixed;
+    top: 54px;
+    bottom: 0;
+    left: 0;
+    width: 250px;
+    background: var(--cor-autenticacao);
+    border-right: 1px solid var(--cor-borda);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    z-index: 1025;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebarNavWrapper {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 10px;
+}
+
+.sidebarNavWrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebarNavWrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+.sidebarGroupTitle {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--cor-texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 12px 12px 6px 12px;
+    white-space: nowrap;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.sidebarItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    color: var(--cor-texto-secundario);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 3px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    position: relative;
+}
+
+.sidebarItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--cor-cinza-claro);
+    transform: translateX(2px);
+}
+
+.sidebarItem .sidebarIcon {
+    font-size: 1.1rem;
+    min-width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+/* Item ativo */
+.sidebarItem.active {
+    background: rgba(var(--cor-dourado-rgb), 0.14);
+    color: var(--cor-dourado) !important;
+    font-weight: 600;
+    border-left: 3px solid var(--cor-dourado);
+    padding-left: 9px;
+}
+
+.sidebarItem.active .sidebarIcon {
+    color: var(--cor-dourado);
+}
+
+/* Item Ação Especial: Novo Chamado */
+.sidebarItemAction {
+    background: rgba(var(--cor-dourado-rgb), 0.08);
+    border: 1px dashed rgba(var(--cor-dourado-rgb), 0.35);
+    color: var(--cor-dourado);
+}
+
+.sidebarItemAction:hover {
+    background: rgba(var(--cor-dourado-rgb), 0.18);
+    border-color: var(--cor-dourado);
+    color: var(--cor-dourado);
+}
+
+/* Rodapé da Sidebar */
+.sidebarFooter {
+    padding: 10px;
+    border-top: 1px solid var(--cor-borda);
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.sidebarCollapseBtn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cor-texto-secundario);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.sidebarCollapseBtn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--cor-cinza-claro);
+    border-color: var(--cor-borda);
+}
+
+/* =============================================================
+   MODO RECOLHIDO (COLLAPSED / COMPACTO - 68px)
+   ============================================================= */
+
+body.sidebar-collapsed .appSidebar {
+    width: 68px;
+}
+
+body.sidebar-collapsed .sidebarGroupTitle {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebarLabel {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebarItem {
+    justify-content: center;
+    padding: 10px 0;
+    margin-bottom: 6px;
+    border-left: none !important;
+}
+
+body.sidebar-collapsed .sidebarItem.active {
+    border-left: none !important;
+    background: rgba(var(--cor-dourado-rgb), 0.2);
+    border-radius: 10px;
+    width: 44px;
+    margin: 0 auto 6px auto;
+}
+
+body.sidebar-collapsed .sidebarCollapseBtn {
+    justify-content: center;
+    padding: 8px 0;
+}
+
+body.sidebar-collapsed .collapseText {
+    display: none;
+}
+
+body.sidebar-collapsed .collapseIcon {
+    transform: rotate(180deg);
+}
+
+/* Layout Principal com Sidebar */
+.appMainWrapper {
+    margin-top: 54px;
+    margin-left: 250px;
+    min-height: calc(100vh - 54px);
+    transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 24px 20px;
+}
+
+body.sidebar-collapsed .appMainWrapper {
+    margin-left: 68px;
+}
+
+/* Para páginas sem autenticação (login, register) */
+body.no-sidebar .appMainWrapper {
+    margin-left: 0 !important;
+    margin-top: 54px;
+}
+
+/* Backdrop para mobile */
+.sidebarBackdrop {
+    display: none;
+    position: fixed;
+    top: 54px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 1020;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+/* Responsividade Mobile (< 992px) */
+@media (max-width: 991.98px) {
+    .appSidebar {
+        transform: translateX(-100%);
+        width: 250px !important;
+    }
+
+    .appSidebar.show-mobile {
+        transform: translateX(0);
+        box-shadow: 4px 0 25px rgba(0, 0, 0, 0.7);
+    }
+
+    .sidebarBackdrop.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .appMainWrapper,
+    body.sidebar-collapsed .appMainWrapper {
+        margin-left: 0 !important;
+        padding: 16px 12px;
+    }
+
+    .sidebarFooter {
+        display: none;
+    }
+}

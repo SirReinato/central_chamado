@@ -28,161 +28,194 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-<body class="bg-dark">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light navbarSistema text-dark shadow-sm fixed-top">
+<body class="bg-dark {% if not current_user.is_authenticated %}no-sidebar{% endif %}">
+    <!-- =============================================================
+         TOPBAR SLIM (MODERNA E CONTEXTUAL)
+         ============================================================= -->
+    <header class="appTopbar">
+        {% if current_user.is_authenticated %}
+        <!-- Botão Toggle da Sidebar (Mobile & Desktop) -->
+        <button id="btnToggleSidebar" class="btn btnSidebarToggle me-2" type="button" aria-label="Alternar menu lateral" title="Recolher / Expandir Menu (Alt+B)">
+            <i class="bi bi-layout-sidebar-inset fs-5"></i>
+        </button>
 
-        <div class="container-fluid">
+        <!-- Nome / Branding do Sistema -->
+        <a class="appBrand" href="{{ url_for('impressoras.index') if current_user.is_tecnico_impressora else url_for('chamados.home') }}">
+            <i class="bi bi-shield-check text-warning fs-5"></i>
+            <span>Central de Chamados</span>
+            <span class="appBrandBadge d-none d-sm-inline">PRO</span>
+        </a>
 
-            <!-- Nome do sistema -->
-            <a class="navbar-brand text-light" href="{{ url_for('impressoras.index') if current_user.is_authenticated and current_user.is_tecnico_impressora else url_for('main.index') }}">
-                Central de Chamados
-            </a>
+        <!-- Breadcrumb / Contexto da Página Atual -->
+        <div class="topbarBreadcrumb d-none d-md-flex align-items-center ms-3 ps-3 border-start border-secondary border-opacity-25">
+            <i class="bi bi-compass text-secondary me-1"></i>
+            {% if request.endpoint == 'dashboard.dashboard' %}
+                <span>Painel</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Dashboard</span>
+            {% elif request.endpoint == 'chamados.novo_chamado' %}
+                <span>Service Desk</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Novo Chamado</span>
+            {% elif request.endpoint in ('chamados.listar_chamados', 'chamados.detalhes_chamado', 'chamados.editar_chamado') %}
+                <span>Service Desk</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Fila de Chamados</span>
+            {% elif request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}
+                <span>Parque Gráfico</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Impressoras</span>
+            {% elif request.endpoint == 'impressoras.gerenciar_estoque' %}
+                <span>Parque Gráfico</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Estoque & Insumos</span>
+            {% elif request.endpoint == 'usuarios.listar' %}
+                <span>Administração</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Usuários</span>
+            {% else %}
+                <span>Visão Geral</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Início</span>
+            {% endif %}
+        </div>
 
-            <!-- Menu mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Alternar navegação">
-
-                <span class="navbar-toggler-icon"></span>
-
+        <!-- Ações do Topo / Perfil / PWA -->
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <!-- Botão PWA: Instalar Aplicativo -->
+            <button id="btnInstalarPwa" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1" title="Instalar Central de Chamados como aplicativo no Windows ou celular">
+                <i class="bi bi-download"></i>
+                <span class="d-none d-sm-inline">Instalar App</span>
             </button>
 
-            <!-- Links da navbar -->
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Chip do Usuário Logado -->
+            <div class="topbarUserChip d-none d-sm-flex">
+                <div class="topbarUserAvatar">
+                    {{ current_user.nome[:1] | upper }}
+                </div>
+                <span class="topbarUserName">{{ current_user.nome }}</span>
+                {% if current_user.is_admin %}
+                    <span class="topbarUserRole roleAdmin">Admin</span>
+                {% elif current_user.is_operador %}
+                    <span class="topbarUserRole roleOperador">Operador</span>
+                {% elif current_user.is_tecnico_impressora %}
+                    <span class="topbarUserRole roleTecnico">Técnico Imp.</span>
+                {% else %}
+                    <span class="topbarUserRole roleUsuario">Usuário</span>
+                {% endif %}
+            </div>
 
-                {% if current_user.is_authenticated %}
+            <!-- Botão Logout -->
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger topbarLogout" title="Encerrar sessão">
+                <i class="bi bi-box-arrow-right me-1"></i>
+                <span class="d-none d-sm-inline">Sair</span>
+            </a>
+        </div>
 
-                <ul class="navbar-nav">
+        {% else %}
 
-                    {% if current_user.is_tecnico_impressora %}
-                    <!-- Perfil Técnico de Impressoras: Exclusivamente Impressoras e Estoque -->
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.index') }}">
-                            <i class="bi bi-printer me-1"></i>Impressoras
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
-                            <i class="bi bi-box-seam me-1"></i>Estoque
-                        </a>
-                    </li>
+        <!-- Usuário não autenticado -->
+        <div class="container-fluid d-flex align-items-center justify-content-between px-0">
+            <a class="appBrand" href="{{ url_for('auth.login') }}">
+                <i class="bi bi-shield-check text-warning fs-5"></i>
+                <span>Central de Chamados</span>
+            </a>
 
-                    {% else %}
-                    <!-- Demais perfis (admin, operador, usuario comum) -->
-                    <!-- Novo chamado -->
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold"
-                            href="{{ url_for('chamados.novo_chamado') }}">
-                            Novo Chamado
-                        </a>
-                    </li>
-
-                    <!-- Listar chamados -->
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold"
-                            href="{{ url_for('chamados.listar_chamados') }}">
-                            Listar Chamados
-                        </a>
-                    </li>
-
-                    <!-- Usuários / Dashboard -->
-                    {% if current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold"
-                            href="{{ url_for('dashboard.dashboard') }}">
-                            Dashboard
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('usuarios.listar') }}">
-                            Usuários
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    <!-- Impressoras -->
-                    {% if current_user.is_admin or current_user.is_operador %}
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.index') }}">
-                            Impressoras
-                        </a>
-                    </li>
-                    
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-light fw-semibold" href="{{ url_for('impressoras.gerenciar_estoque') }}">
-                            Estoque
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% endif %}
-
-                </ul>
-
-                <!-- Botão PWA: Instalar Aplicativo (exibido dinamicamente quando suportado) -->
-                <button id="btnInstalarPwa" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1 me-2" title="Instalar Central de Chamados como aplicativo no Windows ou celular">
+            <div class="d-flex align-items-center gap-2 ms-auto">
+                <button id="btnInstalarPwaPublic" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1" title="Instalar Central de Chamados como aplicativo">
                     <i class="bi bi-download"></i>
                     <span class="d-none d-sm-inline">Instalar App</span>
                 </button>
-
-                <!-- Usuário logado -->
-                <div class="d-flex align-items-center gap-2 ms-auto">
-
-                    <span class="text-light fw-semibold">
-                        Olá, {{ current_user.nome }}
-                    </span>
-
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm fw-semibold">
-                        Sair
-                    </a>
-
-                </div>
-
-                {% else %}
-
-                <!-- Usuário não autenticado -->
-                <ul class="navbar-nav ms-auto align-items-center">
-
-                    <li class="nav-item me-2">
-                        <button id="btnInstalarPwaPublic" type="button" class="btn btn-sm btn-outline-info d-none align-items-center gap-1" title="Instalar Central de Chamados como aplicativo">
-                            <i class="bi bi-download"></i>
-                            <span class="d-none d-sm-inline">Instalar App</span>
-                        </button>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark" href="{{ url_for('auth.login') }}">
-                            Entrar
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link linkNavbar text-dark" href="{{ url_for('auth.register') }}">
-                            Registrar
-                        </a>
-                    </li>
-
-                </ul>
-
-                {% endif %}
-
+                <a class="btn btn-sm btn-outline-light" href="{{ url_for('auth.login') }}">
+                    Entrar
+                </a>
+                <a class="btn btn-sm btn-warning fw-semibold text-dark" href="{{ url_for('auth.register') }}">
+                    Registrar
+                </a>
             </div>
-
         </div>
 
-    </nav>
+        {% endif %}
+    </header>
+
+    {% if current_user.is_authenticated %}
+    <!-- =============================================================
+         SIDEBAR RETRÁTIL INTELIGENTE (WORKSPACE NAVIGATION)
+         ============================================================= -->
+    <!-- Backdrop para fechamento no mobile -->
+    <div class="sidebarBackdrop" id="sidebarBackdrop"></div>
+
+    <aside class="appSidebar" id="appSidebar">
+        <div class="sidebarNavWrapper">
+            {% if current_user.is_tecnico_impressora %}
+            <!-- Perfil Técnico de Impressoras: Exclusivamente Impressoras e Estoque -->
+            <div class="sidebarGroupTitle">PARQUE GRÁFICO</div>
+            <a href="{{ url_for('impressoras.index') }}" class="sidebarItem {% if request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}active{% endif %}" title="Monitoramento de Impressoras">
+                <i class="bi bi-printer-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Impressoras</span>
+            </a>
+            <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="sidebarItem {% if request.endpoint == 'impressoras.gerenciar_estoque' %}active{% endif %}" title="Controle de Estoque & Suprimentos">
+                <i class="bi bi-box-seam-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Estoque & Insumos</span>
+            </a>
+
+            {% else %}
+            <!-- Demais Perfis (Administrador, Operador, Usuário Comum) -->
+            <!-- VISÃO GERAL -->
+            <div class="sidebarGroupTitle">VISÃO GERAL</div>
+            <a href="{{ url_for('chamados.home') }}" class="sidebarItem {% if request.endpoint == 'chamados.home' %}active{% endif %}" title="Início">
+                <i class="bi bi-house-door-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Início</span>
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('dashboard.dashboard') }}" class="sidebarItem {% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}" title="Dashboard de Indicadores">
+                <i class="bi bi-speedometer2 sidebarIcon"></i>
+                <span class="sidebarLabel">Dashboard</span>
+            </a>
+            {% endif %}
+
+            <!-- SERVICE DESK -->
+            <div class="sidebarGroupTitle">SERVICE DESK</div>
+            <a href="{{ url_for('chamados.novo_chamado') }}" class="sidebarItem sidebarItemAction {% if request.endpoint == 'chamados.novo_chamado' %}active{% endif %}" title="Abrir Novo Chamado">
+                <i class="bi bi-plus-circle-fill sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Novo Chamado</span>
+            </a>
+            <a href="{{ url_for('chamados.listar_chamados') }}" class="sidebarItem {% if request.endpoint in ('chamados.listar_chamados', 'chamados.detalhes_chamado', 'chamados.editar_chamado') %}active{% endif %}" title="Fila de Chamados">
+                <i class="bi bi-ticket-detailed-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Fila de Chamados</span>
+            </a>
+
+            <!-- PARQUE GRÁFICO (Admin e Operador) -->
+            {% if current_user.is_admin or current_user.is_operador %}
+            <div class="sidebarGroupTitle">PARQUE GRÁFICO</div>
+            <a href="{{ url_for('impressoras.index') }}" class="sidebarItem {% if request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}active{% endif %}" title="Monitoramento de Impressoras">
+                <i class="bi bi-printer-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Impressoras</span>
+            </a>
+            <a href="{{ url_for('impressoras.gerenciar_estoque') }}" class="sidebarItem {% if request.endpoint == 'impressoras.gerenciar_estoque' %}active{% endif %}" title="Controle de Estoque & Suprimentos">
+                <i class="bi bi-box-seam-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Estoque & Insumos</span>
+            </a>
+            {% endif %}
+
+            <!-- ADMINISTRAÇÃO -->
+            {% if current_user.is_admin %}
+            <div class="sidebarGroupTitle">ADMINISTRAÇÃO</div>
+            <a href="{{ url_for('usuarios.listar') }}" class="sidebarItem {% if request.endpoint == 'usuarios.listar' %}active{% endif %}" title="Gestão de Usuários & RBAC">
+                <i class="bi bi-people-fill sidebarIcon"></i>
+                <span class="sidebarLabel">Usuários & Acessos</span>
+            </a>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Rodapé da Sidebar: Botão de Recolher -->
+        <div class="sidebarFooter">
+            <button id="btnCollapseSidebar" type="button" class="sidebarCollapseBtn" title="Recolher / Expandir Menu Lateral">
+                <i class="bi bi-chevron-double-left collapseIcon"></i>
+                <span class="collapseText">Recolher Menu</span>
+            </button>
+        </div>
+    </aside>
+    {% endif %}
 
     <!-- Indicador de Status Offline do PWA -->
     <div id="offlineIndicator" class="alert alert-warning py-1 px-3 m-0 position-fixed bottom-0 start-50 translate-middle-x shadow-lg text-center d-none" style="z-index: 9999; border-radius: 20px; font-size: 0.85rem; background: rgba(245, 158, 11, 0.95); color: #000; border: 1px solid #d97706; margin-bottom: 15px !important;">
         <i class="bi bi-wifi-off me-1"></i> Modo Offline — Conexão com o servidor perdida.
     </div>
 
-    <!-- Conteúdo das páginas -->
-    <main class="container containerPadrao mt-4 bg-dark text-light rounded shadow-sm">
+    <!-- Conteúdo Principal da Aplicação -->
+    <main class="appMainWrapper">
         <!-- Alertas Globais do Sistema -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <div class="pt-3 px-3">
+        <div class="mb-4">
             {% for category, message in messages %}
             <div class="alert alert-{{ 'danger' if category in ('error', 'danger') else ('warning' if category == 'warning' else ('info' if category == 'info' else 'success')) }} alert-dismissible fade show shadow-sm" role="alert">
                 {{ message }}
@@ -362,6 +395,66 @@
         }
         window.addEventListener('online', verificarStatusRede);
         window.addEventListener('offline', verificarStatusRede);
+
+        // ==========================================
+        // 4. Gestão da Sidebar Retrátil Moderna
+        // ==========================================
+        (function() {
+            const body = document.body;
+            const sidebar = document.getElementById('appSidebar');
+            const btnToggle = document.getElementById('btnToggleSidebar');
+            const btnCollapse = document.getElementById('btnCollapseSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (!sidebar) return;
+
+            // Restaura preferência salva no desktop
+            const isCollapsed = localStorage.getItem('cc_sidebar_collapsed') === 'true';
+            if (isCollapsed && window.innerWidth >= 992) {
+                body.classList.add('sidebar-collapsed');
+            }
+
+            function toggleSidebar() {
+                if (window.innerWidth < 992) {
+                    // Mobile: Alterna gaveta offcanvas com backdrop
+                    const isOpen = sidebar.classList.toggle('show-mobile');
+                    if (backdrop) backdrop.classList.toggle('show', isOpen);
+                } else {
+                    // Desktop: Alterna modo recolhido (68px) e expandido (250px)
+                    const collapsed = body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('cc_sidebar_collapsed', collapsed ? 'true' : 'false');
+                }
+            }
+
+            if (btnToggle) btnToggle.addEventListener('click', toggleSidebar);
+            if (btnCollapse) btnCollapse.addEventListener('click', toggleSidebar);
+
+            // Fechamento no mobile
+            if (backdrop) {
+                backdrop.addEventListener('click', () => {
+                    sidebar.classList.remove('show-mobile');
+                    backdrop.classList.remove('show');
+                });
+            }
+
+            // Fechar mobile ao clicar em um link da sidebar
+            sidebar.querySelectorAll('.sidebarItem').forEach((link) => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show-mobile');
+                        if (backdrop) backdrop.classList.remove('show');
+                    }
+                });
+            });
+
+            // Atalho de teclado rápido: Alt + B
+            window.addEventListener('keydown', (e) => {
+                if (e.altKey && (e.key === 'b' || e.key === 'B')) {
+                    e.preventDefault();
+                    toggleSidebar();
+                }
+            });
+        })();
     </script>
 </body>
 
