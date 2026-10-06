@@ -130,6 +130,14 @@ def register():
                 email=email_raw
             )
 
+        if len(senha) < 6:
+            return render_template(
+                'auth/register.html',
+                error='A senha deve conter no mínimo 6 caracteres para sua segurança.',
+                nome=nome,
+                email=email_raw
+            )
+
         # Validação estrita do padrão de e-mail institucional
         email, erro_email = validar_email_institucional(email_raw)
         if erro_email:
