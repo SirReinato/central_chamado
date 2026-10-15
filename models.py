@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import UserMixin
+import re
 
 db = SQLAlchemy()
 
@@ -35,6 +36,25 @@ class Chamado(db.Model):
         nullable=True
     )
     tecnico = db.relationship('Usuario', foreign_keys=[tecnico_id], backref='chamados_atendidos')
+
+    # Integracao com GLPI (Campos de Rastreabilidade e Idempotencia)
+    origem = db.Column(db.String(20), nullable=False, default='local')
+    glpi_id = db.Column(db.Integer, unique=True, nullable=True, index=True)
+    glpi_numero = db.Column(db.String(50), nullable=True)
+
+
+class GlpiSyncLog(db.Model):
+    """Registro de auditoria e controle de cursor para sincronizacao com o GLPI."""
+    __tablename__ = 'glpi_sync_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data_execucao = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    tickets_encontrados = db.Column(db.Integer, default=0)
+    tickets_importados = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(30), nullable=False, default='Sucesso')
+    mensagem = db.Column(db.Text, nullable=True)
+    ultimo_ticket_id = db.Column(db.Integer, nullable=True)
+    ultima_data_ticket = db.Column(db.DateTime, nullable=True)
 
 
 class Usuario(UserMixin, db.Model):
@@ -246,6 +266,45 @@ class HistoricoSuprimento(db.Model):
     usuario_responsavel = db.Column(db.String(100), nullable=False)
     data_retirada = db.Column(db.DateTime, default=datetime.now)
 
+    @property
+    def responsavel_nome(self):
+        """Retorna o nome do usuário sem o sufixo de motivo de ajuste."""
+        if not self.usuario_responsavel:
+            return "Sistema"
+        match = re.match(r'^(.*?)\s*\(.*?\)$', self.usuario_responsavel.strip())
+        if match and match.group(1).strip():
+            return match.group(1).strip()
+        return self.usuario_responsavel.strip()
+
+    @property
+    def destino_detalhe(self):
+        """
+        Identifica se a retirada foi vinculada a uma impressora física
+        ou a um ajuste de setor manual.
+        """
+        if self.impressora:
+            local = (self.impressora.local or "").strip()
+            if not local and self.impressora.andar and self.impressora.andar != "Não Informado":
+                local = f"{self.impressora.andar} - {self.impressora.sala}"
+            return {
+                "tipo": "impressora",
+                "label": self.impressora.nome,
+                "local": local or "Local não informado"
+            }
+        if self.usuario_responsavel:
+            match = re.match(r'^.*?\((?:Ajuste:\s*)?(.*?)\)$', self.usuario_responsavel.strip())
+            if match and match.group(1).strip():
+                return {
+                    "tipo": "setor",
+                    "label": match.group(1).strip(),
+                    "local": "Ajuste de estoque"
+                }
+        return {
+            "tipo": "geral",
+            "label": "Ajuste manual",
+            "local": None
+        }
+
 
 # =========================================================
 # BASE DE CONHECIMENTO (KNOWLEDGE BASE / WIKI / PROCEDIMENTOS)
@@ -360,5 +419,89 @@ class KbSolicitacao(db.Model):
     solicitante = db.relationship('Usuario', foreign_keys=[solicitante_id], backref='solicitacoes_kb')
     categoria = db.relationship('KbCategoria', foreign_keys=[categoria_id])
     artigo_gerado = db.relationship('KbArtigo', foreign_keys=[artigo_gerado_id])
+
+
+# =========================================================================
+# MODELOS: ITENS DA SALA (ESTOQUE INTERNO TI ENTRE SALAS)
+# =========================================================================
+
+class ItemSala(db.Model):
+    __tablename__ = 'itens_sala'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False, index=True)
+    categoria = db.Column(db.String(60), nullable=False, default='Periféricos', index=True)
+    estoque_minimo = db.Column(db.Integer, default=2, nullable=False)
+    unidade = db.Column(db.String(20), default='UN')
+    descricao = db.Column(db.String(255), nullable=True)
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    # Relacionamentos
+    estoques = db.relationship('ItemSalaEstoque', backref='item', cascade='all, delete-orphan', lazy='joined')
+    movimentacoes = db.relationship('ItemSalaMovimentacao', backref='item', cascade='all, delete-orphan', lazy='dynamic', order_by='ItemSalaMovimentacao.created_at.desc()')
+
+    @property
+    def total_estoque(self):
+        return sum(e.quantidade for e in self.estoques)
+
+    @property
+    def estoque_sala_principal(self):
+        for e in self.estoques:
+            if e.sala == 'Sala Principal':
+                return e.quantidade
+        return 0
+
+    @property
+    def estoque_sala_terceiro(self):
+        for e in self.estoques:
+            if e.sala == 'Sala TI - 3º Andar':
+                return e.quantidade
+        return 0
+
+    @property
+    def is_estoque_baixo(self):
+        return self.total_estoque <= (self.estoque_minimo or 0)
+
+    def estoque_por_sala(self, nome_sala):
+        for e in self.estoques:
+            if e.sala == nome_sala:
+                return e.quantidade
+        return 0
+
+
+class ItemSalaEstoque(db.Model):
+    __tablename__ = 'itens_sala_estoque'
+    __table_args__ = (
+        db.UniqueConstraint('item_id', 'sala', name='uq_item_sala'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('itens_sala.id', ondelete='CASCADE'), nullable=False)
+    sala = db.Column(db.String(60), nullable=False, index=True)  # 'Sala Principal' ou 'Sala TI - 3º Andar'
+    quantidade = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class ItemSalaMovimentacao(db.Model):
+    __tablename__ = 'itens_sala_movimentacoes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('itens_sala.id', ondelete='CASCADE'), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False, index=True)  # 'saida', 'entrada', 'transferencia', 'ajuste'
+    quantidade = db.Column(db.Integer, nullable=False)
+    sala_origem = db.Column(db.String(60), nullable=True)
+    sala_destino = db.Column(db.String(60), nullable=True)
+    entregue_por = db.Column(db.String(120), nullable=True)  # Quem entregou (Técnico TI)
+    recebido_por = db.Column(db.String(120), nullable=True)  # Quem retirou
+    setor = db.Column(db.String(120), nullable=True, index=True)  # Setor de destino
+    origem_fornecedor = db.Column(db.String(120), nullable=True)  # Compra, Fornecedor, etc.
+    observacao = db.Column(db.Text, nullable=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now, index=True)
+
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
+
 
 

@@ -81,7 +81,7 @@
                 </div>
                 <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-dark table-hover align-middle tabelaPadrao">
+                        <table class="table tabelaPadrao table-hover align-middle mb-0">
                             <thead class="cabecalhoTabela">
                                 <tr>
                                     <th>Família</th>
@@ -94,27 +94,24 @@
                             <tbody>
                                 {% if familias %}
                                 {% for fam in familias %}
-                                <tr>
+                                <tr class="linhaTabela">
                                     <td class="fw-bold">
                                         {{ fam.nome_familia }}
-                                        {% if fam.quantidade_toner <= fam.estoque_minimo or fam.quantidade_cilindro
-                                            <=fam.estoque_minimo %} <span class="badge bg-danger ms-1"
-                                            title="Estoque baixo!">Baixo</span>
-                                            {% endif %}
+                                        {% if fam.quantidade_toner <= fam.estoque_minimo or fam.quantidade_cilindro <= fam.estoque_minimo %}
+                                        <span class="badge bg-danger ms-1" title="Estoque baixo!">Baixo</span>
+                                        {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <span
-                                            class="badge {{ 'bg-success' if fam.quantidade_toner > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                        <span class="badge {{ 'bg-success' if fam.quantidade_toner > fam.estoque_minimo else 'bg-warning text-dark' }}">
                                             {{ fam.quantidade_toner }}
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span
-                                            class="badge {{ 'bg-success' if fam.quantidade_cilindro > fam.estoque_minimo else 'bg-warning text-dark' }}">
+                                        <span class="badge {{ 'bg-success' if fam.quantidade_cilindro > fam.estoque_minimo else 'bg-warning text-dark' }}">
                                             {{ fam.quantidade_cilindro }}
                                         </span>
                                     </td>
-                                    <td class="text-center ">{{ fam.estoque_minimo }}</td>
+                                    <td class="text-center">{{ fam.estoque_minimo }}</td>
                                     <td class="text-end">
                                         <!-- Botão para abrir Modal de Adicionar Lote -->
                                         <button type="button" class="btn btn-sm botaoDetalhes" data-bs-toggle="modal"
@@ -129,7 +126,7 @@
                                 </tr>
                                 {% endfor %}
                                 {% else %}
-                                <tr>
+                                <tr class="linhaTabela">
                                     <td colspan="5" class="text-center text-muted py-4">Nenhuma família de suprimento
                                         cadastrada ainda.</td>
                                 </tr>
@@ -252,50 +249,194 @@
             <div class="card cardPadrao">
                 <div class="barraDestaque"></div>
                 <div class="cabecalhoCard">
-                    <h2 class="h5 mb-0 fw-bold">Histórico Recente de Retiradas (-1)</h2>
-                    <p class="subtituloCard small mt-1 mb-0">Auditoria das últimas substituições efetuadas nas
-                        impressoras</p>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h2 class="h5 mb-0 fw-bold d-flex align-items-center gap-2">
+                                <i class="bi bi-clock-history text-primary"></i>
+                                Histórico de Movimentações de Estoque
+                            </h2>
+                            <p class="subtituloCard small mt-1 mb-0">
+                                Auditoria detalhada de retiradas, baixas por impressora e ajustes manuais por setor
+                            </p>
+                        </div>
+                        {% if historico_pagination and historico_pagination.total > 0 %}
+                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                            style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); font-weight: 600;">
+                            <i class="bi bi-journal-check"></i>
+                            {{ historico_pagination.total }} movimentações registradas
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-dark table-hover align-middle tabelaPadrao mb-0">
+                        <table class="table tabelaPadrao table-hover align-middle mb-0">
                             <thead class="cabecalhoTabela">
                                 <tr>
-                                    <th>Data / Hora</th>
-                                    <th>Família</th>
-                                    <th>Insumo Retirado</th>
-                                    <th>Quantidade</th>
+                                    <th style="min-width: 140px;">Data / Hora</th>
+                                    <th>Família de Suprimento</th>
+                                    <th class="text-center" style="width: 130px;">Insumo</th>
+                                    <th class="text-center" style="width: 150px;">Movimentação</th>
+                                    <th>Destino / Setor</th>
                                     <th>Responsável</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% if historico %}
                                 {% for h in historico %}
-                                <tr>
-                                    <td class="small">{{ h.data_retirada.strftime('%d/%m/%Y %H:%M') if h.data_retirada
-                                        else '-' }}</td>
+                                <tr class="linhaTabela">
+                                    <!-- Data e Hora -->
                                     <td>
-                                        {% if h.familia %}
-                                        {{ h.familia.nome_familia }}
-                                        {% elif h.impressora and h.impressora.familia_suprimento %}
-                                        {{ h.impressora.familia_suprimento.nome_familia }}
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded p-2 d-flex align-items-center justify-content-center"
+                                                style="background: rgba(148, 163, 184, 0.08); border: 1px solid rgba(148, 163, 184, 0.15); width: 34px; height: 34px; flex-shrink: 0;">
+                                                <i class="bi bi-calendar3 text-tema-secundario opacity-75"></i>
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold text-white d-block" style="font-size: 0.86rem;">
+                                                    {{ h.data_retirada.strftime('%d/%m/%Y') if h.data_retirada else '—' }}
+                                                </span>
+                                                <span class="small text-tema-secundario" style="font-size: 0.76rem;">
+                                                    <i class="bi bi-clock me-1"></i>{{ h.data_retirada.strftime('%H:%M') if h.data_retirada else '—' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Família de Suprimento -->
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="p-1 px-2 rounded"
+                                                style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); flex-shrink: 0;">
+                                                <i class="bi bi-box-seam text-info"></i>
+                                            </span>
+                                            <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                                                {% if h.familia %}
+                                                {{ h.familia.nome_familia }}
+                                                {% elif h.impressora and h.impressora.familia_suprimento %}
+                                                {{ h.impressora.familia_suprimento.nome_familia }}
+                                                {% else %}
+                                                <span class="text-muted fst-italic">—</span>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Insumo Retirado / Movimentado -->
+                                    <td class="text-center">
+                                        {% if h.tipo_insumo|lower == 'toner' %}
+                                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                            style="background: rgba(56, 189, 248, 0.14); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 600; font-size: 0.78rem;">
+                                            <i class="bi bi-droplet-fill"></i> Toner
+                                        </span>
+                                        {% elif h.tipo_insumo|lower == 'cilindro' %}
+                                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                            style="background: rgba(192, 132, 252, 0.14); color: #c084fc; border: 1px solid rgba(192, 132, 247, 0.3); font-weight: 600; font-size: 0.78rem;">
+                                            <i class="bi bi-disc-fill"></i> Cilindro
+                                        </span>
                                         {% else %}
-                                        <span class="text-muted">—</span>
+                                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                            style="background: rgba(148, 163, 184, 0.14); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); font-weight: 600; font-size: 0.78rem;">
+                                            <i class="bi bi-tag-fill"></i> {{ h.tipo_insumo|capitalize }}
+                                        </span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <span class="text-uppercase fw-bold">{{ h.tipo_insumo }}</span>
+
+                                    <!-- Quantidade Movimentada -->
+                                    <td class="text-center">
+                                        {% if h.quantidade < 0 %}
+                                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                            style="background: rgba(239, 68, 68, 0.14); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700; font-size: 0.8rem;"
+                                            title="Baixa / Saída de insumo">
+                                            <i class="bi bi-dash-circle-fill"></i>
+                                            <span>{{ h.quantidade }} un</span>
+                                            <span class="small opacity-75 ms-1 fw-normal">(Saída)</span>
+                                        </span>
+                                        {% elif h.quantidade > 0 %}
+                                        <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                            style="background: rgba(34, 197, 94, 0.14); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-weight: 700; font-size: 0.8rem;"
+                                            title="Entrada / Reposição de insumo">
+                                            <i class="bi bi-plus-circle-fill"></i>
+                                            <span>+{{ h.quantidade }} un</span>
+                                            <span class="small opacity-75 ms-1 fw-normal">(Entrada)</span>
+                                        </span>
+                                        {% else %}
+                                        <span class="badge rounded-pill px-3 py-2 text-muted"
+                                            style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2);">
+                                            0 un
+                                        </span>
+                                        {% endif %}
                                     </td>
+
+                                    <!-- Destino / Setor / Impressora -->
                                     <td>
-                                        <span class="text-danger fw-bold">{{ h.quantidade }}</span>
+                                        {% set d = h.destino_detalhe %}
+                                        {% if d.tipo == 'impressora' %}
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge rounded-pill px-2 py-1"
+                                                    style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); font-size: 0.72rem; font-weight: 500;">
+                                                    <i class="bi bi-printer-fill me-1"></i>Impressora
+                                                </span>
+                                                <span class="fw-bold text-white small">{{ d.label }}</span>
+                                            </div>
+                                            {% if d.local %}
+                                            <span class="small text-tema-secundario d-block mt-1 ms-1" style="font-size: 0.76rem;">
+                                                <i class="bi bi-geo-alt me-1 text-info opacity-75"></i>{{ d.local }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        {% elif d.tipo == 'setor' %}
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge rounded-pill px-2 py-1"
+                                                    style="background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 0.72rem; font-weight: 500;">
+                                                    <i class="bi bi-geo-alt-fill me-1"></i>Setor / Local
+                                                </span>
+                                                <span class="fw-bold text-white small">{{ d.label }}</span>
+                                            </div>
+                                            <span class="small text-tema-secundario d-block mt-1 ms-1" style="font-size: 0.76rem;">
+                                                <i class="bi bi-sliders me-1 opacity-75"></i>Ajuste manual de estoque
+                                            </span>
+                                        </div>
+                                        {% else %}
+                                        <span class="badge rounded-pill px-2 py-1"
+                                            style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); font-size: 0.74rem;">
+                                            <i class="bi bi-sliders me-1"></i>Ajuste Geral
+                                        </span>
+                                        {% endif %}
                                     </td>
-                                    <td>{{ h.usuario_responsavel }}</td>
+
+                                    <!-- Responsável -->
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
+                                                style="width: 30px; height: 30px; background: linear-gradient(135deg, #0ea5e9, #2563eb); font-size: 0.75rem; flex-shrink: 0;">
+                                                {{ (h.responsavel_nome[0] if h.responsavel_nome else 'U')|upper }}
+                                            </div>
+                                            <div>
+                                                <span class="fw-medium text-white d-block" style="font-size: 0.86rem;">
+                                                    {{ h.responsavel_nome }}
+                                                </span>
+                                                <span class="small text-tema-secundario" style="font-size: 0.74rem;">
+                                                    Técnico / Usuário
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                                 {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-3">Nenhuma retirada registrada no
-                                        histórico.</td>
+                                <tr class="linhaTabela">
+                                    <td colspan="6" class="text-center text-tema-secundario py-5">
+                                        <div class="p-4">
+                                            <i class="bi bi-inbox text-tema-secundario fs-1 d-block mb-2 opacity-50"></i>
+                                            <h5 class="fw-bold text-white mb-1">Nenhuma movimentação registrada</h5>
+                                            <p class="text-tema-secundario small mb-0">
+                                                O histórico de auditoria exibirá aqui todas as baixas de suprimentos para impressoras e ajustes manuais.
+                                            </p>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endif %}
                             </tbody>

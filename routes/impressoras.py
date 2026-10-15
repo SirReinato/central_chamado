@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import login_required, current_user
 from models import db, Impressora
 from services.impressoras_services import ImpressorasService
@@ -71,6 +71,8 @@ def index():
         default_assunto=default_assunto,
         default_mensagem=default_mensagem,
         data_hoje=agora_hoje.strftime("%d/%m/%Y às %H:%M"),
+        impressoras_com_erro=ImpressorasService.obter_impressoras_com_erro(),
+        intervalo_auto_minutos=ImpressorasService.INTERVALO_AUTO_MINUTOS,
         filtros={
             "busca": busca,
             "status": status_filtro,
@@ -78,6 +80,31 @@ def index():
             "tipo": tipo_filtro
         }
     )
+
+@impressoras_bp.route("/api/atualizar-status-auto", methods=["POST"])
+@login_required
+@printer_staff_required
+def atualizar_status_auto():
+    """
+    Endpoint chamado pelo front a cada 30 min. Executa a varredura
+    (com proteção contra execuções simultâneas/repetidas) e devolve
+    a lista de impressoras com erro em JSON.
+    """
+    try:
+        executou, ultima = ImpressorasService.atualizar_status_automatico()
+    except Exception as e:
+        from utils.logger import get_logger
+        get_logger('impressoras_routes').error(f"Falha na atualização automática: {e}")
+        return jsonify({"ok": False, "mensagem": "Falha ao atualizar o status das impressoras."}), 500
+
+    erros = ImpressorasService.obter_impressoras_com_erro()
+    return jsonify({
+        "ok": True,
+        "executou": executou,
+        "ultima_atualizacao": ultima.strftime("%d/%m/%Y %H:%M") if ultima else None,
+        "total_erros": len(erros),
+        "impressoras_com_erro": erros,
+    })
 
 @impressoras_bp.route("/relatorio-paginas-pdf")
 @login_required

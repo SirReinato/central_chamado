@@ -22,6 +22,10 @@ from reportlab.pdfgen import canvas
 
 from services.snmp_service import consultar_impressora, consultar_impressoras_bulk
 
+# Importados após o "from pysnmp.hlapi import *" para não serem sobrescritos
+import threading
+from datetime import timedelta
+
 class NumberedCanvas(canvas.Canvas):
     """Canvas customizado do ReportLab para numeração dinâmica de páginas (Página X de Y)."""
     def __init__(self, *args, **kwargs):
@@ -482,7 +486,8 @@ class ImpressorasService:
             # -----------------------------------------------------
 
             if not is_online:
-                impressora.status_detalhado = "Equipamento Offline"
+                impressora.status_detalhado = "Desconectada da Rede"
+                impressora.ultimo_erro = "Sem resposta a Ping (ICMP). Equipamento possivelmente desligado da tomada ou com cabo de rede desconectado."
                 impressora.necessita_atencao = True
                 logger.debug(f"{impressora.nome} ({ip}) -> OFFLINE")
                 continue
@@ -495,9 +500,11 @@ class ImpressorasService:
                 # Verifica se houve erro na consulta SNMP
                 # -------------------------------------------------
                 if not dados_snmp or "erro" in dados_snmp:
-                    impressora.status_detalhado = "Erro de Comunicação SNMP"
+                    msg_erro = dados_snmp.get('erro', 'Porta SNMP 161 (UDP) sem resposta / Timeout') if dados_snmp else 'Porta SNMP 161 (UDP) sem resposta / Timeout'
+                    impressora.status_detalhado = "Porta SNMP Inacessível"
+                    impressora.ultimo_erro = f"Ping respondeu, mas consulta SNMP falhou: {msg_erro}."
                     impressora.necessita_atencao = True
-                    logger.warning(f"Erro SNMP em {impressora.nome}: {dados_snmp.get('erro', 'sem resposta')}")
+                    logger.warning(f"Erro SNMP em {impressora.nome}: {msg_erro}")
                     continue
 
                 # -------------------------------------------------
@@ -530,6 +537,16 @@ class ImpressorasService:
                     impressora.cilindro = int(round(float(cilindro)))
 
                 # -------------------------------------------------
+                # TONERS COLORIDOS (se fornecidos)
+                # -------------------------------------------------
+                if dados_snmp.get("toner_ciano") is not None:
+                    impressora.toner_ciano = int(round(float(dados_snmp["toner_ciano"])))
+                if dados_snmp.get("toner_magenta") is not None:
+                    impressora.toner_magenta = int(round(float(dados_snmp["toner_magenta"])))
+                if dados_snmp.get("toner_amarelo") is not None:
+                    impressora.toner_amarelo = int(round(float(dados_snmp["toner_amarelo"])))
+
+                # -------------------------------------------------
                 # MAC ADDRESS, CONTATO E LOCALIZAÇÃO
                 # -------------------------------------------------
                 mac = dados_snmp.get("mac_address")
@@ -545,29 +562,190 @@ class ImpressorasService:
                     impressora.local = local
 
                 # -------------------------------------------------
-                # STATUS
+                # STATUS & CAPTURA DE ERROS DE HARDWARE / VISOR
                 # -------------------------------------------------
-                impressora.status_detalhado = "Pronta / Operacional"
-                impressora.necessita_atencao = False
+                erros_hardware = dados_snmp.get("erros_hardware") or []
+                visor_alerta = dados_snmp.get("visor_mensagem")
+                toner_critico = impressora.toner_preto is not None and impressora.toner_preto <= ImpressorasService.LIMITE_PERCENTUAL_CRITICO
+                cilindro_critico = impressora.cilindro is not None and impressora.cilindro <= ImpressorasService.LIMITE_PERCENTUAL_CRITICO
+
+                erros_detectados = []
+                if erros_hardware:
+                    erros_detectados.extend(erros_hardware)
+                if visor_alerta:
+                    erros_detectados.append(f"Visor: {visor_alerta}")
+                if toner_critico:
+                    if impressora.toner_preto == 0:
+                        erros_detectados.append("Toner Esgotado (0%)")
+                    else:
+                        erros_detectados.append(f"Toner Crítico ({impressora.toner_preto}%)")
+                if cilindro_critico:
+                    erros_detectados.append(f"Cilindro Crítico ({impressora.cilindro}%)")
+
+                if erros_detectados:
+                    impressora.status_detalhado = " | ".join(erros_detectados[:2])
+                    impressora.ultimo_erro = f"Alerta Detectado: {', '.join(erros_detectados)}"
+                    impressora.necessita_atencao = True
+                else:
+                    impressora.status_detalhado = "Pronta / Operacional"
+                    impressora.ultimo_erro = None
+                    impressora.necessita_atencao = False
 
                 logger.info(
                     f"{impressora.nome} ({ip}) -> ONLINE | "
                     f"Toner: {impressora.toner_preto}% | "
                     f"Cilindro: {impressora.cilindro}% | "
-                    f"Páginas: {impressora.paginas_impressas}"
+                    f"Páginas: {impressora.paginas_impressas} | "
+                    f"Status: {impressora.status_detalhado}"
                 )
 
             except Exception as e:
                 logger.error(f"Erro ao atualizar {impressora.nome} ({ip}): {e}")
-                impressora.online = False
-                impressora.status_detalhado = "Erro de Comunicação"
+                impressora.status_detalhado = "Erro de Processamento"
+                impressora.ultimo_erro = f"Falha interna ao processar telemetria: {str(e)}"
                 impressora.necessita_atencao = True
 
         # ---------------------------------------------------------
         # SALVA TODAS AS ALTERAÇÕES
         # ---------------------------------------------------------
         db.session.commit()
+        ImpressorasService._ultima_atualizacao_auto = datetime.now()
         logger.info("Atualização das impressoras finalizada com sucesso.")
+
+    # =============================================================
+    # ATUALIZAÇÃO AUTOMÁTICA (30 MIN) + DETECÇÃO DE ERROS
+    # =============================================================
+
+    INTERVALO_AUTO_MINUTOS = 30
+    _ultima_atualizacao_auto = None
+    _lock_atualizacao = threading.Lock()
+
+    @staticmethod
+    def atualizar_status_automatico(intervalo_minutos=None):
+        """
+        Executa atualizar_status() apenas se a última varredura tiver
+        ocorrido há mais de (intervalo - 2) minutos. Evita que várias
+        abas/usuários abertos disparem varreduras SNMP simultâneas.
+
+        Retorna (executou: bool, ultima_atualizacao: datetime | None).
+        """
+        intervalo = intervalo_minutos or ImpressorasService.INTERVALO_AUTO_MINUTOS
+        janela_minima = timedelta(minutes=max(intervalo - 2, 1))
+
+        # Lock não bloqueante: se outra requisição já está atualizando, apenas retorna.
+        if not ImpressorasService._lock_atualizacao.acquire(blocking=False):
+            return False, ImpressorasService._ultima_atualizacao_auto
+
+        try:
+            ultima = ImpressorasService._ultima_atualizacao_auto
+            if ultima and datetime.now() - ultima < janela_minima:
+                return False, ultima
+
+            ImpressorasService.atualizar_status()
+            return True, ImpressorasService._ultima_atualizacao_auto
+        finally:
+            ImpressorasService._lock_atualizacao.release()
+
+    @staticmethod
+    def obter_impressoras_com_erro():
+        """
+        Lista as impressoras monitoradas (com IP, físicas) que apresentam
+        algum status de erro após a última varredura:
+          - Offline (sem resposta ao ping)
+          - Erro de comunicação SNMP
+          - Toner ou cilindro em nível crítico
+        Impressoras manuais (sem IP) e filas virtuais são ignoradas, pois
+        não são monitoradas automaticamente.
+        """
+        limite_critico = ImpressorasService.LIMITE_PERCENTUAL_CRITICO
+        erros = []
+
+        impressoras = Impressora.query.filter(
+            Impressora.ip.isnot(None),
+            Impressora.ip != ""
+        ).order_by(Impressora.nome).all()
+
+        for imp in impressoras:
+            if imp.is_virtual:
+                continue
+
+            problemas = []
+            severidade = "alerta"
+            diagnostico = ""
+            tipo_erro = "hardware"
+
+            if not imp.online:
+                problemas.append("Desconectada da Rede")
+                tipo_erro = "rede"
+                severidade = "critico"
+                diagnostico = imp.ultimo_erro or "Equipamento não responde a ping (ICMP). Possivelmente desligado da tomada ou desconectado da rede."
+            elif imp.necessita_atencao:
+                status_txt = (imp.status_detalhado or "").strip()
+                if "SNMP" in status_txt.upper():
+                    problemas.append("Porta SNMP Inacessível")
+                    tipo_erro = "snmp"
+                    severidade = "critico"
+                    diagnostico = imp.ultimo_erro or "Equipamento responde na rede, mas a porta SNMP 161 (UDP) não retornou dados. Verifique o serviço SNMP na impressora."
+                else:
+                    # Pode ser erro de hardware, visor, etc.
+                    partes = [p.strip() for p in status_txt.split("|") if p.strip()]
+                    if partes:
+                        for p in partes:
+                            problemas.append(p)
+                    else:
+                        problemas.append("Alerta de Hardware")
+                    tipo_erro = "hardware"
+                    severidade = "critico"
+                    diagnostico = imp.ultimo_erro or status_txt or "A impressora reportou um estado de erro ou alerta de hardware."
+
+            if imp.online and imp.toner_preto is not None and imp.toner_preto <= limite_critico:
+                if imp.toner_preto == 0:
+                    problemas.append("Toner Esgotado (0%)")
+                    severidade = "critico"
+                else:
+                    problemas.append(f"Toner Crítico ({imp.toner_preto}%)")
+                if not diagnostico:
+                    diagnostico = f"Nível de toner em {imp.toner_preto}%. É necessária a substituição do cartucho de toner."
+                    tipo_erro = "suprimento"
+
+            if imp.online and imp.cilindro is not None and imp.cilindro <= limite_critico:
+                problemas.append(f"Cilindro Crítico ({imp.cilindro}%)")
+                if not diagnostico:
+                    diagnostico = f"Vida útil do cilindro em {imp.cilindro}%. Necessária troca em breve."
+                    tipo_erro = "suprimento"
+
+            if not problemas:
+                continue
+
+            # Remove duplicados preservando a ordem
+            problemas_unicos = []
+            for p in problemas:
+                if p not in problemas_unicos:
+                    problemas_unicos.append(p)
+
+            local = (imp.local or "").strip()
+            if not local and imp.andar and imp.andar != "Não Informado":
+                local = f"{imp.andar} - {imp.sala}"
+
+            erros.append({
+                "id": imp.id,
+                "nome": imp.nome,
+                "ip": imp.ip,
+                "modelo": imp.modelo or "Não informado",
+                "local": local or "Não informado",
+                "online": imp.online,
+                "problemas": problemas_unicos,
+                "diagnostico": diagnostico or imp.ultimo_erro or imp.status_detalhado or "Status de erro não especificado.",
+                "status_detalhado": imp.status_detalhado or ("Equipamento Offline" if not imp.online else "Erro Detectado"),
+                "ultimo_erro": imp.ultimo_erro,
+                "tipo_erro": tipo_erro,
+                "severidade": severidade,
+                "ultimo_check": imp.ultimo_check.strftime("%d/%m/%Y %H:%M") if imp.ultimo_check else "—",
+            })
+
+        # Críticos primeiro
+        erros.sort(key=lambda e: (e["severidade"] != "critico", e["nome"] or ""))
+        return erros
 
     @staticmethod
     def consultar_interface_web(ip):

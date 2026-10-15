@@ -46,8 +46,29 @@
                 Atualizar Status
             </a>
 
+            <button type="button" class="btn {% if impressoras_com_erro %}btn-outline-danger{% else %}botaoSecundario{% endif %} position-relative"
+                id="btnAbrirAlertasImpressoras" data-bs-toggle="modal" data-bs-target="#modalErrosImpressoras"
+                title="Impressoras com status de erro">
+                <i class="bi bi-bell{% if impressoras_com_erro %}-fill{% endif %} me-1"></i>
+                Alertas
+                <span id="badgeTotalErros"
+                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not impressoras_com_erro %}d-none{% endif %}">
+                    {{ impressoras_com_erro|length }}
+                </span>
+            </button>
+
         </div>
 
+    </div>
+
+    <!-- INDICADOR DE ATUALIZAÇÃO AUTOMÁTICA -->
+    <div class="d-flex justify-content-end align-items-center gap-2 mb-3 small text-tema-secundario"
+        id="indicadorAutoUpdate">
+        <span class="pontoStatus pontoStatus--online" id="pontoAutoUpdate"></span>
+        <span id="textoAutoUpdate">
+            Atualização automática a cada {{ intervalo_auto_minutos }} min —
+            próxima em <strong id="contadorAutoUpdate">--:--</strong>
+        </span>
     </div>
 
 
@@ -1111,6 +1132,254 @@
                 formEmail.addEventListener("submit", function () {
                     btnEnviar.disabled = true;
                     btnEnviar.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Enviando...';
+                });
+            }
+        });
+    </script>
+
+    <!-- =====================================================
+         MODAL: IMPRESSORAS COM STATUS DE ERRO
+         ===================================================== -->
+    <div class="modal fade" id="modalErrosImpressoras" tabindex="-1" aria-labelledby="modalErrosImpressorasLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content modalTema">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold text-tema" id="modalErrosImpressorasLabel">
+                        {% if impressoras_com_erro %}
+                        <i class="bi bi-exclamation-octagon-fill text-danger me-2"></i>
+                        {{ impressoras_com_erro|length }} impressora(s) com status de erro
+                        {% else %}
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        Nenhuma impressora com erro
+                        {% endif %}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+
+                <div class="modal-body p-4 text-start">
+                    {% if impressoras_com_erro %}
+                    <p class="text-tema-secundario small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Resultado da última verificação automática. Impressoras manuais (sem IP) e filas
+                        virtuais não são monitoradas e não aparecem aqui.
+                    </p>
+
+                    <div class="d-flex flex-column gap-3">
+                        {% for e in impressoras_com_erro %}
+                        <div class="p-3 rounded d-flex flex-column gap-2"
+                            style="background: {% if e.severidade == 'critico' %}rgba(239, 68, 68, 0.08){% else %}rgba(245, 158, 11, 0.08){% endif %};
+                                   border: 1px solid {% if e.severidade == 'critico' %}rgba(239, 68, 68, 0.35){% else %}rgba(245, 158, 11, 0.35){% endif %};">
+                            
+                            <!-- Header da Impressora com Erro -->
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                <div>
+                                    <div class="fw-bold text-tema fs-6">
+                                        <i class="bi bi-printer-fill me-1 {% if e.severidade == 'critico' %}text-danger{% else %}text-warning{% endif %}"></i>
+                                        {{ e.nome }}
+                                    </div>
+                                    <div class="small text-tema-secundario mt-1 d-flex flex-wrap align-items-center gap-2">
+                                        {% if e.ip %}
+                                        <span class="ipImpressora"><i class="bi bi-hdd-network me-1 opacity-75"></i>{{ e.ip }}</span>
+                                        <a href="http://{{ e.ip }}" target="_blank" rel="noopener noreferrer" class="badge bg-secondary bg-opacity-25 text-info text-decoration-none border border-secondary border-opacity-50" title="Acessar painel web de configuração da impressora">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>Painel Web
+                                        </a>
+                                        {% endif %}
+                                        <span><i class="bi bi-geo-alt-fill text-info opacity-75 me-1"></i>{{ e.local }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="small text-tema-secundario text-end">
+                                    <i class="bi bi-clock me-1 opacity-75"></i>{{ e.ultimo_check }}
+                                </div>
+                            </div>
+
+                            <!-- Badges dos Erros Identificados -->
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% for p in e.problemas %}
+                                <span class="badge {% if e.severidade == 'critico' %}bg-danger{% else %}bg-warning text-dark{% endif %} d-inline-flex align-items-center gap-1">
+                                    {% if 'Rede' in p or 'Desconectada' in p or 'Offline' in p %}
+                                    <i class="bi bi-wifi-off"></i>
+                                    {% elif 'SNMP' in p %}
+                                    <i class="bi bi-shield-exclamation"></i>
+                                    {% elif 'Atolado' in p or 'Jam' in p %}
+                                    <i class="bi bi-file-earmark-break"></i>
+                                    {% elif 'Porta' in p or 'Tampa' in p or 'Cover' in p %}
+                                    <i class="bi bi-door-open"></i>
+                                    {% elif 'Toner' in p %}
+                                    <i class="bi bi-droplet-half"></i>
+                                    {% elif 'Cilindro' in p %}
+                                    <i class="bi bi-gear-wide-connected"></i>
+                                    {% elif 'Papel' in p or 'Bandeja' in p %}
+                                    <i class="bi bi-files"></i>
+                                    {% else %}
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    {% endif %}
+                                    {{ p }}
+                                </span>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Caixa de Diagnóstico do Erro Identificado -->
+                            <div class="p-2 rounded mt-1" style="background: rgba(0, 0, 0, 0.25); border-left: 3px solid {% if e.severidade == 'critico' %}#ef4444{% else %}#f59e0b{% endif %}; font-size: 0.84rem;">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="bi bi-info-circle-fill {% if e.severidade == 'critico' %}text-danger{% else %}text-warning{% endif %} mt-1"></i>
+                                    <div>
+                                        <div class="text-tema fw-semibold">
+                                            Status do Erro / Causa Identificada:
+                                        </div>
+                                        <div class="text-tema-secundario mt-1">
+                                            {{ e.diagnostico }}
+                                        </div>
+                                        {% if e.ultimo_erro and e.ultimo_erro != e.diagnostico %}
+                                        <div class="text-warning small mt-1 opacity-90">
+                                            <i class="bi bi-terminal me-1"></i>{{ e.ultimo_erro }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-shield-check text-success fs-1 d-block mb-2"></i>
+                        <p class="text-tema-secundario mb-0">Todas as impressoras monitoradas estão operando
+                            normalmente.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-footer border-top border-secondary">
+                    {% if impressoras_com_erro %}
+                    <a href="{{ url_for('impressoras.index', page=2, status='offline') }}" class="btn botaoSecundario">
+                        <i class="bi bi-list-ul me-1"></i> Ver lista Offline
+                    </a>
+                    {% endif %}
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn botaoPrimario" id="btnAtualizarAgoraModal">
+                        <i class="bi bi-arrow-repeat me-1"></i> Verificar novamente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const INTERVALO_MIN = {{ intervalo_auto_minutos | int }};
+            const INTERVALO_MS = INTERVALO_MIN * 60 * 1000;
+            const ADIAMENTO_MS = 60 * 1000; // adia 1 min se o usuário estiver editando algo
+            const URL_API = "{{ url_for('impressoras.atualizar_status_auto') }}";
+            const CHAVE_PROXIMA = "impAutoUpdateProxima";
+            const CHAVE_ASSINATURA = "impErrosAssinaturaVista";
+            const CHAVE_FORCAR_MODAL = "impMostrarAlertasAposUpdate";
+
+            const erros = {{ impressoras_com_erro | tojson }};
+            const assinaturaAtual = erros.map(e => e.id + ":" + e.problemas.join("|")).join(";");
+
+            const contador = document.getElementById("contadorAutoUpdate");
+            const texto = document.getElementById("textoAutoUpdate");
+            const ponto = document.getElementById("pontoAutoUpdate");
+            const modalEl = document.getElementById("modalErrosImpressoras");
+            const btnAgora = document.getElementById("btnAtualizarAgoraModal");
+            let executando = false;
+
+            function obterProxima() {
+                const v = parseInt(localStorage.getItem(CHAVE_PROXIMA), 10);
+                return isNaN(v) ? null : v;
+            }
+            function definirProxima(ms) {
+                localStorage.setItem(CHAVE_PROXIMA, String(Date.now() + ms));
+            }
+
+            // Mantém a contagem entre navegações (filtros/paginação) sem reiniciar.
+            if (!obterProxima()) definirProxima(INTERVALO_MS);
+
+            function usuarioOcupado() {
+                if (document.querySelector(".modal.show:not(#modalErrosImpressoras)")) return true;
+                const ativo = document.activeElement;
+                return !!(ativo && ["INPUT", "TEXTAREA", "SELECT"].includes(ativo.tagName));
+            }
+
+            function formatar(ms) {
+                const total = Math.max(0, Math.floor(ms / 1000));
+                const m = String(Math.floor(total / 60)).padStart(2, "0");
+                const s = String(total % 60).padStart(2, "0");
+                return m + ":" + s;
+            }
+
+            async function executarAtualizacao(manual) {
+                if (executando) return;
+                executando = true;
+                texto.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Atualizando status das impressoras...';
+                ponto.className = "pontoStatus pontoStatus--offline";
+                if (btnAgora) btnAgora.disabled = true;
+
+                try {
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+                    const resp = await fetch(URL_API, {
+                        method: "POST",
+                        headers: { "X-CSRFToken": csrf, "X-Requested-With": "XMLHttpRequest" },
+                        credentials: "same-origin"
+                    });
+                    if (!resp.ok) throw new Error("HTTP " + resp.status);
+                    const dados = await resp.json();
+
+                    definirProxima(INTERVALO_MS);
+                    if (dados.total_erros > 0) sessionStorage.setItem(CHAVE_FORCAR_MODAL, "1");
+                    // Recarrega para atualizar tabela, cards e modal com os dados novos.
+                    window.location.reload();
+                } catch (err) {
+                    console.error("Falha na atualização automática:", err);
+                    definirProxima(manual ? INTERVALO_MS : 5 * 60 * 1000); // tenta de novo em 5 min
+                    texto.innerHTML = '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Falha ao atualizar — nova tentativa em <strong id="contadorAutoUpdate">--:--</strong>';
+                    executando = false;
+                    if (btnAgora) btnAgora.disabled = false;
+                }
+            }
+
+            function tick() {
+                if (executando) return;
+                const restante = obterProxima() - Date.now();
+                const el = document.getElementById("contadorAutoUpdate");
+                if (restante > 0) {
+                    if (el) el.textContent = formatar(restante);
+                    return;
+                }
+                if (usuarioOcupado()) {
+                    definirProxima(ADIAMENTO_MS);
+                    return;
+                }
+                executarAtualizacao(false);
+            }
+
+            tick();
+            setInterval(tick, 1000);
+
+            if (btnAgora) {
+                btnAgora.addEventListener("click", function () {
+                    executarAtualizacao(true);
+                });
+            }
+
+            // Exibe o modal automaticamente se:
+            //  - acabou de rodar a atualização automática e há erros, ou
+            //  - surgiram erros novos/diferentes dos que o usuário já viu.
+            if (modalEl && erros.length > 0) {
+                const forcar = sessionStorage.getItem(CHAVE_FORCAR_MODAL) === "1";
+                const jaVisto = localStorage.getItem(CHAVE_ASSINATURA) === assinaturaAtual;
+                if (forcar || !jaVisto) {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            }
+            sessionStorage.removeItem(CHAVE_FORCAR_MODAL);
+
+            if (modalEl) {
+                modalEl.addEventListener("hidden.bs.modal", function () {
+                    localStorage.setItem(CHAVE_ASSINATURA, assinaturaAtual);
                 });
             }
         });

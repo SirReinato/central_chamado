@@ -1,0 +1,1536 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container containerPadrao my-4">
+
+    <!-- =============================================================
+         1. CABEÇALHO & AÇÕES RÁPIDAS DA CENTRAL LOGÍSTICA
+         ============================================================= -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge rounded-pill" style="background: rgba(var(--cor-dourado-rgb), 0.18); color: var(--cor-dourado); border: 1px solid rgba(var(--cor-dourado-rgb), 0.35); font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <i class="bi bi-boxes me-1"></i> ALMOXARIFADO TI
+                </span>
+                <span class="text-tema-secundario small">Controle de Estoque & Movimentações</span>
+            </div>
+            <h1 class="tituloPrincipal mb-1">Itens da Sala</h1>
+            <p class="tituloSecundario mb-0">Gestão e rastreabilidade de equipamentos entre a Sala Principal e a Sala do 3º Andar.</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn botaoSecundario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoItem" title="Cadastrar novo item no inventário">
+                <i class="bi bi-plus-lg text-warning"></i>
+                <span>Novo Material</span>
+            </button>
+            <button type="button" class="btn botaoSecundario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTransferencia" title="Transferir materiais entre salas">
+                <i class="bi bi-arrow-left-right text-info"></i>
+                <span>Transferir Salas</span>
+            </button>
+            <button type="button" class="btn botaoSecundario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalEntrada" title="Dar entrada / repor materiais">
+                <i class="bi bi-box-arrow-in-down text-success"></i>
+                <span>Registrar Entrada</span>
+            </button>
+            <button type="button" class="btn botaoPrimario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalSaida" title="Registrar saída / entrega de material">
+                <i class="bi bi-box-arrow-up-right text-danger"></i>
+                <span>Registrar Saída</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Seção de Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'danger' else 'info') }} alert-dismissible fade show mb-4" role="alert" style="border-radius: 12px;">
+        <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else ('bi-exclamation-triangle-fill' if category == 'danger' else 'bi-info-circle-fill') }} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- =============================================================
+         2. CARDS RESUMO DE INDICADORES (KPIS)
+         ============================================================= -->
+    <div class="row g-3 mb-4">
+        <!-- Total de Itens -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card cardPadrao h-100 p-3 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Total de Itens</div>
+                        <div class="fs-3 fw-bold text-tema mt-1">{{ kpis.total_itens }}</div>
+                        <div class="small text-tema-secundario opacity-75">Unidades físicas em estoque</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center" style="background: rgba(var(--cor-azul-rgb), 0.15); color: var(--cor-azul); width: 48px; height: 48px;">
+                        <i class="bi bi-boxes fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Materiais Diferentes -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card cardPadrao h-100 p-3 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Materiais Distintos</div>
+                        <div class="fs-3 fw-bold text-tema mt-1">{{ kpis.materiais_diferentes }}</div>
+                        <div class="small text-tema-secundario opacity-75">Tipos de peças cadastradas</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center" style="background: rgba(var(--cor-dourado-rgb), 0.15); color: var(--cor-dourado); width: 48px; height: 48px;">
+                        <i class="bi bi-cpu fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Itens Retirados Hoje -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="card cardPadrao h-100 p-3 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Retirados Hoje</div>
+                        <div class="fs-3 fw-bold text-warning mt-1">{{ kpis.retirados_hoje }}</div>
+                        <div class="small text-tema-secundario opacity-75">Entregues para setores hoje</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center" style="background: rgba(150, 67, 67, 0.2); color: var(--cor-perigo-texto); width: 48px; height: 48px;">
+                        <i class="bi bi-box-arrow-up-right fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimentações do Mês -->
+        <div class="col-xl col-md-6 col-sm-6">
+            <div class="card cardPadrao h-100 p-3 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Movimentações Mês</div>
+                        <div class="fs-3 fw-bold text-info mt-1">{{ kpis.movimentacoes_mes }}</div>
+                        <div class="small text-tema-secundario opacity-75">Entradas, saídas e transferências</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center" style="background: rgba(var(--cor-azul-rgb), 0.2); color: #9CBED4; width: 48px; height: 48px;">
+                        <i class="bi bi-arrow-left-right fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerta Estoque Baixo -->
+        <div class="col-xl col-md-6 col-sm-12">
+            <div class="card cardPadrao h-100 p-3 position-relative overflow-hidden {% if kpis.qtd_baixo_estoque > 0 %}border-warning{% endif %}">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Estoque Baixo</div>
+                        <div class="fs-3 fw-bold {% if kpis.qtd_baixo_estoque > 0 %}text-warning{% else %}text-success{% endif %} mt-1">
+                            {{ kpis.qtd_baixo_estoque }}
+                        </div>
+                        <div class="small text-tema-secundario opacity-75">
+                            {% if kpis.qtd_baixo_estoque > 0 %}
+                            Materiais em nível crítico
+                            {% else %}
+                            Todos os itens em nível seguro
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center" style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); width: 48px; height: 48px;">
+                        <i class="bi {{ 'bi-exclamation-triangle-fill text-warning' if kpis.qtd_baixo_estoque > 0 else 'bi-check2-circle text-success' }} fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         3. NAVEGAÇÃO POR ABAS (SALAS, HISTÓRICO, ANALYTICS)
+         ============================================================= -->
+    <ul class="nav nav-pills customPills mb-4" id="pillsTabItens" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if filtros.tab == 'salas' or not filtros.tab %}active{% endif %}" id="tab-salas-btn" data-bs-toggle="pill" data-bs-target="#tab-salas" type="button" role="tab">
+                <i class="bi bi-grid-fill me-2"></i>Estoque por Sala
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if filtros.tab == 'historico' %}active{% endif %}" id="tab-historico-btn" data-bs-toggle="pill" data-bs-target="#tab-historico" type="button" role="tab">
+                <i class="bi bi-clock-history me-2"></i>Histórico & Auditoria
+                <span class="badge rounded-pill bg-secondary ms-1">{{ historico|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if filtros.tab == 'metricas' %}active{% endif %}" id="tab-metricas-btn" data-bs-toggle="pill" data-bs-target="#tab-metricas" type="button" role="tab">
+                <i class="bi bi-bar-chart-fill me-2"></i>Métricas & Relatórios
+            </button>
+        </li>
+    </ul>
+
+    <!-- =============================================================
+         CONTEÚDO DAS ABAS
+         ============================================================= -->
+    <div class="tab-content" id="pillsTabContent">
+
+        <!-- =========================================================
+             ABA 1: ESTOQUE POR SALA (LAYOUT LOGÍSTICO LADO A LADO)
+             ========================================================= -->
+        <div class="tab-pane fade {% if filtros.tab == 'salas' or not filtros.tab %}show active{% endif %}" id="tab-salas" role="tabpanel">
+
+            <!-- Barra de Filtros e Busca Rápida -->
+            <div class="card cardPadrao p-3 mb-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-lg-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--cor-borda); color: var(--cor-texto-secundario);">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="filtroRapidoTexto" class="form-control inputPadrao border-start-0" placeholder="Buscar material por nome, categoria ou descrição..." value="{{ filtros.busca }}">
+                        </div>
+                    </div>
+                    <div class="col-lg-6 d-flex flex-wrap align-items-center justify-content-lg-end gap-2">
+                        <span class="text-tema-secundario small me-1"><i class="bi bi-funnel me-1"></i>Categoria:</span>
+                        <div class="d-flex flex-wrap gap-1">
+                            <a href="{{ url_for('itens_sala.index', categoria='todas', busca=filtros.busca, tab='salas') }}" class="btn btn-sm {% if filtros.categoria == 'todas' or not filtros.categoria %}botaoPrimario{% else %}botaoSecundario{% endif %}">
+                                Todas
+                            </a>
+                            {% for cat in categorias %}
+                            <a href="{{ url_for('itens_sala.index', categoria=cat, busca=filtros.busca, tab='salas') }}" class="btn btn-sm {% if filtros.categoria == cat %}botaoPrimario{% else %}botaoSecundario{% endif %}">
+                                {{ cat }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ÁREAS DAS SALAS LADO A LADO -->
+            <div class="row g-4">
+
+                <!-- SALA PRINCIPAL -->
+                <div class="col-xl-6 col-12">
+                    <div class="card cardPadrao h-100 shadow-sm border-0 position-relative overflow-hidden">
+                        <!-- Barra de Acento Superior -->
+                        <div style="height: 4px; background: linear-gradient(90deg, #D0B982, #547A95);"></div>
+                        
+                        <!-- Cabeçalho da Sala -->
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--cor-borda) !important; background: rgba(0,0,0,0.15);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); width: 44px; height: 44px;">
+                                    <i class="bi bi-pc-display fs-4"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 fw-bold text-tema mb-0">🖥 Sala Principal</h2>
+                                    <span class="small text-tema-secundario">Laboratório & Oficina Central de TI</span>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <span class="badge px-3 py-2 rounded-pill" style="background: rgba(var(--cor-azul-rgb), 0.25); color: #B2D7F0; font-size: 0.85rem; border: 1px solid rgba(var(--cor-azul-rgb), 0.4);">
+                                    <strong>{{ salas_dados.sala_principal.total_unidades }}</strong> unidades
+                                </span>
+                                <div class="small text-tema-secundario mt-1">{{ salas_dados.sala_principal.total_tipos }} materiais ativos</div>
+                            </div>
+                        </div>
+
+                        <!-- Grid de Cards de Materiais da Sala Principal -->
+                        <div class="p-3">
+                            <div class="row g-3" id="gridSalaPrincipal">
+                                {% for item in salas_dados.sala_principal.itens %}
+                                <div class="col-md-6 col-12 itemCardWrapper" data-nome="{{ item.nome|lower }}" data-categoria="{{ item.categoria|lower }}">
+                                    <div class="card h-100 p-3 position-relative itemLogisticaCard {% if item.quantidade == 0 %}esgotado{% elif item.is_baixo %}alerta{% endif %}">
+                                        <!-- Header do Card -->
+                                        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="itemIconeBox">
+                                                    <i class="bi {{ item.icone }}"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="h6 fw-bold text-tema mb-0 itemNome">{{ item.nome }}</h3>
+                                                    <span class="badge badgeCategoria">{{ item.categoria }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-link text-tema-secundario p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                                                    <li>
+                                                        <button class="dropdown-item small" type="button" onclick="abrirModalEditar({{ item.id }}, '{{ item.nome|escape }}', '{{ item.categoria }}', {{ item.estoque_minimo }}, '{{ item.unidade }}')">
+                                                            <i class="bi bi-pencil me-2 text-warning"></i>Editar Material
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item small" type="button" onclick="abrirModalTransferir({{ item.id }}, 'Sala Principal', 'Sala TI - 3º Andar')">
+                                                            <i class="bi bi-arrow-left-right me-2 text-info"></i>Transferir p/ 3º Andar
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <!-- Indicadores de Quantidade e Nível -->
+                                        <div class="d-flex align-items-end justify-content-between mt-2 mb-2">
+                                            <div>
+                                                <div class="display-6 fw-bold text-tema itemQuantidade">{{ item.quantidade }}</div>
+                                                <div class="small text-tema-secundario">em estoque nesta sala</div>
+                                            </div>
+
+                                            <div class="text-end">
+                                                {% if item.quantidade == 0 %}
+                                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-x-circle me-1"></i>Esgotado
+                                                </span>
+                                                {% elif item.is_baixo %}
+                                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Estoque Baixo
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-check-circle me-1"></i>Normal
+                                                </span>
+                                                {% endif %}
+                                                <div class="small text-tema-secundario mt-1">Total geral: <strong>{{ item.total_geral }}</strong></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Barra de Nível Visual -->
+                                        <div class="progress itemProgressBar mb-3">
+                                            {% set perc = 100 if item.estoque_minimo == 0 else [((item.quantidade / (item.estoque_minimo * 2)) * 100)|int, 100]|min %}
+                                            <div class="progress-bar {% if item.quantidade == 0 %}bg-danger{% elif item.is_baixo %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ perc }}%;"></div>
+                                        </div>
+
+                                        <!-- Botões de Ação Rápida no Card -->
+                                        <div class="d-flex gap-2 mt-auto pt-2 border-top border-secondary border-opacity-25">
+                                            <button type="button" class="btn btn-sm btnAcaoCard flex-grow-1 btnAcaoCard--saida" onclick="abrirModalSaida({{ item.id }}, 'Sala Principal')" {% if item.quantidade == 0 %}disabled{% endif %}>
+                                                <i class="bi bi-box-arrow-up-right me-1"></i>Retirar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btnAcaoCard flex-grow-1 btnAcaoCard--entrada" onclick="abrirModalEntrada({{ item.id }}, 'Sala Principal')">
+                                                <i class="bi bi-plus-lg me-1"></i>Repor
+                                            </button>
+                                            <button type="button" class="btn btn-sm btnAcaoCard btnAcaoCard--transf" onclick="abrirModalTransferir({{ item.id }}, 'Sala Principal', 'Sala TI - 3º Andar')" title="Transferir para Sala do 3º Andar" {% if item.quantidade == 0 %}disabled{% endif %}>
+                                                <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="col-12 text-center py-5 text-tema-secundario">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                    Nenhum material encontrado com os filtros aplicados.
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SALA TI - 3º ANDAR -->
+                <div class="col-xl-6 col-12">
+                    <div class="card cardPadrao h-100 shadow-sm border-0 position-relative overflow-hidden">
+                        <!-- Barra de Acento Superior -->
+                        <div style="height: 4px; background: linear-gradient(90deg, #547A95, #64B5F6);"></div>
+
+                        <!-- Cabeçalho da Sala -->
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="border-color: var(--cor-borda) !important; background: rgba(0,0,0,0.15);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: rgba(84, 122, 149, 0.25); color: #9CBED4; width: 44px; height: 44px;">
+                                    <i class="bi bi-building fs-4"></i>
+                                </div>
+                                <div>
+                                    <h2 class="h5 fw-bold text-tema mb-0">🏢 Sala TI - 3º Andar</h2>
+                                    <span class="small text-tema-secundario">Ponto Operacional de Apoio - 3º Pavimento</span>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <span class="badge px-3 py-2 rounded-pill" style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); font-size: 0.85rem; border: 1px solid rgba(var(--cor-dourado-rgb), 0.35);">
+                                    <strong>{{ salas_dados.sala_3_andar.total_unidades }}</strong> unidades
+                                </span>
+                                <div class="small text-tema-secundario mt-1">{{ salas_dados.sala_3_andar.total_tipos }} materiais ativos</div>
+                            </div>
+                        </div>
+
+                        <!-- Grid de Cards de Materiais da Sala 3º Andar -->
+                        <div class="p-3">
+                            <div class="row g-3" id="gridSalaTerceiro">
+                                {% for item in salas_dados.sala_3_andar.itens %}
+                                <div class="col-md-6 col-12 itemCardWrapper" data-nome="{{ item.nome|lower }}" data-categoria="{{ item.categoria|lower }}">
+                                    <div class="card h-100 p-3 position-relative itemLogisticaCard {% if item.quantidade == 0 %}esgotado{% elif item.is_baixo %}alerta{% endif %}">
+                                        <!-- Header do Card -->
+                                        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="itemIconeBox">
+                                                    <i class="bi {{ item.icone }}"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="h6 fw-bold text-tema mb-0 itemNome">{{ item.nome }}</h3>
+                                                    <span class="badge badgeCategoria">{{ item.categoria }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-link text-tema-secundario p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                                                    <li>
+                                                        <button class="dropdown-item small" type="button" onclick="abrirModalEditar({{ item.id }}, '{{ item.nome|escape }}', '{{ item.categoria }}', {{ item.estoque_minimo }}, '{{ item.unidade }}')">
+                                                            <i class="bi bi-pencil me-2 text-warning"></i>Editar Material
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item small" type="button" onclick="abrirModalTransferir({{ item.id }}, 'Sala TI - 3º Andar', 'Sala Principal')">
+                                                            <i class="bi bi-arrow-left-right me-2 text-info"></i>Transferir p/ Sala Principal
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <!-- Indicadores de Quantidade e Nível -->
+                                        <div class="d-flex align-items-end justify-content-between mt-2 mb-2">
+                                            <div>
+                                                <div class="display-6 fw-bold text-tema itemQuantidade">{{ item.quantidade }}</div>
+                                                <div class="small text-tema-secundario">em estoque nesta sala</div>
+                                            </div>
+
+                                            <div class="text-end">
+                                                {% if item.quantidade == 0 %}
+                                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-x-circle me-1"></i>Esgotado
+                                                </span>
+                                                {% elif item.is_baixo %}
+                                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Estoque Baixo
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50 px-2 py-1">
+                                                    <i class="bi bi-check-circle me-1"></i>Normal
+                                                </span>
+                                                {% endif %}
+                                                <div class="small text-tema-secundario mt-1">Total geral: <strong>{{ item.total_geral }}</strong></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Barra de Nível Visual -->
+                                        <div class="progress itemProgressBar mb-3">
+                                            {% set perc = 100 if item.estoque_minimo == 0 else [((item.quantidade / (item.estoque_minimo * 2)) * 100)|int, 100]|min %}
+                                            <div class="progress-bar {% if item.quantidade == 0 %}bg-danger{% elif item.is_baixo %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ perc }}%;"></div>
+                                        </div>
+
+                                        <!-- Botões de Ação Rápida no Card -->
+                                        <div class="d-flex gap-2 mt-auto pt-2 border-top border-secondary border-opacity-25">
+                                            <button type="button" class="btn btn-sm btnAcaoCard flex-grow-1 btnAcaoCard--saida" onclick="abrirModalSaida({{ item.id }}, 'Sala TI - 3º Andar')" {% if item.quantidade == 0 %}disabled{% endif %}>
+                                                <i class="bi bi-box-arrow-up-right me-1"></i>Retirar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btnAcaoCard flex-grow-1 btnAcaoCard--entrada" onclick="abrirModalEntrada({{ item.id }}, 'Sala TI - 3º Andar')">
+                                                <i class="bi bi-plus-lg me-1"></i>Repor
+                                            </button>
+                                            <button type="button" class="btn btn-sm btnAcaoCard btnAcaoCard--transf" onclick="abrirModalTransferir({{ item.id }}, 'Sala TI - 3º Andar', 'Sala Principal')" title="Transferir para Sala Principal" {% if item.quantidade == 0 %}disabled{% endif %}>
+                                                <i class="bi bi-arrow-left"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="col-12 text-center py-5 text-tema-secundario">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                    Nenhum material encontrado com os filtros aplicados.
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- =========================================================
+             ABA 2: LINHA DO TEMPO & HISTÓRICO DE AUDITORIA
+             ========================================================= -->
+        <div class="tab-pane fade {% if filtros.tab == 'historico' %}show active{% endif %}" id="tab-historico" role="tabpanel">
+
+            <!-- Filtros do Histórico -->
+            <div class="card cardPadrao p-3 mb-4">
+                <form method="GET" action="{{ url_for('itens_sala.index') }}" class="row g-2 align-items-end">
+                    <input type="hidden" name="tab" value="historico">
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label labelCampo small mb-1">Buscar</label>
+                        <input type="text" name="busca_hist" class="form-control inputPadrao" placeholder="Item, quem retirou, obs..." value="{{ filtros.busca_hist }}">
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label class="form-label labelCampo small mb-1">Operação</label>
+                        <select name="tipo_hist" class="form-select inputPadrao">
+                            <option value="todos" {% if filtros.tipo_hist == 'todos' %}selected{% endif %}>Todas</option>
+                            <option value="saida" {% if filtros.tipo_hist == 'saida' %}selected{% endif %}>Saída</option>
+                            <option value="entrada" {% if filtros.tipo_hist == 'entrada' %}selected{% endif %}>Entrada</option>
+                            <option value="transferencia" {% if filtros.tipo_hist == 'transferencia' %}selected{% endif %}>Transferência</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <label class="form-label labelCampo small mb-1">Sala</label>
+                        <select name="sala_hist" class="form-select inputPadrao">
+                            <option value="todas" {% if filtros.sala_hist == 'todas' %}selected{% endif %}>Todas as Salas</option>
+                            <option value="Sala Principal" {% if filtros.sala_hist == 'Sala Principal' %}selected{% endif %}>Sala Principal</option>
+                            <option value="Sala TI - 3º Andar" {% if filtros.sala_hist == 'Sala TI - 3º Andar' %}selected{% endif %}>Sala TI - 3º Andar</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 col-6">
+                        <label class="form-label labelCampo small mb-1">Setor</label>
+                        <input type="text" name="setor_hist" class="form-control inputPadrao" placeholder="Ex: Financeiro" value="{{ filtros.setor_hist }}">
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 col-12 d-flex gap-2">
+                        <button type="submit" class="btn botaoPrimario flex-grow-1">
+                            <i class="bi bi-funnel me-1"></i>Filtrar
+                        </button>
+                        <a href="{{ url_for('itens_sala.index', tab='historico') }}" class="btn botaoSecundario" title="Limpar Filtros">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Timeline de Movimentações -->
+            <div class="card cardPadrao p-4">
+                <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom border-secondary border-opacity-25">
+                    <h3 class="h5 fw-bold text-tema mb-0">
+                        <i class="bi bi-journal-check text-warning me-2"></i>Rastreabilidade & Registro de Auditoria
+                    </h3>
+                    <span class="text-tema-secundario small">Exibindo últimas <strong>{{ historico|length }}</strong> movimentações</span>
+                </div>
+
+                {% if historico %}
+                <div class="logisticsTimeline">
+                    {% for mov in historico %}
+                    <div class="timelineItem">
+                        <!-- Ponto da Timeline -->
+                        <div class="timelineBadge timelineBadge--{{ mov.tipo }}">
+                            {% if mov.tipo == 'saida' %}
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            {% elif mov.tipo == 'entrada' %}
+                            <i class="bi bi-box-arrow-in-down"></i>
+                            {% else %}
+                            <i class="bi bi-arrow-left-right"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Card do Evento -->
+                        <div class="timelineContent cardPadrao p-3">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge px-2 py-1 fw-bold rounded-pill text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;
+                                        {% if mov.tipo == 'saida' %}
+                                        background: rgba(150, 67, 67, 0.25); color: #FFA3A3; border: 1px solid rgba(150, 67, 67, 0.4);
+                                        {% elif mov.tipo == 'entrada' %}
+                                        background: rgba(72, 112, 82, 0.25); color: #8BE49B; border: 1px solid rgba(72, 112, 82, 0.4);
+                                        {% else %}
+                                        background: rgba(84, 122, 149, 0.25); color: #B2D7F0; border: 1px solid rgba(84, 122, 149, 0.4);
+                                        {% endif %}">
+                                        {{ 'Saída de Material' if mov.tipo == 'saida' else ('Entrada / Reposição' if mov.tipo == 'entrada' else 'Transferência entre Salas') }}
+                                    </span>
+                                    <strong class="text-tema fs-6">{{ mov.item.nome }}</strong>
+                                    <span class="badge rounded-pill bg-dark text-warning border border-secondary border-opacity-25 px-2 py-1">
+                                        {{ mov.quantidade }} {{ mov.item.unidade }}
+                                    </span>
+                                </div>
+
+                                <div class="text-tema-secundario small d-flex align-items-center gap-1">
+                                    <i class="bi bi-calendar3"></i>
+                                    <span>{{ mov.created_at.strftime('%d/%m/%Y às %H:%M') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Detalhes do Percurso e Pessoas Envolvidas -->
+                            <div class="row g-2 mt-1 small">
+                                <div class="col-md-4 col-12">
+                                    <span class="text-tema-secundario"><i class="bi bi-geo-alt me-1 text-info"></i>Local:</span>
+                                    {% if mov.tipo == 'saida' %}
+                                    <strong class="text-tema">{{ mov.sala_origem }}</strong>
+                                    {% elif mov.tipo == 'entrada' %}
+                                    <strong class="text-tema">{{ mov.sala_destino }}</strong>
+                                    {% else %}
+                                    <strong class="text-tema">{{ mov.sala_origem }}</strong> <i class="bi bi-arrow-right mx-1 text-warning"></i> <strong class="text-tema">{{ mov.sala_destino }}</strong>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-4 col-12">
+                                    {% if mov.tipo == 'saida' %}
+                                    <span class="text-tema-secundario"><i class="bi bi-person-check me-1 text-success"></i>Retirado por:</span>
+                                    <strong class="text-tema">{{ mov.recebido_por or 'Não informado' }}</strong>
+                                    {% elif mov.tipo == 'entrada' %}
+                                    <span class="text-tema-secundario"><i class="bi bi-truck me-1 text-info"></i>Origem:</span>
+                                    <strong class="text-tema">{{ mov.origem_fornecedor or mov.entregue_por or 'Reposição' }}</strong>
+                                    {% else %}
+                                    <span class="text-tema-secundario"><i class="bi bi-person me-1 text-info"></i>Responsável:</span>
+                                    <strong class="text-tema">{{ mov.entregue_por or 'Técnico TI' }}</strong>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-4 col-12">
+                                    <span class="text-tema-secundario"><i class="bi bi-building me-1 text-warning"></i>Setor:</span>
+                                    <strong class="text-tema">{{ mov.setor or 'TI' }}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Observações / Motivo -->
+                            {% if mov.observacao %}
+                            <div class="mt-2 pt-2 border-top border-secondary border-opacity-10 small text-tema-secundario">
+                                <i class="bi bi-chat-left-quote me-1 text-warning opacity-75"></i>
+                                <em>{{ mov.observacao }}</em>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mt-2 text-end text-tema-secundario opacity-50" style="font-size: 0.72rem;">
+                                Registrado por: {{ mov.usuario.nome if mov.usuario else (mov.entregue_por or 'Sistema') }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-tema-secundario">
+                    <i class="bi bi-clock-history fs-1 d-block mb-2 opacity-50"></i>
+                    Nenhuma movimentação encontrada para os filtros selecionados.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- =========================================================
+             ABA 3: MÉTRICAS & RELATÓRIOS (GRÁFICOS CHART.JS)
+             ========================================================= -->
+        <div class="tab-pane fade {% if filtros.tab == 'metricas' %}show active{% endif %}" id="tab-metricas" role="tabpanel">
+
+            <div class="row g-4">
+                <!-- Gráfico 1: Movimentação nos últimos 14 dias (Linhas Entradas vs Saídas) -->
+                <div class="col-lg-8 col-12">
+                    <div class="card cardPadrao h-100 p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="h6 fw-bold text-tema mb-0">
+                                <i class="bi bi-activity text-info me-2"></i>Fluxo Diário: Entradas vs Saídas (Últimos 14 Dias)
+                            </h3>
+                            <span class="badge bg-dark text-tema-secundario border border-secondary border-opacity-25">Tendência</span>
+                        </div>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="graficoFluxoDias"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 2: Proporção de Estoque por Sala (Donut) -->
+                <div class="col-lg-4 col-12">
+                    <div class="card cardPadrao h-100 p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="h6 fw-bold text-tema mb-0">
+                                <i class="bi bi-pie-chart text-warning me-2"></i>Saldo Físico por Sala
+                            </h3>
+                            <span class="badge bg-dark text-tema-secundario border border-secondary border-opacity-25">Estoque Real</span>
+                        </div>
+                        <div style="height: 280px; position: relative;" class="d-flex align-items-center justify-content-center">
+                            <canvas id="graficoProporcaoSalas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 3: Top Materiais Mais Retirados (Barras Horizontais) -->
+                <div class="col-lg-6 col-12">
+                    <div class="card cardPadrao h-100 p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="h6 fw-bold text-tema mb-0">
+                                <i class="bi bi-trophy text-warning me-2"></i>Materiais com Maior Demanda
+                            </h3>
+                            <span class="badge bg-dark text-tema-secundario border border-secondary border-opacity-25">Top Retiradas</span>
+                        </div>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="graficoTopMateriais"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico 4: Retiradas por Setor -->
+                <div class="col-lg-6 col-12">
+                    <div class="card cardPadrao h-100 p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="h6 fw-bold text-tema mb-0">
+                                <i class="bi bi-diagram-3 text-success me-2"></i>Setores com Maior Consumo
+                            </h3>
+                            <span class="badge bg-dark text-tema-secundario border border-secondary border-opacity-25">Destino</span>
+                        </div>
+                        <div style="height: 280px; position: relative;">
+                            <canvas id="graficoSetores"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =============================================================
+     MODAL 1: REGISTRAR SAÍDA
+     ============================================================= -->
+<div class="modal fade" id="modalSaida" tabindex="-1" aria-labelledby="modalSaidaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg" style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalSaidaLabel">
+                    <i class="bi bi-box-arrow-up-right text-danger"></i> Registrar Saída de Material
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('itens_sala.registrar_saida') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+
+                    <!-- Material -->
+                    <div class="mb-3">
+                        <label for="saida_item_id" class="form-label labelCampo">Item / Material <span class="text-danger">*</span></label>
+                        <select class="form-select inputPadrao" id="saida_item_id" name="item_id" required onchange="atualizarSaldoSaida()">
+                            <option value="">Selecione o material...</option>
+                            {% for it in todos_itens %}
+                            <option value="{{ it.id }}">{{ it.nome }} ({{ it.categoria }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Sala de Origem e Saldo Atual -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label for="saida_sala" class="form-label labelCampo">Retirar de qual Sala? <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="saida_sala" name="sala" required onchange="atualizarSaldoSaida()">
+                                <option value="Sala Principal">🖥 Sala Principal</option>
+                                <option value="Sala TI - 3º Andar">🏢 Sala TI - 3º Andar</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label labelCampo text-tema-secundario">Saldo Sala</label>
+                            <div id="saida_saldo_badge" class="form-control inputPadrao text-center fw-bold text-tema bg-dark bg-opacity-50">
+                                —
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div class="mb-3">
+                        <label for="saida_quantidade" class="form-label labelCampo">Quantidade a Retirar <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control inputPadrao" id="saida_quantidade" name="quantidade" value="1" min="1" required>
+                        <div class="form-text text-tema-secundario small">A quantidade não pode ser superior ao saldo disponível na sala.</div>
+                    </div>
+
+                    <!-- Quem Entregou e Quem Retirou -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="saida_entregue_por" class="form-label labelCampo">Entregue por (TI)</label>
+                            <input type="text" class="form-control inputPadrao" id="saida_entregue_por" name="entregue_por" value="{{ current_user.nome }}" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="saida_recebido_por" class="form-label labelCampo">Retirado por <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="saida_recebido_por" name="recebido_por" placeholder="Nome de quem pegou" required>
+                        </div>
+                    </div>
+
+                    <!-- Setor de Destino -->
+                    <div class="mb-3">
+                        <label for="saida_setor" class="form-label labelCampo">Setor / Destino <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control inputPadrao" id="saida_setor" name="setor" placeholder="Ex: Financeiro, RH, Operações, Diretoria..." required>
+                    </div>
+
+                    <!-- Observação / Motivo -->
+                    <div class="mb-2">
+                        <label for="saida_observacao" class="form-label labelCampo">Observação / Chamado / Motivo</label>
+                        <textarea class="form-control inputPadrao" id="saida_observacao" name="observacao" rows="2" placeholder="Ex: Substituição teclado quebrado do posto 04"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">Confirmar Saída</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================================
+     MODAL 2: REGISTRAR ENTRADA / REPOSIÇÃO
+     ============================================================= -->
+<div class="modal fade" id="modalEntrada" tabindex="-1" aria-labelledby="modalEntradaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg" style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalEntradaLabel">
+                    <i class="bi bi-box-arrow-in-down text-success"></i> Registrar Entrada / Reposição
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('itens_sala.registrar_entrada') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+
+                    <!-- Material -->
+                    <div class="mb-3">
+                        <label for="entrada_item_id" class="form-label labelCampo">Item / Material <span class="text-danger">*</span></label>
+                        <select class="form-select inputPadrao" id="entrada_item_id" name="item_id" required>
+                            <option value="">Selecione o material...</option>
+                            {% for it in todos_itens %}
+                            <option value="{{ it.id }}">{{ it.nome }} ({{ it.categoria }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Sala Destino e Quantidade -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
+                            <label for="entrada_sala" class="form-label labelCampo">Guardar em qual Sala? <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="entrada_sala" name="sala" required>
+                                <option value="Sala Principal">🖥 Sala Principal</option>
+                                <option value="Sala TI - 3º Andar">🏢 Sala TI - 3º Andar</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label for="entrada_quantidade" class="form-label labelCampo">Quantidade <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control inputPadrao" id="entrada_quantidade" name="quantidade" value="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <!-- Origem -->
+                    <div class="mb-3">
+                        <label for="entrada_origem" class="form-label labelCampo">Origem do Material</label>
+                        <select class="form-select inputPadrao" id="entrada_origem" name="origem">
+                            {% for ori in origens_entrada %}
+                            <option value="{{ ori }}">{{ ori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Responsável que Adicionou -->
+                    <div class="mb-3">
+                        <label for="entrada_adicionado_por" class="form-label labelCampo">Adicionado por</label>
+                        <input type="text" class="form-control inputPadrao" id="entrada_adicionado_por" name="adicionado_por" value="{{ current_user.nome }}" required>
+                    </div>
+
+                    <!-- Observação -->
+                    <div class="mb-2">
+                        <label for="entrada_observacao" class="form-label labelCampo">Observação / Nota Fiscal / Detalhes</label>
+                        <textarea class="form-control inputPadrao" id="entrada_observacao" name="observacao" rows="2" placeholder="Ex: NF 1234 - Reposição mensal de mouses e teclados"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">Confirmar Entrada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================================
+     MODAL 3: TRANSFERÊNCIA ENTRE SALAS
+     ============================================================= -->
+<div class="modal fade" id="modalTransferencia" tabindex="-1" aria-labelledby="modalTransferenciaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg" style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalTransferenciaLabel">
+                    <i class="bi bi-arrow-left-right text-info"></i> Transferir Material entre Salas
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('itens_sala.transferir') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+
+                    <!-- Material -->
+                    <div class="mb-3">
+                        <label for="transf_item_id" class="form-label labelCampo">Item a Transferir <span class="text-danger">*</span></label>
+                        <select class="form-select inputPadrao" id="transf_item_id" name="item_id" required onchange="atualizarSaldoTransf()">
+                            <option value="">Selecione o material...</option>
+                            {% for it in todos_itens %}
+                            <option value="{{ it.id }}">{{ it.nome }} ({{ it.categoria }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Salas Origem e Destino -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label for="transf_sala_origem" class="form-label labelCampo">De onde sai? <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="transf_sala_origem" name="sala_origem" required onchange="ajustarDestinoTransf(); atualizarSaldoTransf();">
+                                <option value="Sala Principal">🖥 Sala Principal</option>
+                                <option value="Sala TI - 3º Andar">🏢 Sala TI - 3º Andar</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="transf_sala_destino" class="form-label labelCampo">Para onde vai? <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="transf_sala_destino" name="sala_destino" required>
+                                <option value="Sala TI - 3º Andar">🏢 Sala TI - 3º Andar</option>
+                                <option value="Sala Principal">🖥 Sala Principal</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Saldo na Origem e Quantidade -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label labelCampo text-tema-secundario">Saldo Disponível na Origem</label>
+                            <div id="transf_saldo_badge" class="form-control inputPadrao text-center fw-bold text-tema bg-dark bg-opacity-50">
+                                —
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label for="transf_quantidade" class="form-label labelCampo">Qtd a Transferir <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control inputPadrao" id="transf_quantidade" name="quantidade" value="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <!-- Responsável -->
+                    <div class="mb-3">
+                        <label for="transf_responsavel" class="form-label labelCampo">Responsável pela Transferência</label>
+                        <input type="text" class="form-control inputPadrao" id="transf_responsavel" name="responsavel" value="{{ current_user.nome }}" required>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="mb-2">
+                        <label for="transf_motivo" class="form-label labelCampo">Motivo da Transferência</label>
+                        <input type="text" class="form-control inputPadrao" id="transf_motivo" name="motivo" placeholder="Ex: Abastecimento de periféricos do 3º andar">
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">Efetuar Transferência</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================================
+     MODAL 4: NOVO MATERIAL NO CATÁLOGO
+     ============================================================= -->
+<div class="modal fade" id="modalNovoItem" tabindex="-1" aria-labelledby="modalNovoItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg" style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalNovoItemLabel">
+                    <i class="bi bi-plus-circle text-warning"></i> Cadastrar Novo Material
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('itens_sala.novo_item') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+
+                    <!-- Nome do Item -->
+                    <div class="mb-3">
+                        <label for="novo_nome" class="form-label labelCampo">Nome do Material <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control inputPadrao" id="novo_nome" name="nome" placeholder="Ex: Mouse Sem Fio Logitech M170" required>
+                    </div>
+
+                    <!-- Categoria e Unidade -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label for="novo_categoria" class="form-label labelCampo">Categoria <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="novo_categoria" name="categoria" required>
+                                {% for cat in categorias %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="novo_unidade" class="form-label labelCampo">Unidade</label>
+                            <input type="text" class="form-control inputPadrao" id="novo_unidade" name="unidade" value="UN" placeholder="UN, CX, M">
+                        </div>
+                    </div>
+
+                    <!-- Estoque Mínimo de Alerta -->
+                    <div class="mb-3">
+                        <label for="novo_estoque_minimo" class="form-label labelCampo">Estoque Mínimo de Alerta</label>
+                        <input type="number" class="form-control inputPadrao" id="novo_estoque_minimo" name="estoque_minimo" value="2" min="0">
+                        <div class="form-text text-tema-secundario small">Aviso visual será ativado quando o total em estoque for menor ou igual a este valor.</div>
+                    </div>
+
+                    <!-- Carga Inicial -->
+                    <div class="p-3 rounded mb-3 border border-secondary border-opacity-25" style="background: rgba(0,0,0,0.2);">
+                        <div class="fw-semibold text-tema small mb-2"><i class="bi bi-box-seam me-1 text-warning"></i>Carga Inicial de Estoque (Opcional)</div>
+                        <div class="row g-2">
+                            <div class="col-7">
+                                <label for="novo_sala_inicial" class="form-label labelCampo small">Alocar Inicialmente em:</label>
+                                <select class="form-select inputPadrao form-select-sm" id="novo_sala_inicial" name="sala_inicial">
+                                    <option value="Sala Principal">🖥 Sala Principal</option>
+                                    <option value="Sala TI - 3º Andar">🏢 Sala TI - 3º Andar</option>
+                                </select>
+                            </div>
+                            <div class="col-5">
+                                <label for="novo_quantidade_inicial" class="form-label labelCampo small">Qtd. Inicial</label>
+                                <input type="number" class="form-control inputPadrao form-select-sm" id="novo_quantidade_inicial" name="quantidade_inicial" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descrição / Detalhes -->
+                    <div class="mb-2">
+                        <label for="novo_descricao" class="form-label labelCampo">Descrição / Modelo / Padrão</label>
+                        <textarea class="form-control inputPadrao" id="novo_descricao" name="descricao" rows="2" placeholder="Especificações técnicas, modelo homologado..."></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">Cadastrar Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================================
+     MODAL 5: EDITAR MATERIAL
+     ============================================================= -->
+<div class="modal fade" id="modalEditarItem" tabindex="-1" aria-labelledby="modalEditarItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg" style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalEditarItemLabel">
+                    <i class="bi bi-pencil-square text-warning"></i> Editar Dados do Material
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarItem" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+
+                    <div class="mb-3">
+                        <label for="editar_nome" class="form-label labelCampo">Nome do Material <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control inputPadrao" id="editar_nome" name="nome" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label for="editar_categoria" class="form-label labelCampo">Categoria <span class="text-danger">*</span></label>
+                            <select class="form-select inputPadrao" id="editar_categoria" name="categoria" required>
+                                {% for cat in categorias %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="editar_unidade" class="form-label labelCampo">Unidade</label>
+                            <input type="text" class="form-control inputPadrao" id="editar_unidade" name="unidade" value="UN">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editar_estoque_minimo" class="form-label labelCampo">Estoque Mínimo de Alerta</label>
+                        <input type="number" class="form-control inputPadrao" id="editar_estoque_minimo" name="estoque_minimo" min="0">
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="editar_descricao" class="form-label labelCampo">Descrição</label>
+                        <textarea class="form-control inputPadrao" id="editar_descricao" name="descricao" rows="2"></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 pt-3">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Chart.js para a Aba de Métricas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* =========================================================================
+   ESTILOS ESPECÍFICOS: ITENS DA SALA (CENTRAL LOGÍSTICA & ALMOXARIFADO TI)
+   ========================================================================= */
+
+/* Nav Pills Customizadas */
+.customPills .nav-link {
+    color: var(--cor-texto-secundario);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.customPills .nav-link:hover {
+    color: var(--cor-texto);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.customPills .nav-link.active {
+    color: var(--cor-texto-escuro) !important;
+    background: var(--cor-dourado) !important;
+    border-color: var(--cor-dourado) !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(var(--cor-dourado-rgb), 0.3);
+}
+
+/* Card Logístico de Material */
+.itemLogisticaCard {
+    background: rgba(var(--cor-azul-escuro-rgb), 0.45);
+    border: 1px solid var(--cor-borda);
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.itemLogisticaCard:hover {
+    transform: translateY(-3px);
+    border-color: rgba(var(--cor-dourado-rgb), 0.4);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.itemLogisticaCard.alerta {
+    border-color: rgba(var(--cor-dourado-rgb), 0.45);
+}
+
+.itemLogisticaCard.esgotado {
+    border-color: rgba(150, 67, 67, 0.4);
+    opacity: 0.85;
+}
+
+/* Caixa de Ícone do Material */
+.itemIconeBox {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(var(--cor-azul-rgb), 0.2);
+    color: #9CBED4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+/* Badge de Categoria */
+.badgeCategoria {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--cor-texto-secundario);
+    font-size: 0.7rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 3px 6px;
+}
+
+/* Barra de Progresso do Item */
+.itemProgressBar {
+    height: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Botões de Ação Rápida no Card */
+.btnAcaoCard {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--cor-texto);
+    border: 1px solid var(--cor-borda);
+}
+
+.btnAcaoCard:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.14);
+    color: #FFF;
+}
+
+.btnAcaoCard--saida:hover:not(:disabled) {
+    background: rgba(150, 67, 67, 0.3);
+    border-color: rgba(150, 67, 67, 0.6);
+    color: #FFA3A3;
+}
+
+.btnAcaoCard--entrada:hover:not(:disabled) {
+    background: rgba(72, 112, 82, 0.3);
+    border-color: rgba(72, 112, 82, 0.6);
+    color: #8BE49B;
+}
+
+.btnAcaoCard--transf:hover:not(:disabled) {
+    background: rgba(84, 122, 149, 0.3);
+    border-color: rgba(84, 122, 149, 0.6);
+    color: #B2D7F0;
+}
+
+/* Timeline de Histórico */
+.logisticsTimeline {
+    position: relative;
+    padding-left: 28px;
+}
+
+.logisticsTimeline::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 14px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.timelineItem {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.timelineBadge {
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 0 0 4px var(--cor-fundo);
+    z-index: 2;
+}
+
+.timelineBadge--saida {
+    background: #964343;
+    color: #FFF;
+}
+
+.timelineBadge--entrada {
+    background: #2E6B38;
+    color: #FFF;
+}
+
+.timelineBadge--transferencia {
+    background: #3B6B8C;
+    color: #FFF;
+}
+
+.timelineContent {
+    background: rgba(var(--cor-azul-escuro-rgb), 0.5);
+    border: 1px solid var(--cor-borda);
+    border-radius: 14px;
+}
+</style>
+
+<script>
+// Dados brutos de gráficos injetados pelo backend
+const graficosDados = {{ graficos_json | safe }};
+
+// =========================================================================
+// FILTRO RÁPIDO INSTANTÂNEO EM TEMPO REAL NOS CARDS DAS SALAS
+// =========================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const inputFiltro = document.getElementById('filtroRapidoTexto');
+    if (inputFiltro) {
+        inputFiltro.addEventListener('input', function() {
+            const termo = this.value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.itemCardWrapper');
+            cards.forEach(card => {
+                const nome = card.getAttribute('data-nome') || '';
+                const cat = card.getAttribute('data-categoria') || '';
+                if (!termo || nome.includes(termo) || cat.includes(termo)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Inicializa os gráficos quando a aba de métricas for aberta ou caso já esteja ativa
+    const tabMetricasBtn = document.getElementById('tab-metricas-btn');
+    if (tabMetricasBtn) {
+        tabMetricasBtn.addEventListener('shown.bs.tab', function () {
+            inicializarGraficos();
+        });
+    }
+
+    if (document.getElementById('tab-metricas').classList.contains('show')) {
+        inicializarGraficos();
+    }
+});
+
+// =========================================================================
+// CONTROLE DE MODAIS DINÂMICOS
+// =========================================================================
+function abrirModalSaida(itemId, sala) {
+    const selectItem = document.getElementById('saida_item_id');
+    const selectSala = document.getElementById('saida_sala');
+    if (selectItem) selectItem.value = itemId;
+    if (selectSala) selectSala.value = sala;
+    atualizarSaldoSaida();
+    const modalEl = document.getElementById('modalSaida');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function abrirModalEntrada(itemId, sala) {
+    const selectItem = document.getElementById('entrada_item_id');
+    const selectSala = document.getElementById('entrada_sala');
+    if (selectItem) selectItem.value = itemId;
+    if (selectSala) selectSala.value = sala;
+    const modalEl = document.getElementById('modalEntrada');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function abrirModalTransferir(itemId, salaOrigem, salaDestino) {
+    const selectItem = document.getElementById('transf_item_id');
+    const selectOrigem = document.getElementById('transf_sala_origem');
+    const selectDestino = document.getElementById('transf_sala_destino');
+    if (selectItem) selectItem.value = itemId;
+    if (selectOrigem) selectOrigem.value = salaOrigem;
+    if (selectDestino) selectDestino.value = salaDestino;
+    atualizarSaldoTransf();
+    const modalEl = document.getElementById('modalTransferencia');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function abrirModalEditar(itemId, nome, categoria, min, unidade) {
+    const form = document.getElementById('formEditarItem');
+    if (form) form.action = `/itens-sala/editar/${itemId}`;
+    document.getElementById('editar_nome').value = nome;
+    document.getElementById('editar_categoria').value = categoria;
+    document.getElementById('editar_estoque_minimo').value = min;
+    document.getElementById('editar_unidade').value = unidade || 'UN';
+    const modalEl = document.getElementById('modalEditarItem');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function ajustarDestinoTransf() {
+    const origem = document.getElementById('transf_sala_origem').value;
+    const destinoSelect = document.getElementById('transf_sala_destino');
+    if (origem === 'Sala Principal') {
+        destinoSelect.value = 'Sala TI - 3º Andar';
+    } else {
+        destinoSelect.value = 'Sala Principal';
+    }
+}
+
+function atualizarSaldoSaida() {
+    const itemId = document.getElementById('saida_item_id').value;
+    const sala = document.getElementById('saida_sala').value;
+    const badgeSaldo = document.getElementById('saida_saldo_badge');
+    const inputQtd = document.getElementById('saida_quantidade');
+
+    if (!itemId) {
+        badgeSaldo.textContent = '—';
+        return;
+    }
+
+    fetch(`/itens-sala/api/item/${itemId}`)
+        .then(res => res.json())
+        .then(data => {
+            const saldo = (sala === 'Sala Principal') ? data.estoque_sala_principal : data.estoque_sala_terceiro;
+            badgeSaldo.textContent = `${saldo} ${data.unidade}`;
+            inputQtd.max = saldo;
+            if (saldo === 0) {
+                badgeSaldo.classList.add('text-danger');
+            } else {
+                badgeSaldo.classList.remove('text-danger');
+            }
+        })
+        .catch(err => console.error("Erro ao carregar saldo:", err));
+}
+
+function atualizarSaldoTransf() {
+    const itemId = document.getElementById('transf_item_id').value;
+    const salaOrigem = document.getElementById('transf_sala_origem').value;
+    const badgeSaldo = document.getElementById('transf_saldo_badge');
+    const inputQtd = document.getElementById('transf_quantidade');
+
+    if (!itemId) {
+        badgeSaldo.textContent = '—';
+        return;
+    }
+
+    fetch(`/itens-sala/api/item/${itemId}`)
+        .then(res => res.json())
+        .then(data => {
+            const saldo = (salaOrigem === 'Sala Principal') ? data.estoque_sala_principal : data.estoque_sala_terceiro;
+            badgeSaldo.textContent = `${saldo} ${data.unidade}`;
+            inputQtd.max = saldo;
+            if (saldo === 0) {
+                badgeSaldo.classList.add('text-danger');
+            } else {
+                badgeSaldo.classList.remove('text-danger');
+            }
+        })
+        .catch(err => console.error("Erro ao carregar saldo:", err));
+}
+
+// =========================================================================
+// RENDERIZAÇÃO DOS GRÁFICOS (CHART.JS)
+// =========================================================================
+let graficosInicializados = false;
+
+function inicializarGraficos() {
+    if (graficosInicializados || !graficosDados) return;
+    graficosInicializados = true;
+
+    // Configurações globais Chart.js para o tema escuro
+    Chart.defaults.color = 'rgba(232, 237, 242, 0.72)';
+    Chart.defaults.borderColor = 'rgba(232, 237, 242, 0.12)';
+    Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
+
+    // 1. Gráfico de Fluxo Diário (Linhas)
+    const ctxFluxo = document.getElementById('graficoFluxoDias');
+    if (ctxFluxo) {
+        new Chart(ctxFluxo, {
+            type: 'line',
+            data: {
+                labels: graficosDados.fluxo_dias.labels,
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: graficosDados.fluxo_dias.entradas,
+                        borderColor: '#487052',
+                        backgroundColor: 'rgba(72, 112, 82, 0.15)',
+                        tension: 0.35,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'Saídas',
+                        data: graficosDados.fluxo_dias.saidas,
+                        borderColor: '#964343',
+                        backgroundColor: 'rgba(150, 67, 67, 0.15)',
+                        tension: 0.35,
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+
+    // 2. Gráfico de Proporção por Sala (Doughnut)
+    const ctxSalas = document.getElementById('graficoProporcaoSalas');
+    if (ctxSalas) {
+        new Chart(ctxSalas, {
+            type: 'doughnut',
+            data: {
+                labels: graficosDados.salas_proporcao.labels,
+                datasets: [{
+                    data: graficosDados.salas_proporcao.data,
+                    backgroundColor: ['#D0B982', '#547A95'],
+                    borderColor: 'transparent',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // 3. Gráfico Top Materiais (Barras Horizontais)
+    const ctxTop = document.getElementById('graficoTopMateriais');
+    if (ctxTop) {
+        new Chart(ctxTop, {
+            type: 'bar',
+            data: {
+                labels: graficosDados.top_itens.labels,
+                datasets: [{
+                    label: 'Unidades Retiradas',
+                    data: graficosDados.top_itens.data,
+                    backgroundColor: 'rgba(194, 165, 109, 0.75)',
+                    borderColor: '#C2A56D',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+
+    // 4. Gráfico Setores Mais Demandantes
+    const ctxSetores = document.getElementById('graficoSetores');
+    if (ctxSetores) {
+        new Chart(ctxSetores, {
+            type: 'bar',
+            data: {
+                labels: graficosDados.setores.labels,
+                datasets: [{
+                    label: 'Itens Entregues',
+                    data: graficosDados.setores.data,
+                    backgroundColor: 'rgba(84, 122, 149, 0.75)',
+                    borderColor: '#547A95',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

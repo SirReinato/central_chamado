@@ -57,6 +57,8 @@
                 <span>Service Desk</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Fila de Chamados</span>
             {% elif request.endpoint and request.endpoint.startswith('conhecimento.') %}
                 <span>Conhecimento</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Base de Conhecimento</span>
+            {% elif request.endpoint and request.endpoint.startswith('itens_sala.') %}
+                <span>Almoxarifado TI</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Itens da Sala</span>
             {% elif request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}
                 <span>Parque Gráfico</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Impressoras</span>
             {% elif request.endpoint == 'impressoras.gerenciar_estoque' %}
@@ -147,6 +149,12 @@
                 <span class="sidebarLabel">Estoque & Insumos</span>
             </a>
 
+            <div class="sidebarGroupTitle">ALMOXARIFADO TI</div>
+            <a href="{{ url_for('itens_sala.index') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('itens_sala.') %}active{% endif %}" title="Controle de Itens da Sala TI">
+                <i class="bi bi-boxes sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Itens da Sala</span>
+            </a>
+
             <div class="sidebarGroupTitle">CONHECIMENTO</div>
             <a href="{{ url_for('conhecimento.index') }}" class="sidebarItem {% if request.endpoint in ('conhecimento.index', 'conhecimento.ver_artigo') %}active{% endif %}" title="Base de Conhecimento">
                 <i class="bi bi-journal-text sidebarIcon text-info"></i>
@@ -200,8 +208,14 @@
             </a>
             {% endif %}
 
-            <!-- PARQUE GRÁFICO (Admin e Operador) -->
+            <!-- INFRAESTRUTURA & TI (Admin e Operador) -->
             {% if current_user.is_admin or current_user.is_operador %}
+            <div class="sidebarGroupTitle">ALMOXARIFADO TI</div>
+            <a href="{{ url_for('itens_sala.index') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('itens_sala.') %}active{% endif %}" title="Controle de Itens da Sala TI">
+                <i class="bi bi-boxes sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Itens da Sala</span>
+            </a>
+
             <div class="sidebarGroupTitle">PARQUE GRÁFICO</div>
             <a href="{{ url_for('impressoras.index') }}" class="sidebarItem {% if request.endpoint in ('impressoras.index', 'impressoras.nova_impressora') %}active{% endif %}" title="Monitoramento de Impressoras">
                 <i class="bi bi-printer-fill sidebarIcon"></i>

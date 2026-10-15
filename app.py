@@ -14,6 +14,7 @@ from routes.dashboard import dashboard_bp
 from routes.usuarios import usuarios_bp
 from routes.impressoras import impressoras_bp
 from routes.base_conhecimento import conhecimento_bp
+from routes.itens_sala import itens_sala_bp
 from services.impressoras_services import ImpressorasService
 from utils.logger import setup_logging, get_logger
 
@@ -129,6 +130,7 @@ app.register_blueprint(dashboard_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(impressoras_bp)
 app.register_blueprint(conhecimento_bp)
+app.register_blueprint(itens_sala_bp)
 
 # Cria as tabelas em ambos os bancos (chamados.db e estoque_suprimentos.db)
 with app.app_context():
@@ -150,7 +152,7 @@ def tarefa_atualizar_impressoras():
 
 scheduler = BackgroundScheduler()
 
-# Agendamento a cada 1 hora
+# Agendamento a cada 1 hora para impressoras
 scheduler.add_job(
     func=tarefa_atualizar_impressoras,
     trigger="interval",
@@ -158,6 +160,28 @@ scheduler.add_job(
     id="job_atualizar_impressoras",
     replace_existing=True
 )
+
+def tarefa_sincronizar_glpi():
+    """Tarefa agendada em segundo plano para importar novos chamados do GLPI (Politica Carga Zero)."""
+    with app.app_context():
+        try:
+            from services.glpi_sync import executar_sincronizacao
+            executar_sincronizacao(dry_run=False)
+        except Exception as e:
+            logger.error(f"Falha na rotina agendada do GLPI: {e}", exc_info=True)
+
+# Agendamento GLPI (apenas se GLPI_ENABLE_SYNC estiver ativo no .env)
+if os.environ.get('GLPI_ENABLE_SYNC', 'false').lower() in ('true', '1'):
+    intervalo_min = int(os.environ.get('GLPI_SYNC_INTERVAL_MINUTES', 30))
+    scheduler.add_job(
+        func=tarefa_sincronizar_glpi,
+        trigger="interval",
+        minutes=intervalo_min,
+        id="job_sincronizar_glpi",
+        replace_existing=True
+    )
+    logger.info(f"Job de sincronizacao GLPI agendado a cada {intervalo_min} minutos.")
+
 
 import sys
 
