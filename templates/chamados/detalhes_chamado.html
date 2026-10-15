@@ -62,10 +62,17 @@
         </div>
 
         <div class="mb-4">
-            <small class="d-block mb-2 text-tema-secundario">
-                Descrição Detalhada
-            </small>
-            <div class="caixaDescricaoTicket" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.95rem;">{{ chamado.descricao }}</div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-tema-secundario">
+                    Descrição Detalhada
+                </small>
+                {% if 'ACTIVE DIRECTORY' in chamado.descricao %}
+                <button type="button" class="btn btn-sm btn-outline-info py-0 px-2" onclick="navigator.clipboard.writeText(document.getElementById('descChamado').innerText); this.innerHTML='<i class=\'bi bi-check2\'></i> Copiado!'; setTimeout(() => this.innerHTML='<i class=\'bi bi-clipboard-check me-1\'></i> Copiar Dados do AD', 2000);" style="font-size: 0.75rem;">
+                    <i class="bi bi-clipboard-check me-1"></i> Copiar Dados do AD
+                </button>
+                {% endif %}
+            </div>
+            <div id="descChamado" class="caixaDescricaoTicket" style="white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.95rem;">{{ chamado.descricao }}</div>
         </div>
 
         {% if chamado.origem == 'glpi' %}

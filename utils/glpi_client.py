@@ -199,6 +199,8 @@ class GlpiClient:
                 if not isinstance(tickets, list):
                     tickets = [tickets]
 
+                # Ordena localmente por ID decrescente para garantir os mais recentes primeiro
+                tickets.sort(key=lambda t: t.get('id', 0), reverse=True)
                 logger.info(f"Recebidos {len(tickets)} tickets do GLPI.")
 
                 if ultimo_glpi_id and isinstance(ultimo_glpi_id, int):

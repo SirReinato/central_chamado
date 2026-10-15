@@ -1,10 +1,11 @@
 """
 Servico de Sincronizacao GLPI -> Central de Chamados
-Executa o processamento sob demanda ou via scheduler de forma:
-- Segura e Idempotente (nao duplica chamados)
-- Filtrada exclusivamente para chamados de Formulario (request_type.id == 1)
-- Com registro de auditoria em GlpiSyncLog
-- Com suporte a simulacao (dry_run)
+Executa o processamento com foco em:
+- Extracao inteligente de campos para Criacao de Usuario no AD DS (Active Directory)
+- Destaque e prioridade alta para chamados de Onboarding / Admissao
+- Idempotencia absoluta (glpi_id unico)
+- Registro de auditoria em GlpiSyncLog
+- Execucao controlada e segura sob a Politica de Carga Zero
 """
 import os
 import re
@@ -20,7 +21,6 @@ logger = get_logger('glpi_sync')
 # Lock de execucao para impedir sincronizacoes concorrentes
 _sync_lock = threading.Lock()
 
-# Mapeamento de prioridades numericas do GLPI para texto local
 MAPA_PRIORIDADE = {
     1: 'Baixa',
     2: 'Baixa',
@@ -28,16 +28,6 @@ MAPA_PRIORIDADE = {
     4: 'Alta',
     5: 'Alta',
     6: 'Urgente'
-}
-
-# Mapeamento de status do GLPI para o fluxo da Central
-MAPA_STATUS = {
-    1: 'Aberto',          # Novo
-    2: 'Em Atendimento',  # Em processamento (atribuido)
-    3: 'Em Atendimento',  # Em processamento (planejado)
-    4: 'Pendente',        # Pendente
-    5: 'Resolvido',       # Solucionado
-    6: 'Fechado'          # Fechado
 }
 
 
@@ -61,9 +51,27 @@ def _limpar_html(conteudo_html: str) -> str:
     return '\n'.join(linhas).strip()
 
 
+def _extrair_campos_formulario(conteudo_html: str) -> dict:
+    """Extrai campos rotulados no padrao de formularios do GLPI (ex: <b>X) Campo</b>: Valor)."""
+    if not conteudo_html:
+        return {}
+    txt = html.unescape(conteudo_html).replace('\xa0', ' ')
+    txt = re.sub(r'<br\s*/?>', '\n', txt, flags=re.IGNORECASE)
+    txt = re.sub(r'</?(?:p|div)>', '\n', txt, flags=re.IGNORECASE)
+
+    campos = {}
+    padrao = r'<b>\s*\d+\)\s*([^<:]+)\s*</b>\s*:\s*([^<\n\r]+)'
+    matches = re.findall(padrao, txt, flags=re.IGNORECASE)
+    for k, v in matches:
+        k_clean = k.strip()
+        v_clean = re.sub(r'<[^>]+>', '', v).strip()
+        if v_clean:
+            campos[k_clean] = v_clean
+    return campos
+
+
 def _extrair_solicitante(ticket: dict) -> str:
     """Extrai o nome legivel do solicitante da equipe ou objeto de usuario."""
-    # 1. Procura na lista de team por role == 'requester'
     team = ticket.get('team') or []
     for membro in team:
         if membro.get('role') == 'requester':
@@ -73,7 +81,6 @@ def _extrair_solicitante(ticket: dict) -> str:
             if membro.get('name'):
                 return membro.get('name')
 
-    # 2. Tenta user_recipient
     user_rec = ticket.get('user_recipient')
     if isinstance(user_rec, dict) and user_rec.get('name'):
         return user_rec.get('name')
@@ -94,11 +101,71 @@ def _converter_data(data_str: str) -> datetime:
     if not data_str:
         return datetime.now()
     try:
-        # Trata formato ISO ex: 2026-08-31T11:31:20-03:00
         data_limpa = data_str[:19]
         return datetime.strptime(data_limpa, "%Y-%m-%dT%H:%M:%S")
     except Exception:
         return datetime.now()
+
+
+def _formatar_dados_ad_ds(campos: dict, t_id: int, descricao_original: str) -> tuple:
+    """
+    Identifica se e um formulario de Criacao de Usuario e gera um resumo
+    estruturado com os dados essenciais para criacao da conta no AD DS.
+    Retorna: (is_user_form, titulo_formatado, solicitante_formatado, setor_formatado, categoria, prioridade, descricao_final)
+    """
+    # Detecta se e formulario de criacao de usuario
+    chaves_usuario = [k for k in campos.keys() if 'colaborador' in k.lower() or 'admiss' in k.lower()]
+    is_user_form = len(chaves_usuario) > 0 or 'criação de usuário' in descricao_original.lower() or 'criacao de usuario' in descricao_original.lower()
+
+    if not is_user_form:
+        return False, None, None, None, None, None, descricao_original
+
+    # 1. Extracao dos campos para o AD
+    nome = campos.get('Nome do Colaborador') or campos.get('Colaborador') or 'Novo Colaborador'
+    logon = campos.get('E-mail corporativo') or campos.get('Email corporativo') or ''
+    logon_limpo = re.sub(r'[^a-zA-Z0-9._-]', '', logon.split('@')[0].lower()) if logon else ''
+    email_sugerido = f"{logon_limpo}@brasfort.com.br" if logon_limpo else 'Não informado'
+
+    setor = campos.get('Setor') or campos.get('Setor / Posto / Contrato') or 'TI / Operações'
+    empresa = campos.get('Empresa') or campos.get('Empresa / Unidade de negócio') or 'Brasfort'
+    funcao = campos.get('Função') or campos.get('Funcao') or campos.get('Funo') or campos.get('Cargo') or 'Não informado'
+    lider = campos.get('Líder direto') or campos.get('Lder direto') or campos.get('Gestor responsável') or 'Não informado'
+    admissao = campos.get('Admissão') or campos.get('Admisso') or campos.get('Prazo necessário') or 'Não informado'
+    recursos = campos.get('Acessos necessários') or campos.get('Acessos necessrios') or 'E-mail corporativo, Computador'
+    registro = campos.get('Registro') or campos.get('Matrícula') or '-'
+    cpf = campos.get('CPF') or '-'
+    rg = campos.get('RG') or '-'
+    telefone = campos.get('E-mail / Telefone') or campos.get('Telefone') or '-'
+
+    # 2. Titulo e Solicitante amigaveis
+    titulo_formatado = f"Criação de Usuário: {nome} ({empresa})"
+    solicitante_formatado = nome
+    setor_formatado = setor
+    categoria = "Criação de Usuário"
+    prioridade = "Alta"  # Alta prioridade para onboarding
+
+    # 3. Montagem da descricao limpa e estruturada para AD DS
+    descricao_ad = f"""======================================================================
+📋 DADOS ESSENCIAIS PARA CRIAÇÃO NO ACTIVE DIRECTORY (AD DS)
+======================================================================
+• Nome Completo (Display Name) : {nome}
+• Logon Sugerido (SamAccount)  : {logon_limpo or 'definir.padrao'}
+• E-mail Corporativo Sugerido  : {email_sugerido}
+• Setor / Departamento (OU)    : {setor}
+• Empresa / Unidade de Negócio : {empresa}
+• Cargo / Função (Title)       : {funcao}
+• Gestor / Líder Direto        : {lider}
+• Data de Admissão             : {admissao}
+• Recursos & Acessos           : {recursos}
+• Registro / Matrícula         : {registro}
+• Documentos                   : CPF: {cpf} | RG: {rg}
+• Telefone / Contato           : {telefone}
+======================================================================
+
+📄 DETALHES DO FORMULÁRIO COMPLETO (GLPI #{t_id}):
+{descricao_original}"""
+
+    return True, titulo_formatado, solicitante_formatado, setor_formatado, categoria, prioridade, descricao_ad
 
 
 def executar_sincronizacao(dry_run: bool = False) -> dict:
@@ -172,24 +239,40 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
                 resultado['ja_existentes'] += 1
                 continue
 
-            # Mapeamento de dados
+            # Mapeamento basico
             titulo = t.get('name', f"Chamado GLPI #{t_id}").strip()
             descricao_bruta = t.get('content', '')
-            descricao = _limpar_html(descricao_bruta) or "Chamado importado do GLPI sem descricao textual."
+            descricao_limpa = _limpar_html(descricao_bruta) or "Chamado importado do GLPI sem descricao textual."
             
-            solicitante = _extrair_solicitante(t)
-            setor = _extrair_setor(t)
-            
-            # Categoria
+            solicitante_original = _extrair_solicitante(t)
+            setor_original = _extrair_setor(t)
             categoria_nome = cat.get('name') or "Outros"
             
-            # Prioridade
             prio_num = t.get('priority', 3)
             prioridade = MAPA_PRIORIDADE.get(prio_num, 'Média')
 
+            # Parser inteligente para formularios de Criacao de Usuario / AD DS
+            campos_form = _extrair_campos_formulario(descricao_bruta)
+            is_user_form, tit_fmt, sol_fmt, set_fmt, cat_fmt, prio_fmt, desc_final = _formatar_dados_ad_ds(
+                campos=campos_form,
+                t_id=t_id,
+                descricao_original=descricao_limpa
+            )
+
+            if is_user_form:
+                titulo = tit_fmt or titulo
+                solicitante = f"{sol_fmt} (Solicitado por: {solicitante_original})"
+                setor = set_fmt or setor_original
+                categoria_nome = cat_fmt or categoria_nome
+                prioridade = prio_fmt or prioridade
+                descricao = desc_final
+            else:
+                solicitante = solicitante_original
+                setor = setor_original
+                descricao = descricao_limpa
+
             # Status: Todo novo chamado importado do GLPI entra como 'Aberto' para ser atendido na Central
             status_local = 'Aberto'
-
             data_abertura = _converter_data(t.get('date_creation'))
 
             if not dry_run:
@@ -214,7 +297,6 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
         if not dry_run:
             db.session.commit()
 
-            # Grava registro no log de sincronizacao
             log_sync = GlpiSyncLog(
                 data_execucao=datetime.now(),
                 tickets_encontrados=resultado['total_encontrados'],
