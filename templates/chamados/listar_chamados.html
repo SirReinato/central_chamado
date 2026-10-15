@@ -123,6 +123,11 @@
                                 <a href="{{ url_for('chamados.detalhes_chamado', id=chamado.id) }}" class="text-tema text-decoration-none">
                                     {{ chamado.titulo }}
                                 </a>
+                                {% if chamado.origem == 'glpi' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 ms-1" style="font-size: 0.72rem; font-weight: 600;" title="Sincronizado do GLPI (Ticket #{{ chamado.glpi_numero }})">
+                                    <i class="bi bi-box-arrow-in-down-right me-1"></i>GLPI #{{ chamado.glpi_numero }}
+                                </span>
+                                {% endif %}
                             </td>
 
                             <!-- Solicitante e Setor -->

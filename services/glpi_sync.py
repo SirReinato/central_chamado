@@ -42,16 +42,23 @@ MAPA_STATUS = {
 
 
 def _limpar_html(conteudo_html: str) -> str:
-    """Converte HTML simples retornado pelo GLPI em texto limpo e legivel."""
+    """Converte HTML retornado pelo GLPI em texto limpo, organizado e perfeitamente legivel."""
     if not conteudo_html:
         return ""
+    # Decodifica entidades HTML (&nbsp;, &quot;, &amp;, etc.)
     texto = html.unescape(conteudo_html)
-    # Substitui quebras de linha HTML
+    # Substitui espacos nao-quebraveis por espacos normais
+    texto = texto.replace('\xa0', ' ')
+    # Trata quebras de bloco e paragrafos antes de remover tags
+    texto = re.sub(r'</?(?:div|p|h[1-6]|li|tr)[^>]*>', '\n', texto, flags=re.IGNORECASE)
     texto = re.sub(r'<br\s*/?>', '\n', texto, flags=re.IGNORECASE)
-    texto = re.sub(r'</p>', '\n', texto, flags=re.IGNORECASE)
     # Remove qualquer outra tag HTML
     texto = re.sub(r'<[^>]+>', '', texto)
-    return texto.strip()
+    # Normaliza quebras de linha multiplas para no maximo duas
+    texto = re.sub(r'\n{3,}', '\n\n', texto)
+    # Remove espacos em branco nas extremidades de cada linha
+    linhas = [linha.strip() for linha in texto.splitlines()]
+    return '\n'.join(linhas).strip()
 
 
 def _extrair_solicitante(ticket: dict) -> str:
@@ -180,10 +187,8 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
             prio_num = t.get('priority', 3)
             prioridade = MAPA_PRIORIDADE.get(prio_num, 'Média')
 
-            # Status
-            st_obj = t.get('status') or {}
-            st_id = st_obj.get('id', 1) if isinstance(st_obj, dict) else 1
-            status_local = MAPA_STATUS.get(st_id, 'Aberto')
+            # Status: Todo novo chamado importado do GLPI entra como 'Aberto' para ser atendido na Central
+            status_local = 'Aberto'
 
             data_abertura = _converter_data(t.get('date_creation'))
 
