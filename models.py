@@ -89,8 +89,13 @@ class Usuario(UserMixin, db.Model):
     )
     
     @property
+    def is_supremo(self):
+        """Retorna True para o Administrador Supremo (admin@king.com ou perfil supremo)."""
+        return (self.email and self.email.lower().strip() == 'admin@king.com') or self.perfil == 'supremo'
+
+    @property
     def is_admin(self):
-        return self.perfil == 'admin'
+        return self.perfil == 'admin' or self.is_supremo
     
     @property
     def is_operador(self):

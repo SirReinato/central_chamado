@@ -1489,6 +1489,16 @@ body {
     border: 1px solid rgba(var(--cor-dourado-rgb), 0.4);
 }
 
+.roleSupremo {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.35), rgba(168, 85, 247, 0.35));
+    color: #facc15;
+    border: 1px solid #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.35);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .roleOperador {
     background: rgba(var(--cor-azul-rgb), 0.2);
     color: #93c5fd;

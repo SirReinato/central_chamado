@@ -51,4 +51,18 @@ def printer_staff_required(func):
 
         return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper
+
+
+def supremo_required(func):
+    """Permite acesso exclusivo ao Administrador Supremo (admin@king.com)."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            abort(401)
+        if not getattr(current_user, 'is_supremo', False):
+            abort(403)
+        return func(*args, **kwargs)
+
+    return wrapper
+

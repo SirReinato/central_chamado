@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container containerPadrao my-4">
+
+    <!-- =============================================================
+         1. CABEÇALHO DA ÁREA SUPREMA
+         ============================================================= -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge rounded-pill" style="background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.4); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.8px;">
+                    <i class="bi bi-shield-lock-fill me-1"></i> ACESSO SUPREMO
+                </span>
+                <span class="text-tema-secundario small">Gestão & Auditoria de APIs Externas</span>
+            </div>
+            <h1 class="tituloPrincipal mb-1">
+                Integração GLPI <span class="badge bg-secondary fs-6 align-middle ms-2">v2.3 REST OAuth2</span>
+            </h1>
+            <p class="tituloSecundario mb-0">Controle de sincronização, monitoramento de carga zero e auditoria de chamados corporativos.</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Botão Sincronizar Agora (Manual com Proteção) -->
+            <form action="{{ url_for('glpi_admin.sincronizar_manual') }}" method="POST" class="d-inline" onsubmit="this.btnSync.disabled=true; this.btnSync.innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span> Sincronizando...';">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="btnSync" class="btn botaoPrimario d-inline-flex align-items-center gap-2" {% if circuit_aberto %}disabled title="Circuit Breaker ativo. Aguarde o cooldown."{% endif %}>
+                    <i class="bi bi-arrow-repeat text-dark"></i>
+                    <span>Sincronizar Agora</span>
+                </button>
+            </form>
+
+            {% if circuit_aberto %}
+            <!-- Botão Destravar Circuit Breaker -->
+            <form action="{{ url_for('glpi_admin.resetar_circuito') }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" title="Forçar reabertura da comunicação">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <span>Destravar Circuito</span>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =============================================================
+         2. CARDS DE INDICADORES & SAÚDE DO SISTEMA
+         ============================================================= -->
+    <div class="row g-3 mb-4">
+        <!-- Status do Sincronizador Automático -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card cardPadrao h-100 p-3 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-tema-secundario small fw-medium">Sincronizador Automático</span>
+                    <i class="bi bi-clock-history fs-4 {% if sync_ativo %}text-success{% else %}text-secondary{% endif %}"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <h3 class="mb-0 fw-bold">
+                        {% if sync_ativo %}
+                        <span class="text-success"><i class="bi bi-check-circle-fill me-1 fs-5"></i> Ativo</span>
+                        {% else %}
+                        <span class="text-secondary"><i class="bi bi-pause-circle me-1 fs-5"></i> Inativo</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="mt-2 small text-tema-secundario">
+                    Intervalo relaxado: <strong class="text-light">{{ intervalo_minutos }} min</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado do Circuit Breaker -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card cardPadrao h-100 p-3 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-tema-secundario small fw-medium">Circuit Breaker (Proteção)</span>
+                    <i class="bi bi-shield-check fs-4 {% if circuit_aberto %}text-danger{% else %}text-info{% endif %}"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <h3 class="mb-0 fw-bold">
+                        {% if circuit_aberto %}
+                        <span class="text-danger"><i class="bi bi-exclamation-octagon-fill me-1 fs-5"></i> Aberto</span>
+                        {% else %}
+                        <span class="text-info"><i class="bi bi-shield-fill-check me-1 fs-5"></i> Saudável</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="mt-2 small text-tema-secundario">
+                    {% if circuit_aberto %}
+                    Cooldown ativo: <strong class="text-danger">{{ tempo_restante_cooldown }}s restantes</strong>
+                    {% else %}
+                    Falhas acumuladas: <strong class="text-light">{{ falhas_circuito }}</strong>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Chamados Importados -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card cardPadrao h-100 p-3 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-tema-secundario small fw-medium">Chamados do GLPI</span>
+                    <i class="bi bi-ticket-perforated-fill fs-4 text-warning"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <h3 class="mb-0 fw-bold text-light">{{ total_glpi }}</h3>
+                    <span class="small text-tema-secundario">registros</span>
+                </div>
+                <div class="mt-2 small text-tema-secundario">
+                    Origem exclusiva: <strong class="text-warning">Formulário Helpdesk</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Importados Hoje -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card cardPadrao h-100 p-3 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-tema-secundario small fw-medium">Sincronizados Hoje</span>
+                    <i class="bi bi-calendar2-check-fill fs-4 text-primary"></i>
+                </div>
+                <div class="d-flex align-items-baseline gap-2">
+                    <h3 class="mb-0 fw-bold text-light">{{ hoje_glpi }}</h3>
+                    <span class="small text-tema-secundario">novos hoje</span>
+                </div>
+                <div class="mt-2 small text-tema-secundario">
+                    Teto por lote: <strong class="text-light">{{ batch_size }} tickets</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         3. PAINEL DE CONFIGURAÇÕES DE SEGURANÇA & ENDPOINT
+         ============================================================= -->
+    <div class="card cardPadrao mb-4">
+        <div class="card-header bg-transparent border-secondary border-opacity-25 py-3 d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 fw-semibold text-light d-flex align-items-center gap-2">
+                <i class="bi bi-sliders text-warning"></i> Parâmetros Técnicos & Defesas Ativas
+            </h5>
+            <span class="badge bg-dark border border-secondary text-secondary small">Somente Leitura</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <label class="small text-tema-secundario d-block mb-1">Endpoint REST (v2.3)</label>
+                    <code class="d-block p-2 rounded bg-dark border border-secondary border-opacity-25 text-info text-truncate">
+                        {{ api_url }}
+                    </code>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="small text-tema-secundario d-block mb-1">Client ID (OAuth2)</label>
+                    <code class="d-block p-2 rounded bg-dark border border-secondary border-opacity-25 text-warning text-truncate">
+                        {{ client_id_mascarado }}
+                    </code>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="small text-tema-secundario d-block mb-1">Política Anti-Sobrecarga</label>
+                    <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small text-light">
+                        <i class="bi bi-shield-fill-check text-success me-1"></i> Cooldown de 10 min em 429/5xx
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label class="small text-tema-secundario d-block mb-1">Mecanismo de Sessão</label>
+                    <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small text-light">
+                        <i class="bi bi-key-fill text-warning me-1"></i> JWT Bearer (Sem sessões em banco)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         4. HISTÓRICO DE AUDITORIA & LOGS DE SINCRONIZAÇÃO
+         ============================================================= -->
+    <div class="card cardPadrao">
+        <div class="card-header bg-transparent border-secondary border-opacity-25 py-3 d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 fw-semibold text-light d-flex align-items-center gap-2">
+                <i class="bi bi-journal-text text-info"></i> Registros de Auditoria (`glpi_sync_logs`)
+            </h5>
+            <span class="badge bg-secondary small">Últimas {{ logs|length }} execuções</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                    <thead style="background: rgba(255, 255, 255, 0.03);">
+                        <tr>
+                            <th class="ps-3 py-3 text-secondary text-uppercase" style="font-size: 0.75rem;">Data / Hora</th>
+                            <th class="py-3 text-secondary text-uppercase" style="font-size: 0.75rem;">Status</th>
+                            <th class="py-3 text-secondary text-uppercase text-center" style="font-size: 0.75rem;">Analisados</th>
+                            <th class="py-3 text-secondary text-uppercase text-center" style="font-size: 0.75rem;">Importados</th>
+                            <th class="py-3 text-secondary text-uppercase" style="font-size: 0.75rem;">Cursor (Último ID)</th>
+                            <th class="pe-3 py-3 text-secondary text-uppercase" style="font-size: 0.75rem;">Mensagem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="ps-3 text-light fw-medium">
+                                {{ log.data_execucao.strftime('%d/%m/%Y %H:%M:%S') }}
+                            </td>
+                            <td>
+                                {% if log.status == 'Sucesso' %}
+                                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2 py-1">
+                                    <i class="bi bi-check-circle me-1"></i> Sucesso
+                                </span>
+                                {% elif log.status == 'Erro' %}
+                                <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                    <i class="bi bi-x-circle me-1"></i> Erro
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1">{{ log.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-light">
+                                {{ log.tickets_encontrados }}
+                            </td>
+                            <td class="text-center">
+                                {% if log.tickets_importados > 0 %}
+                                <span class="badge bg-warning text-dark fw-bold">+{{ log.tickets_importados }}</span>
+                                {% else %}
+                                <span class="text-secondary">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.ultimo_ticket_id %}
+                                <span class="badge bg-dark border border-secondary text-info">#{{ log.ultimo_ticket_id }}</span>
+                                {% else %}
+                                <span class="text-secondary">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3 text-tema-secundario text-truncate" style="max-width: 320px;" title="{{ log.mensagem }}">
+                                {{ log.mensagem or '-' }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-secondary">
+                                <i class="bi bi-inbox fs-4 d-block mb-1"></i>
+                                Nenhum log de execução registrado até o momento.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

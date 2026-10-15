@@ -15,6 +15,7 @@ from routes.usuarios import usuarios_bp
 from routes.impressoras import impressoras_bp
 from routes.base_conhecimento import conhecimento_bp
 from routes.itens_sala import itens_sala_bp
+from routes.glpi_admin import glpi_admin_bp
 from services.impressoras_services import ImpressorasService
 from utils.logger import setup_logging, get_logger
 
@@ -131,6 +132,7 @@ app.register_blueprint(usuarios_bp)
 app.register_blueprint(impressoras_bp)
 app.register_blueprint(conhecimento_bp)
 app.register_blueprint(itens_sala_bp)
+app.register_blueprint(glpi_admin_bp)
 
 # Cria as tabelas em ambos os bancos (chamados.db e estoque_suprimentos.db)
 with app.app_context():

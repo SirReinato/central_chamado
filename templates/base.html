@@ -65,6 +65,8 @@
                 <span>Parque Gráfico</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Estoque & Insumos</span>
             {% elif request.endpoint == 'usuarios.listar' %}
                 <span>Administração</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Usuários</span>
+            {% elif request.endpoint and request.endpoint.startswith('glpi_admin.') %}
+                <span>Supremo</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Integração GLPI</span>
             {% else %}
                 <span>Visão Geral</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Início</span>
             {% endif %}
@@ -84,7 +86,9 @@
                     {{ current_user.nome[:1] | upper }}
                 </div>
                 <span class="topbarUserName">{{ current_user.nome }}</span>
-                {% if current_user.is_admin %}
+                {% if current_user.is_supremo %}
+                    <span class="topbarUserRole roleSupremo"><i class="bi bi-crown-fill me-1"></i>Supremo</span>
+                {% elif current_user.is_admin %}
                     <span class="topbarUserRole roleAdmin">Admin</span>
                 {% elif current_user.is_operador %}
                     <span class="topbarUserRole roleOperador">Operador</span>
@@ -233,6 +237,17 @@
             <a href="{{ url_for('usuarios.listar') }}" class="sidebarItem {% if request.endpoint == 'usuarios.listar' %}active{% endif %}" title="Gestão de Usuários & RBAC">
                 <i class="bi bi-people-fill sidebarIcon"></i>
                 <span class="sidebarLabel">Usuários & Acessos</span>
+            </a>
+            {% endif %}
+
+            <!-- ÁREA EXCLUSIVA DO SUPREMO (admin@king.com) -->
+            {% if current_user.is_supremo %}
+            <div class="sidebarGroupTitle" style="color: #facc15; font-weight: 700; letter-spacing: 0.8px;">
+                <i class="bi bi-crown-fill me-1"></i> SUPREMO
+            </div>
+            <a href="{{ url_for('glpi_admin.painel') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('glpi_admin.') %}active{% endif %}" title="Painel de Integração GLPI & APIs">
+                <i class="bi bi-cpu-fill sidebarIcon" style="color: #facc15;"></i>
+                <span class="sidebarLabel" style="font-weight: 600;">Integração GLPI</span>
             </a>
             {% endif %}
             {% endif %}
