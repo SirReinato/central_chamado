@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     modo = "SIMULACAO (Dry-Run - sem gravar no banco)" if dry_run else "REAL (gravando no banco)"
     print(f"\n=======================================================")
-    print(f"   TESTE DE INTEGRACAO GLPI -> CENTRAL DE CHAMADOS")
+    print(f"   TESTE DE INTEGRACAO GLPI -> HUB CENTRAL - SIRREINATO BRASFORT")
     print(f"   Modo: {modo}")
     print(f"=======================================================\n")
 

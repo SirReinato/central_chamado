@@ -1,0 +1,456 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container containerPadrao my-4">
+
+    <!-- =============================================================
+         1. CABEÇALHO & AÇÕES RÁPIDAS
+         ============================================================= -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge rounded-pill"
+                      style="background: rgba(var(--cor-dourado-rgb), 0.18); color: var(--cor-dourado); border: 1px solid rgba(var(--cor-dourado-rgb), 0.35); font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <i class="bi bi-telephone-inbound me-1"></i> RAMAIS BRASFORT
+                </span>
+                <span class="text-tema-secundario small">Diretório de ramais internos por departamento</span>
+            </div>
+            <h1 class="tituloPrincipal mb-1">Ramais</h1>
+            <p class="tituloSecundario mb-0">Consulte os ramais de colaboradores organizados por setor.</p>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            {% if pode_gerenciar %}
+            <button type="button" class="btn botaoPrimario d-inline-flex align-items-center gap-2"
+                    data-bs-toggle="modal" data-bs-target="#modalNovoRamal"
+                    title="Cadastrar novo ramal">
+                <i class="bi bi-plus-lg text-warning"></i>
+                <span>Novo Ramal</span>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Seção de Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'danger' else 'info') }} alert-dismissible fade show mb-4" role="alert" style="border-radius: 12px;">
+        <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else ('bi-exclamation-triangle-fill' if category == 'danger' else 'bi-info-circle-fill') }} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- =============================================================
+         2. RESUMO RÁPIDO
+         ============================================================= -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card cardPadrao h-100 p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Total de Ramais</div>
+                        <div class="fs-3 fw-bold text-tema mt-1">{{ total }}</div>
+                        <div class="small text-tema-secundario opacity-75">Entradas no diretório</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center"
+                         style="background: rgba(var(--cor-azul-rgb), 0.15); color: var(--cor-azul); width: 48px; height: 48px;">
+                        <i class="bi bi-telephone-inbound fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cardPadrao h-100 p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Departamentos</div>
+                        <div class="fs-3 fw-bold text-tema mt-1">{{ departamentos_ordenados|length }}</div>
+                        <div class="small text-tema-secundario opacity-75">Setores cadastrados</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center"
+                         style="background: rgba(var(--cor-dourado-rgb), 0.15); color: var(--cor-dourado); width: 48px; height: 48px;">
+                        <i class="bi bi-building fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card cardPadrao h-100 p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-tema-secundario small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">Acesso</div>
+                        <div class="fs-3 fw-bold text-info mt-1">Liberado</div>
+                        <div class="small text-tema-secundario opacity-75">Todos os autenticados</div>
+                    </div>
+                    <div class="rounded-3 p-3 d-flex align-items-center justify-content-center"
+                         style="background: rgba(var(--cor-info-rgb), 0.15); color: var(--cor-info-texto); width: 48px; height: 48px;">
+                        <i class="bi bi-unlock-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         3. BARRA DE BUSCA RÁPIDA
+         ============================================================= -->
+    <div class="card cardPadrao p-3 mb-4 shadow-sm border-0">
+        <div class="row g-3 align-items-center">
+            <div class="col-lg-8 col-md-6 col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"
+                          style="border-color: var(--cor-borda); color: var(--cor-texto-secundario);">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="buscaRapida"
+                           class="form-control inputPadrao border-start-0"
+                           placeholder="Buscar por nome, departamento ou ramal..."
+                           value="{{ busca }}">
+                </div>
+                <div class="form-text text-tema-secundario small mt-1">
+                    Digite parte do nome, setor ou número do ramal para filtrar os resultados.
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 col-12 d-flex gap-2">
+                <a href="{{ url_for('ramais.index') }}" class="btn botaoSecundario flex-grow-1">
+                    <i class="bi bi-arrow-counterclockwise"></i> Limpar
+                </a>
+                {% if pode_gerenciar %}
+                <button type="button" class="btn botaoPrimario flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalNovoRamal">
+                    <i class="bi bi-plus-lg"></i> Novo Ramal
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================================
+         4. LISTAGEM ORGANIZADA POR DEPARTAMENTO
+         ============================================================= -->
+    {% if departamentos_ordenados %}
+    <div class="row g-4">
+        {% for departamento in departamentos_ordenados %}
+        <div class="col-lg-4 col-md-6 col-12">
+            <div class="card cardPadrao h-100 shadow-sm border-0 position-relative overflow-hidden">
+                <!-- Barra de acento superior do departamento -->
+                <div style="height: 4px; background: var(--gradiente-principal);"></div>
+
+                <!-- Cabeçalho do Departamento -->
+                <div class="p-3 border-bottom d-flex align-items-center justify-content-between"
+                     style="border-color: var(--cor-borda) !important; background: rgba(0,0,0,0.15);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 p-2 d-flex align-items-center justify-content-center"
+                             style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); width: 44px; height: 44px;">
+                            <i class="bi bi-building fs-4"></i>
+                        </div>
+                        <div>
+                            <h2 class="h6 fw-bold text-tema mb-0">{{ departamento }}</h2>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge px-3 py-2 rounded-pill"
+                              style="background: rgba(var(--cor-azul-rgb), 0.25); color: #B2D7F0; font-size: 0.85rem; border: 1px solid rgba(var(--cor-azul-rgb), 0.4);">
+                            <strong>{{ ramais_por_departamento[departamento]|length }}</strong> ramal{{ 's' if ramais_por_departamento[departamento]|length != 1 else '' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Lista de Ramais do Departamento -->
+                <div class="p-3">
+                    <div class="list-group list-group-flush" id="lista-{{ departamento|replace(' ', '-')|lower }}">
+                        {% for r in ramais_por_departamento[departamento] %}
+                        <div class="list-group-item list-group-item-action border-0 py-3"
+                             style="background: transparent; color: var(--cor-texto);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3 flex-grow-1">
+                                    <div class="avatarRamal">
+                                        {{ r.nome[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-tema">{{ r.nome }}</div>
+                                        <div class="small text-tema-secundario">
+                                            <i class="bi bi-telephone-inbound-fill text-warning me-1"></i>
+                                            Ramal: <strong class="text-tema">{{ r.ramal }}</strong>
+                                            {% if r.andar %}
+                                            <i class="bi bi-geo-alt text-info ms-2 me-1"></i>
+                                            {{ r.andar }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botão de Chamada Direta MicroSIP (visível para todos) -->
+                                <a href="{{ 'callto:' + (r.ramal | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace('.', '')) }}"
+                                   class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
+                                   title="Ligar via MicroSIP (callto:{{ r.ramal }})"
+                                   onclick="return discarRamal('{{ r.ramal }}')">
+                                    <i class="bi bi-telephone-fill"></i>
+                                    <span class="d-none d-sm-inline">Chamar</span>
+                                </a>
+
+                                <!-- Ações de Edição / Exclusão (apenas admin) -->
+                                {% if pode_gerenciar %}
+                                <div class="dropdown ms-2">
+                                    <button class="btn btn-sm btn-link text-tema-secundario p-0" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                                        <li>
+                                            <button class="dropdown-item small d-flex align-items-center gap-2"
+                                                    type="button"
+                                                    onclick="abrirModalEditar({{ r.id }}, '{{ r.nome|escape }}', '{{ r.departamento|escape }}', '{{ r.ramal|escape }}', '{{ r.andar or ''|escape }}')">
+                                                <i class="bi bi-pencil text-warning me-2"></i>Editar
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <form action="{{ url_for('ramais.excluir', id=r.id) }}" method="POST"
+                                                  style="margin: 0;"
+                                                    onsubmit="return confirm('Tem certeza que deseja excluir o ramal {{ r.ramal }} de {{ r.nome }}?')">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button class="dropdown-item small text-danger d-flex align-items-center gap-2"
+                                                        type="submit">
+                                                    <i class="bi bi-trash-fill me-2"></i>Excluir
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item text-center text-tema-secundario py-4">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-50"></i>
+                            Nenhum ramal cadastrado neste departamento.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-tema-secundario">
+        <i class="bi bi-telephone-inbound fs-1 d-block mb-2 opacity-50"></i>
+        Nenhum ramal encontrado.
+        {% if busca %}
+        <div class="mt-2">
+            <a href="{{ url_for('ramais.index') }}" class="btn botaoSecundario btn-sm">Limpar busca</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- =============================================================
+     MODAL: NOVO RAMAL
+     ============================================================= -->
+<div class="modal fade" id="modalNovoRamal" tabindex="-1" aria-labelledby="modalNovoRamalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg"
+             style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalNovoRamalLabel">
+                    <i class="bi bi-plus-lg text-warning"></i> Cadastrar Novo Ramal
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('ramais.novo') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="novo_nome" class="form-label labelCampo">Nome do Colaborador <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="novo_nome" name="nome"
+                                   placeholder="Ex: João Silva" required maxlength="150">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="novo_ramal" class="form-label labelCampo">Número do Ramal <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="novo_ramal" name="ramal"
+                                   placeholder="Ex: 2013" required maxlength="20" inputmode="numeric">
+                        </div>
+                        <div class="col-12">
+                            <label for="novo_departamento" class="form-label labelCampo">Departamento / Setor <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="novo_departamento" name="departamento"
+                                   placeholder="Ex: Dep. Financeiro" required maxlength="150">
+                        </div>
+                        <div class="col-12">
+                            <label for="novo_andar" class="form-label labelCampo">Andar / Localização</label>
+                            <input type="text" class="form-control inputPadrao" id="novo_andar" name="andar"
+                                   placeholder="Ex: 2ª Andar" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="form-text text-tema-secundario small mt-2">
+                        Os campos marcados com <span class="text-danger">*</span> são obrigatórios.
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">
+                        <i class="bi bi-save me-1"></i> Salvar Ramal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================================
+     MODAL: EDITAR RAMAL
+     ============================================================= -->
+<div class="modal fade" id="modalEditarRamal" tabindex="-1" aria-labelledby="modalEditarRamalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao border-0 shadow-lg"
+             style="background: var(--cor-card-1);">
+            <div class="modal-header border-bottom border-secondary border-opacity-25 pb-3">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalEditarRamalLabel">
+                    <i class="bi bi-pencil text-warning"></i> Editar Ramal
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" id="editar_id" name="id">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="editar_nome" class="form-label labelCampo">Nome do Colaborador <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="editar_nome" name="nome"
+                                   placeholder="Ex: João Silva" required maxlength="150">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editar_ramal" class="form-label labelCampo">Número do Ramal <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="editar_ramal" name="ramal"
+                                   placeholder="Ex: 2013" required maxlength="20" inputmode="numeric">
+                        </div>
+                        <div class="col-12">
+                            <label for="editar_departamento" class="form-label labelCampo">Departamento / Setor <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control inputPadrao" id="editar_departamento" name="departamento"
+                                   placeholder="Ex: Dep. Financeiro" required maxlength="150">
+                        </div>
+                        <div class="col-12">
+                            <label for="editar_andar" class="form-label labelCampo">Andar / Localização</label>
+                            <input type="text" class="form-control inputPadrao" id="editar_andar" name="andar"
+                                   placeholder="Ex: 2ª Andar" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="form-text text-tema-secundario small mt-2">
+                        Os campos marcados com <span class="text-danger">*</span> são obrigatórios.
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario">
+                        <i class="bi bi-save me-1"></i> Atualizar Ramal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================================
+     SCRIPT: Busca rápida + Modais
+     ============================================================= -->
+<script>
+    (function() {
+        // ==========================================
+        // 1. Busca rápida em tempo real (filtro no frontend)
+        // ==========================================
+        const buscaInput = document.getElementById('buscaRapida');
+        const termoAtual = "{{ busca }}";
+
+        if (buscaInput) {
+            buscaInput.addEventListener('input', function(e) {
+                const termo = e.target.value.toLowerCase().trim();
+
+                // Filtra cards de departamento
+                document.querySelectorAll('.cardPadrao.h-100.shadow-sm.border-0.position-relative').forEach(function(card) {
+                    const deptoHeader = card.querySelector('h2');
+                    const itens = card.querySelectorAll('.list-group-item');
+                    let temVisivel = false;
+
+                    itens.forEach(function(item) {
+                        const nome = item.textContent.toLowerCase();
+                        if (termo === '' || nome.includes(termo)) {
+                            item.style.display = '';
+                            temVisivel = true;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    // Esconde departamento se nenhum item estiver visível
+                    if (termo !== '') {
+                        card.style.display = temVisivel ? '' : 'none';
+                    } else {
+                        card.style.display = '';
+                    }
+                });
+
+                // Mostra/esconde mensagem de vazio
+                const vazioMsg = document.querySelector('.text-center.py-5.text-tema-secundario');
+                const cardsVisiveis = document.querySelectorAll('.cardPadrao.h-100.shadow-sm.border-0.position-relative[style*="display: "]');
+                // (A mensagem de vazio é renderizada pelo servidor quando não há dados)
+            });
+        }
+
+        // ==========================================
+        // 1.5. Discar ramal via MicroSIP (protocolo callto:)
+        // ==========================================
+        window.discarRamal = function(ramalRaw) {
+            // Remove tudo que não for dígito (espaços, traços, parênteses, pontos, etc.)
+            var ramalLimpo = ramalRaw.replace(/\D/g, '');
+            if (!ramalLimpo) {
+                alert('Número do ramal inválido.');
+                return false;
+            }
+            // Abre o link callto: para acionar o MicroSIP (ou outro cliente configurado no Windows)
+            window.location.href = 'callto:' + ramalLimpo;
+            return false;
+        };
+
+        // ==========================================
+        // 2. Abrir modal de edição com dados do ramal
+        // ==========================================
+        window.abrirModalEditar = function(id, nome, departamento, ramal, andar) {
+            document.getElementById('editar_id').value = id;
+            document.getElementById('editar_nome').value = nome;
+            document.getElementById('editar_departamento').value = departamento;
+            document.getElementById('editar_ramal').value = ramal;
+            document.getElementById('editar_andar').value = andar;
+
+            // Ajusta o action do form para a URL de edição correta
+            const form = document.querySelector('#modalEditarRamal form');
+            if (form) {
+                form.action = "/ramais/editar/" + id;
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarRamal'));
+            modal.show();
+        };
+
+        // ==========================================
+        // 3. Limpa modal de edição ao fechar
+        // ==========================================
+        const modalEditar = document.getElementById('modalEditarRamal');
+        if (modalEditar) {
+            modalEditar.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('editar_id').value = '';
+                document.getElementById('editar_nome').value = '';
+                document.getElementById('editar_departamento').value = '';
+                document.getElementById('editar_ramal').value = '';
+                document.getElementById('editar_andar').value = '';
+            });
+        }
+    })();
+</script>
+
+{% endblock %}

@@ -1,5 +1,5 @@
 /* ===================================================================
-   SERVICE WORKER - CENTRAL DE CHAMADOS BRASFORT (PWA)
+   SERVICE WORKER - HUB CENTRAL - SIRREINATO BRASFORT (PWA)
    =================================================================== */
 
 const CACHE_VERSION = 'central-chamados-v1.0.0';
@@ -107,7 +107,7 @@ self.addEventListener('fetch', (event) => {
                         <head>
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Central de Chamados - Offline</title>
+                            <title>Hub Central - SirReinato Brasfort - Offline</title>
                             <style>
                                 body { background: #0f172a; color: #f8fafc; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
                                 .card { background: #1e293b; padding: 32px; border-radius: 12px; border: 1px solid #334155; max-width: 450px; }
@@ -119,7 +119,7 @@ self.addEventListener('fetch', (event) => {
                         <body>
                             <div class="card">
                                 <h1>Sem Conexão com o Servidor</h1>
-                                <p>Não foi possível conectar ao servidor da Central de Chamados. Verifique se o servidor está ativo (flask run) ou se sua rede está conectada.</p>
+                                <p>Não foi possível conectar ao servidor do Hub Central - SirReinato Brasfort. Verifique se o servidor está ativo (flask run) ou se sua rede está conectada.</p>
                                 <button onclick="window.location.reload()">Tentar Reconectar</button>
                             </div>
                         </body>

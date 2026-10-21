@@ -217,6 +217,10 @@
                         </th>
 
                         <th scope="col" class="text-center">
+                            Segurança & Dados
+                        </th>
+
+                        <th scope="col" class="text-center">
                             Ações
                         </th>
 
@@ -232,135 +236,155 @@
                 <tbody>
 
                     {% for usuario in usuarios %}
+                    {% set pode_gerenciar = current_user.pode_gerenciar(usuario) %}
 
                     <tr class="linhaTabela">
 
                         <!-- NOME -->
                         <td>
-
                             <strong>
                                 {{ usuario.nome }}
                             </strong>
-
+                            {% if current_user.id == usuario.id %}
+                            <span class="badge rounded-pill text-bg-primary ms-1" style="font-size: 0.65rem;">Você</span>
+                            {% endif %}
                         </td>
 
 
                         <!-- E-MAIL -->
                         <td>
-
                             {{ usuario.email }}
-
                         </td>
 
 
                         <!-- PERFIL -->
                         <td>
-
-                            {% if usuario.perfil == 'admin' %}
-
+                            {% if usuario.is_supremo %}
+                            <span class="badgePerfil" style="background: rgba(var(--cor-dourado-rgb), 0.2); color: var(--cor-dourado); border: 1px solid var(--cor-dourado); font-weight: 600;">
+                                <i class="bi bi-crown-fill me-1"></i> Supremo
+                            </span>
+                            {% elif usuario.perfil == 'admin' %}
                             <span class="badgePerfil perfilAdmin">
                                 Administrador
                             </span>
-
                             {% elif usuario.perfil == 'operador' %}
                             <span class="badgePerfil perfilOperador">
                                 Operador
                             </span>
-
                             {% elif usuario.perfil == 'tecnicoImpressora' %}
                             <span class="badgePerfil perfilTecnicoImpressora">
                                 Técnico Impressora
                             </span>
-
                             {% else %}
-
                             <span class="badgePerfil perfilUsuario">
                                 Usuário
                             </span>
-
                             {% endif %}
-
                         </td>
 
 
                         <!-- STATUS -->
                         <td>
-
                             {% if usuario.status == 'pendente' %}
-
                             <span class="badgeStatus statusPendente">
                                 Pendente
                             </span>
-
                             {% elif usuario.status == 'ativo' %}
-
                             <span class="badgeStatus statusAtivo">
                                 Ativo
                             </span>
-
                             {% elif usuario.status == 'bloqueado' %}
-
                             <span class="badgeStatus statusBloqueado">
                                 Bloqueado
                             </span>
-
                             {% elif usuario.status == 'reprovado' %}
-
                             <span class="badgeStatus statusReprovado">
                                 Reprovado
                             </span>
-
                             {% else %}
-
                             <span class="badgeStatus statusPadrao">
                                 {{ usuario.status }}
                             </span>
-
                             {% endif %}
-
                         </td>
 
 
-                        <!-- AÇÕES -->
+                        <!-- SEGURANÇA & DADOS (ALTERAR SENHA / EDITAR) -->
                         <td class="text-center">
+                            {% if pode_gerenciar %}
+                            <div class="d-flex justify-content-center gap-1 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 py-1 px-2"
+                                        style="border-radius: 8px; font-size: 0.78rem;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalAlterarSenha"
+                                        data-id="{{ usuario.id }}"
+                                        data-nome="{{ usuario.nome }}"
+                                        data-email="{{ usuario.email }}"
+                                        title="Redefinir a senha deste usuário">
+                                    <i class="bi bi-key-fill"></i>
+                                    <span>Senha</span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 py-1 px-2"
+                                        style="border-radius: 8px; font-size: 0.78rem;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditarUsuario"
+                                        data-id="{{ usuario.id }}"
+                                        data-nome="{{ usuario.nome }}"
+                                        data-email="{{ usuario.email }}"
+                                        title="Editar dados cadastrais (nome, e-mail e senha)">
+                                    <i class="bi bi-pencil-square"></i>
+                                    <span>Editar</span>
+                                </button>
+                            </div>
+                            {% else %}
+                                {% if usuario.is_supremo %}
+                                <span class="badge rounded-pill" style="background: rgba(var(--cor-dourado-rgb), 0.15); color: var(--cor-dourado); border: 1px solid rgba(var(--cor-dourado-rgb), 0.35); font-size: 0.72rem;" title="Conta de nível Supremo — Ninguém além do próprio Administrador Supremo pode alterar.">
+                                    <i class="bi bi-shield-lock-fill me-1"></i> Protegido
+                                </span>
+                                {% else %}
+                                <span class="badge rounded-pill text-bg-secondary opacity-75" style="font-size: 0.72rem;" title="Administrador de nível igual — Somente o Administrador Supremo pode alterar.">
+                                    <i class="bi bi-lock-fill me-1"></i> Restrito ao Supremo
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
 
+
+                        <!-- AÇÕES (STATUS DA CONTA) -->
+                        <td class="text-center">
+                            {% if pode_gerenciar %}
                             <div class="d-flex justify-content-center gap-2 flex-wrap">
-
                                 {% if usuario.status == 'pendente' %}
-
                                 <form method="POST" action="{{ url_for('usuarios.aprovar', id=usuario.id) }}" class="d-inline m-0 p-0">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="acoesUsuario botaoAprovar border-0" style="cursor: pointer;">
                                         Aprovar
                                     </button>
                                 </form>
-
                                 {% elif usuario.status == 'ativo' %}
-
                                 <form method="POST" action="{{ url_for('usuarios.bloquear', id=usuario.id) }}" class="d-inline m-0 p-0">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="acoesUsuario botaoBloquear border-0" style="cursor: pointer;">
                                         Bloquear
                                     </button>
                                 </form>
-
                                 {% elif usuario.status == 'bloqueado' %}
-
                                 <form method="POST" action="{{ url_for('usuarios.ativar', id=usuario.id) }}" class="d-inline m-0 p-0">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="acoesUsuario botaoAtivar border-0" style="cursor: pointer;">
                                         Ativar
                                     </button>
                                 </form>
-
                                 {% endif %}
-
                             </div>
-
+                            {% else %}
+                            <span class="text-tema-secundario opacity-50 small">—</span>
+                            {% endif %}
                         </td>
 
-                        <!-- RBAC -->
+                        <!-- RBAC (PERFIS) -->
                         <td class="text-center">
+                            {% if pode_gerenciar %}
                             <div class="d-flex justify-content-center gap-1 flex-wrap">
                                 {% if usuario.perfil != 'admin' %}
                                 <form method="POST" action="{{ url_for('usuarios.tornar_adm', id=usuario.id) }}" class="d-inline m-0 p-0">
@@ -387,6 +411,9 @@
                                 </form>
                                 {% endif %}
                             </div>
+                            {% else %}
+                            <span class="text-tema-secundario opacity-50 small">—</span>
+                            {% endif %}
                         </td>
 
                     </tr>
@@ -395,20 +422,14 @@
 
                     <!-- NENHUM USUÁRIO -->
                     <tr class="linhaTabela">
-
-                        <td colspan="6" class="text-center py-5">
-
-
+                        <td colspan="7" class="text-center py-5">
                             <h5 class="tituloTabela">
                                 Nenhum usuário encontrado.
                             </h5>
-
                             <p class="text-tema-secundario mb-0">
                                 Não existem usuários cadastrados no sistema.
                             </p>
-
                         </td>
-
                     </tr>
 
                     {% endfor %}
@@ -422,5 +443,172 @@
     </div>
 
 </div>
+
+<!-- =============================================================
+     MODAL: ALTERAR SENHA DO USUÁRIO
+     ============================================================= -->
+<div class="modal fade" id="modalAlterarSenha" tabindex="-1" aria-labelledby="modalAlterarSenhaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao" style="border: 1px solid var(--cor-borda); border-radius: 16px; background: var(--cor-fundo-card);">
+            <div class="modal-header border-bottom" style="border-color: var(--cor-borda) !important;">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalAlterarSenhaLabel">
+                    <i class="bi bi-key-fill text-warning"></i>
+                    <span>Alterar Senha do Usuário</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formAlterarSenha" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--cor-borda);">
+                        <div class="small text-tema-secundario text-uppercase fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Usuário Selecionado</div>
+                        <div class="fw-bold text-tema fs-6" id="modalUsuarioNome">—</div>
+                        <div class="small text-tema-secundario" id="modalUsuarioEmail">—</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="inputNovaSenha" class="form-label small fw-semibold text-tema">Nova Senha</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control inputPadrao" id="inputNovaSenha" name="nova_senha" minlength="6" required placeholder="Digite a nova senha (mín. 6 caracteres)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleSenhaVisualizacao('inputNovaSenha', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="inputConfirmarSenha" class="form-label small fw-semibold text-tema">Confirmar Nova Senha</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control inputPadrao" id="inputConfirmarSenha" name="confirmar_senha" minlength="6" required placeholder="Repita a nova senha">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleSenhaVisualizacao('inputConfirmarSenha', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="small text-tema-secundario opacity-75">
+                        <i class="bi bi-shield-check text-info me-1"></i> A senha será criptografada com hash seguro (PBKDF2/SHA256) antes de ser gravada no banco de dados.
+                    </div>
+                </div>
+                <div class="modal-footer border-top d-flex justify-content-between" style="border-color: var(--cor-borda) !important;">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check-lg"></i>
+                        <span>Confirmar e Salvar Senha</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================================
+     MODAL: EDITAR DADOS DO USUÁRIO
+     ============================================================= -->
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-labelledby="modalEditarUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao" style="border: 1px solid var(--cor-borda); border-radius: 16px; background: var(--cor-fundo-card);">
+            <div class="modal-header border-bottom" style="border-color: var(--cor-borda) !important;">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalEditarUsuarioLabel">
+                    <i class="bi bi-pencil-square text-info"></i>
+                    <span>Editar Dados do Usuário</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formEditarUsuario" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="inputEditarNome" class="form-label small fw-semibold text-tema">Nome Completo</label>
+                        <input type="text" class="form-control inputPadrao" id="inputEditarNome" name="nome" required placeholder="Nome do usuário">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="inputEditarEmail" class="form-label small fw-semibold text-tema">E-mail Corporativo</label>
+                        <input type="text" class="form-control inputPadrao" id="inputEditarEmail" name="email" required placeholder="ex: usuario@king.com">
+                    </div>
+
+                    <div class="p-3 rounded-3 mb-2" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed var(--cor-borda);">
+                        <label class="form-label small fw-semibold text-tema mb-1">Redefinir Senha (Opcional)</label>
+                        <p class="text-tema-secundario small mb-2" style="font-size: 0.75rem;">Deixe os campos abaixo em branco caso não queira alterar a senha atual.</p>
+
+                        <div class="mb-2">
+                            <input type="password" class="form-control inputPadrao form-control-sm" id="inputEditarNovaSenha" name="nova_senha" minlength="6" placeholder="Nova senha (opcional, mín. 6 caracteres)">
+                        </div>
+                        <div>
+                            <input type="password" class="form-control inputPadrao form-control-sm" id="inputEditarConfirmarSenha" name="confirmar_senha" minlength="6" placeholder="Confirmar nova senha">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top d-flex justify-content-between" style="border-color: var(--cor-borda) !important;">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check-lg"></i>
+                        <span>Salvar Alterações</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSenhaVisualizacao(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const icone = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (icone) {
+            icone.classList.remove('bi-eye');
+            icone.classList.add('bi-eye-slash');
+        }
+    } else {
+        input.type = 'password';
+        if (icone) {
+            icone.classList.remove('bi-eye-slash');
+            icone.classList.add('bi-eye');
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Configura modal de Alterar Senha
+    const modalSenha = document.getElementById('modalAlterarSenha');
+    if (modalSenha) {
+        modalSenha.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-id');
+            const userNome = button.getAttribute('data-nome');
+            const userEmail = button.getAttribute('data-email');
+
+            const form = document.getElementById('formAlterarSenha');
+            form.action = `/usuarios/alterar_senha/${userId}`;
+            document.getElementById('modalUsuarioNome').textContent = userNome;
+            document.getElementById('modalUsuarioEmail').textContent = userEmail;
+            document.getElementById('inputNovaSenha').value = '';
+            document.getElementById('inputConfirmarSenha').value = '';
+        });
+    }
+
+    // Configura modal de Editar Dados
+    const modalEditar = document.getElementById('modalEditarUsuario');
+    if (modalEditar) {
+        modalEditar.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-id');
+            const userNome = button.getAttribute('data-nome');
+            const userEmail = button.getAttribute('data-email');
+
+            const form = document.getElementById('formEditarUsuario');
+            form.action = `/usuarios/editar/${userId}`;
+            document.getElementById('inputEditarNome').value = userNome;
+            document.getElementById('inputEditarEmail').value = userEmail;
+            document.getElementById('inputEditarNovaSenha').value = '';
+            document.getElementById('inputEditarConfirmarSenha').value = '';
+        });
+    }
+});
+</script>
 
 {% endblock %}

@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title Central de Chamados Brasfort - Servidor de Rede
+title Hub Central - SirReinato Brasfort - Servidor de Rede
 color 0B
 
 :: Garante que o diretorio atual seja a pasta do projeto
 cd /d "%~dp0"
 
 echo ======================================================================
-echo           CENTRAL DE CHAMADOS BRASFORT - INICIANDO SERVIDOR
+echo           HUB CENTRAL - SIRREINATO BRASFORT - INICIANDO SERVIDOR
 echo ======================================================================
 echo.
 
@@ -24,10 +24,10 @@ for /f "tokens=5" %%p in ('netstat -aon 2^>nul ^| findstr ":5000" ^| findstr "LI
 )
 
 :: 3.1 Garante que a regra do Firewall do Windows esteja ativa para acesso em rede
-netsh advfirewall firewall show rule name="Central de Chamados Brasfort (Porta 5000)" >nul 2>&1
+netsh advfirewall firewall show rule name="Hub Central - SirReinato Brasfort (Porta 5000)" >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo [FIREWALL] Configurando liberacao da porta 5000 no Firewall do Windows...
-    netsh advfirewall firewall add rule name="Central de Chamados Brasfort (Porta 5000)" dir=in action=allow protocol=TCP localport=5000 >nul 2>&1
+    netsh advfirewall firewall add rule name="Hub Central - SirReinato Brasfort (Porta 5000)" dir=in action=allow protocol=TCP localport=5000 >nul 2>&1
 )
 
 :: 4. Obtem o IP real da maquina na rede local atraves do helper Python
@@ -52,7 +52,7 @@ set PORT=5000
 
 cls
 echo ======================================================================
-echo                 CENTRAL DE CHAMADOS - BRASFORT
+echo                 HUB CENTRAL - SIRREINATO BRASFORT
 echo           SERVIDOR DE REDE ATIVO (ACESSO LOCAL E LAN)
 echo ======================================================================
 echo.

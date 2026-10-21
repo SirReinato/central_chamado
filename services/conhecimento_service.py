@@ -277,7 +277,7 @@ ping 10.90.1.25 -n 4
 ```
 
 > [!TIP]
-> Se o ping responder em menos de 5ms, o equipamento está pronto para ser adicionado ao monitoramento da Central de Chamados!
+> Se o ping responder em menos de 5ms, o equipamento está pronto para ser adicionado ao monitoramento do Hub Central - SirReinato Brasfort!
 """,
             categoria_id=cat_imp.id,
             autor_id=admin.id,
@@ -315,7 +315,7 @@ Tutorial para colaboradores em regime híbrido ou técnicos externos acessarem c
 
 ## 3. Teste de Acesso aos Serviços Locais
 
-Com a VPN conectada, abra o navegador e acesse a Central de Chamados pelo endereço da rede local:
+Com a VPN conectada, abra o navegador e acesse o Hub Central - SirReinato Brasfort pelo endereço da rede local:
 
 ```text
 http://172.16.50.5:5000

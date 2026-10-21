@@ -47,3 +47,7 @@ dist/
 *.tmp
 *.bak
 scratch/
+
+# Antigravity e Graphify
+.agents/
+graphify-out/

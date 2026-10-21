@@ -105,6 +105,32 @@ class Usuario(UserMixin, db.Model):
     def is_tecnico_impressora(self):
         return self.perfil == 'tecnicoImpressora'
     
+    def pode_gerenciar(self, outro_usuario):
+        """
+        Regra hierárquica de gestão de usuários e senhas:
+        - Administrador Supremo: tem poder absoluto, gerencia a si mesmo e a todos os usuários.
+        - Administrador comum:
+          - NÃO pode gerenciar o Administrador Supremo (alvo.is_supremo).
+          - NÃO pode gerenciar outros Administradores (alvo.is_admin e alvo.id != self.id).
+          - PODE gerenciar sua própria conta (alvo.id == self.id).
+          - PODE gerenciar todos os usuários abaixo de sua hierarquia (operador, tecnicoImpressora, usuario comum).
+        - Demais perfis: não possuem permissão de gestão de outros usuários.
+        """
+        if not self.is_admin:
+            return False
+
+        if self.is_supremo:
+            return True
+
+        if outro_usuario.is_supremo:
+            return False
+
+        if outro_usuario.is_admin and outro_usuario.id != self.id:
+            return False
+
+        return True
+
+    
     
 class Impressora(db.Model):
     __tablename__ = "impressoras"
@@ -507,6 +533,63 @@ class ItemSalaMovimentacao(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now, index=True)
 
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
+
+
+# =========================================================================
+# MODELO: RAMAIS BRASFORT (DIRETÓRIO DE RAMAIS INTERNOS)
+# =========================================================================
+
+class Ramal(db.Model):
+    __tablename__ = 'ramais'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    nome = db.Column(
+        db.String(150),
+        nullable=False,
+        index=True
+    )
+    departamento = db.Column(
+        db.String(150),
+        nullable=False,
+        index=True
+    )
+    ramal = db.Column(
+        db.String(20),
+        nullable=False,
+        index=True
+    )
+    andar = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    # Timestamps conforme padrão do projeto
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.now,
+        nullable=False
+    )
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+        nullable=False
+    )
+
+    def __repr__(self):
+        return f"<Ramal {self.ramal} - {self.nome} ({self.departamento})>"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'departamento': self.departamento,
+            'ramal': self.ramal,
+            'andar': self.andar,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 

@@ -424,7 +424,7 @@ Para garantir que o e-mail renderize perfeitamente no **Outlook Desktop**, **Out
           <!-- Rodapé -->
           <tr>
             <td style="background-color: #f8fafc; padding: 14px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
-              Enviado automaticamente pelo Sistema Central de Chamados & Monitoramento
+              Enviado automaticamente pelo Sistema Hub Central - SirReinato Brasfort & Monitoramento
             </td>
           </tr>
 

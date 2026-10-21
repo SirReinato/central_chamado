@@ -1,5 +1,5 @@
 @echo off
-title Criar Atalho na Area de Trabalho - Central de Chamados
+title Criar Atalho na Area de Trabalho - Hub Central - SirReinato Brasfort
 color 0B
 cd /d "%~dp0"
 

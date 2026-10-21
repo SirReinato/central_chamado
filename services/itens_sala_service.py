@@ -1,9 +1,49 @@
+import io
 import logging
+import calendar
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_, desc
 from models import db, ItemSala, ItemSalaEstoque, ItemSalaMovimentacao, Usuario
 
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+
 logger = logging.getLogger('central_chamados')
+
+
+class ItensSalaNumberedCanvas(canvas.Canvas):
+    """Canvas customizado do ReportLab para numeração dinâmica de páginas (Página X de Y) em Landscape."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_number(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica", 8)
+        self.setFillColor(colors.HexColor("#64748b"))
+        # Rodapé em página paisagem (A4 Landscape: largura 841.89 pt, margens 30 pt)
+        page_text = f"Página {self._pageNumber} de {page_count}"
+        self.drawRightString(841.89 - 30, 16, page_text)
+        self.drawString(30, 16, "Hub Central - SirReinato Brasfort — Almoxarifado TI: Relatório de Itens por Sala e Saídas Mensais")
+        self.setStrokeColor(colors.HexColor("#cbd5e1"))
+        self.setLineWidth(0.5)
+        self.line(30, 26, 841.89 - 30, 26)
+        self.restoreState()
 
 
 class ItensSalaService:
@@ -564,3 +604,537 @@ class ItensSalaService:
                 'saidas': saidas_serie
             }
         }
+
+    @classmethod
+    def gerar_relatorio_pdf(cls, mes=None, ano=None, emitido_por=None):
+        """
+        Gera relatório executivo em PDF (Landscape A4) contendo:
+        1. Indicadores consolidados do almoxarifado.
+        2. Tabela de posição atual de estoque em cada sala (Sala Principal e Sala TI - 3º Andar).
+        3. Histórico detalhado de saídas/retiradas de materiais no mês vigente (ou mês informado).
+        4. Resumo analítico de saídas por setor solicitante e por material.
+        """
+        MESES_PT = [
+            '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ]
+        agora = datetime.now()
+        if not ano:
+            ano = agora.year
+        if not mes:
+            mes = agora.month
+
+        nome_mes = MESES_PT[mes] if 1 <= mes <= 12 else str(mes)
+        periodo_str = f"{nome_mes} de {ano}"
+        agora_str = agora.strftime("%d/%m/%Y %H:%M")
+        responsavel_str = emitido_por or "Equipe de TI"
+
+        inicio_mes = datetime(ano, mes, 1, 0, 0, 0)
+        ultimo_dia = calendar.monthrange(ano, mes)[1]
+        fim_mes = datetime(ano, mes, ultimo_dia, 23, 59, 59)
+
+        # 1. Carrega dados de estoque atual
+        itens = ItemSala.query.filter_by(ativo=True).order_by(ItemSala.categoria.asc(), ItemSala.nome.asc()).all()
+
+        total_itens_sp = 0
+        total_itens_st = 0
+        itens_com_baixo_estoque = 0
+        dados_itens_estoque = []
+
+        for item in itens:
+            sp = item.estoque_sala_principal
+            st = item.estoque_sala_terceiro
+            tot = sp + st
+            total_itens_sp += sp
+            total_itens_st += st
+            baixo = tot <= (item.estoque_minimo or 0)
+            if baixo:
+                itens_com_baixo_estoque += 1
+
+            dados_itens_estoque.append({
+                'id': item.id,
+                'nome': item.nome,
+                'categoria': item.categoria,
+                'unidade': item.unidade or 'UN',
+                'estoque_minimo': item.estoque_minimo or 0,
+                'sp': sp,
+                'st': st,
+                'total': tot,
+                'baixo': baixo
+            })
+
+        # 2. Carrega saídas do mês vigente
+        saidas = ItemSalaMovimentacao.query.join(
+            ItemSala, ItemSala.id == ItemSalaMovimentacao.item_id
+        ).filter(
+            ItemSalaMovimentacao.tipo == 'saida',
+            ItemSalaMovimentacao.created_at >= inicio_mes,
+            ItemSalaMovimentacao.created_at <= fim_mes
+        ).order_by(
+            ItemSalaMovimentacao.created_at.asc()
+        ).all()
+
+        total_saidas_qtd = sum(s.quantidade for s in saidas)
+        total_saidas_registros = len(saidas)
+
+        # 3. Agrupamento de saídas por setor e material
+        setores_agrupados = {}
+        materiais_agrupados = {}
+        for s in saidas:
+            setor_nome = (s.setor or 'Não Informado').strip()
+            setores_agrupados[setor_nome] = setores_agrupados.get(setor_nome, 0) + s.quantidade
+
+            mat_nome = s.item.nome if s.item else f"Item #{s.item_id}"
+            materiais_agrupados[mat_nome] = materiais_agrupados.get(mat_nome, 0) + s.quantidade
+
+        setores_ranking = sorted(setores_agrupados.items(), key=lambda x: x[1], reverse=True)
+        materiais_ranking = sorted(materiais_agrupados.items(), key=lambda x: x[1], reverse=True)
+
+        # Configuração do documento ReportLab
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buf,
+            pagesize=landscape(A4),
+            leftMargin=30,
+            rightMargin=30,
+            topMargin=26,
+            bottomMargin=32
+        )
+
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            'ReportTitle',
+            parent=styles['Heading1'],
+            fontName='Helvetica-Bold',
+            fontSize=14,
+            leading=17,
+            textColor=colors.HexColor('#0f172a'),
+            spaceAfter=2
+        )
+
+        subtitle_style = ParagraphStyle(
+            'ReportSubTitle',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=8,
+            leading=10.5,
+            textColor=colors.HexColor('#64748b'),
+            spaceAfter=8
+        )
+
+        section_heading = ParagraphStyle(
+            'SectionHeading',
+            parent=styles['Heading2'],
+            fontName='Helvetica-Bold',
+            fontSize=10.5,
+            leading=13,
+            textColor=colors.HexColor('#0f172a'),
+            spaceBefore=6,
+            spaceAfter=4
+        )
+
+        th_style = ParagraphStyle(
+            'TableHeader',
+            parent=styles['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=7.5,
+            leading=9.5,
+            textColor=colors.HexColor('#ffffff')
+        )
+
+        th_center = ParagraphStyle(
+            'TableHeaderCenter',
+            parent=th_style,
+            alignment=1
+        )
+
+        td_style = ParagraphStyle(
+            'TableCell',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=7.5,
+            leading=9.5,
+            textColor=colors.HexColor('#1e293b')
+        )
+
+        td_center = ParagraphStyle(
+            'TableCellCenter',
+            parent=td_style,
+            alignment=1
+        )
+
+        td_bold = ParagraphStyle(
+            'TableCellBold',
+            parent=td_style,
+            fontName='Helvetica-Bold'
+        )
+
+        td_bold_center = ParagraphStyle(
+            'TableCellBoldCenter',
+            parent=td_style,
+            fontName='Helvetica-Bold',
+            alignment=1
+        )
+
+        td_warning = ParagraphStyle(
+            'TableCellWarning',
+            parent=td_style,
+            fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#b45309'),
+            alignment=1
+        )
+
+        td_success = ParagraphStyle(
+            'TableCellSuccess',
+            parent=td_style,
+            textColor=colors.HexColor('#15803d'),
+            alignment=1
+        )
+
+        kpi_label = ParagraphStyle(
+            'KpiLabel',
+            parent=styles['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=7.5,
+            leading=9,
+            textColor=colors.HexColor('#475569'),
+            alignment=1
+        )
+
+        kpi_val = ParagraphStyle(
+            'KpiVal',
+            parent=styles['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=12,
+            leading=14,
+            textColor=colors.HexColor('#0f172a'),
+            alignment=1
+        )
+
+        kpi_sub = ParagraphStyle(
+            'KpiSub',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=6.5,
+            leading=8,
+            textColor=colors.HexColor('#64748b'),
+            alignment=1
+        )
+
+        def criar_estilo_tabela_zebrada(num_linhas, header_bg='#0f172a'):
+            t_style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor(header_bg)),
+                ('TOPPADDING', (0, 0), (-1, 0), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 4),
+                ('TOPPADDING', (0, 1), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+            ])
+            for i in range(1, num_linhas):
+                if i % 2 == 0:
+                    t_style.add('BACKGROUND', (0, i), (-1, i), colors.HexColor('#f8fafc'))
+                else:
+                    t_style.add('BACKGROUND', (0, i), (-1, i), colors.HexColor('#ffffff'))
+            return t_style
+
+        elements = []
+
+        # ==================================================================
+        # CABEÇALHO DO RELATÓRIO
+        # ==================================================================
+        elements.append(Paragraph(
+            "RELATÓRIO DE ITENS POR SALA E SAÍDAS DO MÊS VIGENTE",
+            title_style
+        ))
+        elements.append(Paragraph(
+            f"Hub Central - SirReinato Brasfort — Almoxarifado TI | Mês de Referência: <b>{periodo_str}</b> | Emitido em: <b>{agora_str}</b> | Responsável: <b>{responsavel_str}</b>",
+            subtitle_style
+        ))
+
+        # ==================================================================
+        # CARDS DE KPIS / RESUMO
+        # ==================================================================
+        kpi_cells = [
+            [
+                Paragraph("SALA PRINCIPAL", kpi_label),
+                Paragraph("SALA TI - 3º ANDAR", kpi_label),
+                Paragraph("ESTOQUE CONSOLIDADO", kpi_label),
+                Paragraph(f"SAÍDAS ({nome_mes.upper()})", kpi_label),
+                Paragraph("CATÁLOGO DE MATERIAIS", kpi_label)
+            ],
+            [
+                Paragraph(f"{total_itens_sp} un", kpi_val),
+                Paragraph(f"{total_itens_st} un", kpi_val),
+                Paragraph(f"{total_itens_sp + total_itens_st} un", kpi_val),
+                Paragraph(f"{total_saidas_qtd} un", kpi_val),
+                Paragraph(f"{len(dados_itens_estoque)} tipos", kpi_val)
+            ],
+            [
+                Paragraph("Saldo disponível", kpi_sub),
+                Paragraph("Saldo disponível", kpi_sub),
+                Paragraph("Total nas 2 salas", kpi_sub),
+                Paragraph(f"{total_saidas_registros} entregas realizadas", kpi_sub),
+                Paragraph(f"{itens_com_baixo_estoque} em nível crítico", kpi_sub)
+            ]
+        ]
+        kpi_table = Table(
+            kpi_cells,
+            colWidths=[156, 156, 156, 156, 156],
+            style=TableStyle([
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8fafc')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                ('TOPPADDING', (0, 0), (-1, 0), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 1),
+                ('TOPPADDING', (0, 1), (-1, 1), 1),
+                ('BOTTOMPADDING', (0, 1), (-1, 1), 1),
+                ('TOPPADDING', (0, 2), (-1, 2), 1),
+                ('BOTTOMPADDING', (0, 2), (-1, 2), 4),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ])
+        )
+        elements.append(kpi_table)
+        elements.append(Spacer(1, 10))
+
+        # ==================================================================
+        # SEÇÃO 1: POSIÇÃO ATUAL DE ESTOQUE POR SALA
+        # ==================================================================
+        elements.append(Paragraph(
+            "1. Posição Atual de Estoque por Sala (Almoxarifado TI)",
+            section_heading
+        ))
+
+        # Larguras: total 780 pt
+        widths_p1 = [200, 115, 45, 65, 110, 110, 75, 60]
+        headers_p1 = [
+            Paragraph("Item / Material", th_style),
+            Paragraph("Categoria", th_style),
+            Paragraph("Unid.", th_center),
+            Paragraph("Est. Mín.", th_center),
+            Paragraph("Sala Principal", th_center),
+            Paragraph("Sala 3º Andar", th_center),
+            Paragraph("Saldo Total", th_center),
+            Paragraph("Situação", th_center)
+        ]
+        table_data_p1 = [headers_p1]
+
+        if dados_itens_estoque:
+            for item in dados_itens_estoque:
+                status_p = Paragraph("Atenção" if item['baixo'] else "Normal", td_warning if item['baixo'] else td_success)
+                row = [
+                    Paragraph(f"<b>{item['nome']}</b>", td_style),
+                    Paragraph(item['categoria'], td_style),
+                    Paragraph(item['unidade'], td_center),
+                    Paragraph(str(item['estoque_minimo']), td_center),
+                    Paragraph(f"<b>{item['sp']}</b> {item['unidade']}", td_center),
+                    Paragraph(f"<b>{item['st']}</b> {item['unidade']}", td_center),
+                    Paragraph(f"<b>{item['total']}</b> {item['unidade']}", td_bold_center),
+                    status_p
+                ]
+                table_data_p1.append(row)
+
+            # Linha de totalização
+            row_total = [
+                Paragraph(f"<b>TOTAL CONSOLIDADO ({len(dados_itens_estoque)} materiais cadastrados)</b>", td_bold),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph(f"<b>{total_itens_sp} un</b>", td_bold_center),
+                Paragraph(f"<b>{total_itens_st} un</b>", td_bold_center),
+                Paragraph(f"<b>{total_itens_sp + total_itens_st} un</b>", td_bold_center),
+                Paragraph("—", td_center)
+            ]
+            table_data_p1.append(row_total)
+        else:
+            table_data_p1.append([
+                Paragraph("Nenhum material cadastrado no catálogo ativo.", td_style),
+                Paragraph("—", td_center), Paragraph("—", td_center), Paragraph("—", td_center),
+                Paragraph("0 un", td_center), Paragraph("0 un", td_center), Paragraph("0 un", td_center),
+                Paragraph("—", td_center)
+            ])
+
+        table_p1 = Table(
+            table_data_p1,
+            colWidths=widths_p1,
+            style=criar_estilo_tabela_zebrada(len(table_data_p1), header_bg='#0f172a'),
+            repeatRows=1
+        )
+        if dados_itens_estoque:
+            table_p1.setStyle(TableStyle([
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e2e8f0')),
+                ('LINEABOVE', (0, -1), (-1, -1), 1, colors.HexColor('#0f172a')),
+            ]))
+
+        elements.append(table_p1)
+
+        # ==================================================================
+        # QUEBRA PARA A PÁGINA 2: SAÍDAS DO MÊS VIGENTE
+        # ==================================================================
+        elements.append(PageBreak())
+
+        elements.append(Paragraph(
+            f"2. Registro de Saídas e Entregas de Materiais no Mês Vigente — {periodo_str}",
+            title_style
+        ))
+        elements.append(Paragraph(
+            f"Hub Central - SirReinato Brasfort — Almoxarifado TI | Período: <b>01/{mes:02d}/{ano}</b> a <b>{ultimo_dia:02d}/{mes:02d}/{ano}</b> | Total de saídas registradas: <b>{total_saidas_qtd} un</b> em <b>{total_saidas_registros} movimentações</b>",
+            subtitle_style
+        ))
+
+        # Larguras: total 780 pt
+        widths_p2 = [75, 140, 45, 95, 110, 105, 90, 120]
+        headers_p2 = [
+            Paragraph("Data/Hora", th_style),
+            Paragraph("Material Retirado", th_style),
+            Paragraph("Qtd", th_center),
+            Paragraph("Sala Origem", th_style),
+            Paragraph("Setor Solicitante", th_style),
+            Paragraph("Recebido por", th_style),
+            Paragraph("Entregue por", th_style),
+            Paragraph("Observação / Motivo", th_style)
+        ]
+        table_data_p2 = [headers_p2]
+
+        if saidas:
+            for s in saidas:
+                dt_str = s.created_at.strftime("%d/%m/%Y %H:%M") if s.created_at else "—"
+                mat_nome = s.item.nome if s.item else f"Item #{s.item_id}"
+                mat_un = s.item.unidade if s.item else "UN"
+                qtd_str = f"<b>{s.quantidade}</b> {mat_un}"
+                origem_str = s.sala_origem or "Sala Principal"
+                setor_str = s.setor or "Geral"
+                recebido_str = s.recebido_por or "—"
+                entregue_str = s.entregue_por or "—"
+                obs_str = s.observacao or "Atendimento padrão"
+
+                row = [
+                    Paragraph(dt_str, td_style),
+                    Paragraph(f"<b>{mat_nome}</b>", td_style),
+                    Paragraph(qtd_str, td_center),
+                    Paragraph(origem_str, td_style),
+                    Paragraph(setor_str, td_style),
+                    Paragraph(recebido_str, td_style),
+                    Paragraph(entregue_str, td_style),
+                    Paragraph(obs_str, td_style)
+                ]
+                table_data_p2.append(row)
+
+            # Linha de totalização de saídas
+            row_total_saidas = [
+                Paragraph("<b>TOTAL DE UNIDADES ENTREGUES NO MÊS:</b>", td_bold),
+                Paragraph("—", td_center),
+                Paragraph(f"<b>{total_saidas_qtd} un</b>", td_bold_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph(f"<b>{total_saidas_registros} movimentações registradas</b>", td_bold)
+            ]
+            table_data_p2.append(row_total_saidas)
+        else:
+            table_data_p2.append([
+                Paragraph("—", td_center),
+                Paragraph(f"Nenhuma saída de material foi registrada para o almoxarifado no mês de {periodo_str}.", td_style),
+                Paragraph("0", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center),
+                Paragraph("—", td_center)
+            ])
+
+        table_p2 = Table(
+            table_data_p2,
+            colWidths=widths_p2,
+            style=criar_estilo_tabela_zebrada(len(table_data_p2), header_bg='#0f172a'),
+            repeatRows=1
+        )
+        if saidas:
+            table_p2.setStyle(TableStyle([
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e2e8f0')),
+                ('LINEABOVE', (0, -1), (-1, -1), 1, colors.HexColor('#0f172a')),
+            ]))
+
+        elements.append(table_p2)
+
+        # ==================================================================
+        # SEÇÃO 3: RESUMO ANALÍTICO (SETORES E MATERIAIS DEMANDADOS)
+        # ==================================================================
+        if saidas and (setores_ranking or materiais_ranking):
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(
+                "3. Resumo Analítico de Demandas do Mês",
+                section_heading
+            ))
+
+            # Tabela Setores (largura 380) e Materiais (largura 380) lado a lado
+            col_w_analitica = [250, 70, 60]
+
+            # Dados setores
+            headers_setores = [
+                Paragraph("Setor Atendido", th_style),
+                Paragraph("Qtd Retirada", th_center),
+                Paragraph("% Mês", th_center)
+            ]
+            data_setores = [headers_setores]
+            for setor, qtd in setores_ranking[:6]:
+                pct = (qtd / total_saidas_qtd * 100) if total_saidas_qtd > 0 else 0
+                data_setores.append([
+                    Paragraph(f"<b>{setor}</b>", td_style),
+                    Paragraph(f"{qtd} un", td_center),
+                    Paragraph(f"{pct:.1f}%", td_center)
+                ])
+
+            table_setores = Table(
+                data_setores,
+                colWidths=col_w_analitica,
+                style=criar_estilo_tabela_zebrada(len(data_setores), header_bg='#334155')
+            )
+
+            # Dados materiais
+            headers_materiais = [
+                Paragraph("Material Requisitado", th_style),
+                Paragraph("Qtd Retirada", th_center),
+                Paragraph("% Mês", th_center)
+            ]
+            data_materiais = [headers_materiais]
+            for mat, qtd in materiais_ranking[:6]:
+                pct = (qtd / total_saidas_qtd * 100) if total_saidas_qtd > 0 else 0
+                data_materiais.append([
+                    Paragraph(f"<b>{mat}</b>", td_style),
+                    Paragraph(f"{qtd} un", td_center),
+                    Paragraph(f"{pct:.1f}%", td_center)
+                ])
+
+            table_materiais = Table(
+                data_materiais,
+                colWidths=col_w_analitica,
+                style=criar_estilo_tabela_zebrada(len(data_materiais), header_bg='#334155')
+            )
+
+            # Envelopa as duas tabelas lado a lado numa tabela container de 780 pt
+            tabela_container = Table(
+                [
+                    [
+                        Paragraph("<b>Top Setores Solicitantes:</b>", td_bold),
+                        Paragraph("<b>Top Materiais Mais Retirados:</b>", td_bold)
+                    ],
+                    [table_setores, table_materiais]
+                ],
+                colWidths=[385, 395],
+                style=TableStyle([
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+                    ('TOPPADDING', (0, 0), (-1, -1), 2),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                ])
+            )
+            elements.append(tabela_container)
+
+        doc.build(elements, canvasmaker=ItensSalaNumberedCanvas)
+        buf.seek(0)
+        return buf
+

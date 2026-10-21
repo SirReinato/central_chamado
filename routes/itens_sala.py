@@ -1,5 +1,6 @@
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from services.itens_sala_service import ItensSalaService
 from utils.decorator import printer_staff_required
@@ -258,3 +259,29 @@ def api_obter_item(item_id):
         'estoque_sala_principal': item.estoque_sala_principal,
         'estoque_sala_terceiro': item.estoque_sala_terceiro
     })
+
+
+@itens_sala_bp.route('/relatorio-pdf', methods=['GET'])
+@login_required
+@printer_staff_required
+def gerar_relatorio_pdf():
+    """Gera e faz o download direto do relatório de itens por sala e saídas do mês vigente em PDF."""
+    ano = request.args.get('ano', type=int)
+    mes = request.args.get('mes', type=int)
+    agora = datetime.now()
+    if not ano:
+        ano = agora.year
+    if not mes:
+        mes = agora.month
+
+    nome_usuario = current_user.nome if hasattr(current_user, 'nome') and current_user.nome else (current_user.usuario if hasattr(current_user, 'usuario') else 'Equipe de TI')
+    buffer = ItensSalaService.gerar_relatorio_pdf(mes=mes, ano=ano, emitido_por=nome_usuario)
+    nome_arquivo = f"relatorio_itens_sala_{ano}_{mes:02d}_{agora.strftime('%Y%m%d_%H%M')}.pdf"
+
+    return send_file(
+        buffer,
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=nome_arquivo
+    )
+

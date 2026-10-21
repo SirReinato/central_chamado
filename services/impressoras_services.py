@@ -50,7 +50,7 @@ class NumberedCanvas(canvas.Canvas):
         self.setFillColor(colors.HexColor("#64748b"))
         page_text = f"Página {self._pageNumber} de {page_count}"
         self.drawRightString(841.89 - 30, 18, page_text)
-        self.drawString(30, 18, "Central de Chamados — Relatório de Monitoramento e Contadores de Impressão")
+        self.drawString(30, 18, "Hub Central - SirReinato Brasfort — Relatório de Monitoramento e Contadores de Impressão")
         self.restoreState()
 
 class DualPagePagination:
@@ -965,7 +965,7 @@ class ImpressorasService:
             title_style
         ))
         elements.append(Paragraph(
-            f"Central de Chamados | Emitido em: {agora_str} | Equipamentos com contagem de páginas: {len(impressoras_pagina1)}",
+            f"Hub Central - SirReinato Brasfort | Emitido em: {agora_str} | Equipamentos com contagem de páginas: {len(impressoras_pagina1)}",
             subtitle_style
         ))
 
@@ -1023,7 +1023,7 @@ class ImpressorasService:
             title_style
         ))
         elements.append(Paragraph(
-            f"Central de Chamados | Equipamentos sem IP cadastrado ou sem resposta na rede | Total: {len(impressoras_pagina2)}",
+            f"Hub Central - SirReinato Brasfort | Equipamentos sem IP cadastrado ou sem resposta na rede | Total: {len(impressoras_pagina2)}",
             subtitle_style
         ))
 

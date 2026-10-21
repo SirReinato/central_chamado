@@ -1,5 +1,5 @@
 """
-Servico de Sincronizacao GLPI -> Central de Chamados
+Servico de Sincronizacao GLPI -> Hub Central - SirReinato Brasfort
 Executa o processamento com foco em:
 - Extracao inteligente de campos para Criacao de Usuario no AD DS (Active Directory)
 - Destaque e prioridade alta para chamados de Onboarding / Admissao
@@ -194,9 +194,17 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
         usuario_padrao = Usuario.query.filter_by(perfil='admin').first() or Usuario.query.first()
         usuario_id_padrao = usuario_padrao.id if usuario_padrao else 1
 
-        # Obter o maior glpi_id ja registrado no banco local
+        # Obter o maior glpi_id ja registrado no banco local (avalia Chamados e logs de sincronizacao)
         ultimo_chamado = Chamado.query.filter(Chamado.glpi_id.isnot(None)).order_by(Chamado.glpi_id.desc()).first()
-        ultimo_id = ultimo_chamado.glpi_id if ultimo_chamado else None
+        ultimo_chamado_id = ultimo_chamado.glpi_id if ultimo_chamado else None
+
+        ultimo_log = GlpiSyncLog.query.filter(
+            GlpiSyncLog.status == 'Sucesso',
+            GlpiSyncLog.ultimo_ticket_id.isnot(None)
+        ).order_by(GlpiSyncLog.id.desc()).first()
+        ultimo_log_id = ultimo_log.ultimo_ticket_id if ultimo_log else None
+
+        ultimo_id = max(filter(None, [ultimo_chamado_id, ultimo_log_id]), default=None)
 
         logger.info(f"Iniciando varredura GLPI. Ultimo GLPI ID registrado: #{ultimo_id or 0}. Dry-run: {dry_run}")
 
@@ -205,6 +213,7 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
 
         filtro_tipo = os.environ.get('GLPI_FILTER_REQUEST_TYPE_ID', '1').strip()
         filtro_cat = os.environ.get('GLPI_FILTER_CATEGORY_ID', '').strip()
+        filtro_apenas_form = os.environ.get('GLPI_FILTER_ONLY_FORMS', 'false').lower() in ('true', '1')
 
         maior_id_processado = ultimo_id or 0
 
@@ -258,6 +267,11 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
                 t_id=t_id,
                 descricao_original=descricao_limpa
             )
+
+            # Filtro 3: Opcional - restringe apenas a chamados originados de formularios
+            if filtro_apenas_form and not is_user_form and len(campos_form) == 0:
+                logger.debug(f"Ticket #{t_id} ignorado pois nao e um formulario (GLPI_FILTER_ONLY_FORMS ativo).")
+                continue
 
             if is_user_form:
                 titulo = tit_fmt or titulo

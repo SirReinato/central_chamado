@@ -55,10 +55,15 @@ class GlpiClient:
         
         self.timeout_connect = 5
         self.timeout_read = int(os.environ.get('GLPI_REQUEST_TIMEOUT', 15))
-        self.batch_size = int(os.environ.get('GLPI_BATCH_SIZE', 15))
+        self.batch_size = int(os.environ.get('GLPI_BATCH_SIZE', 30))
         self.filter_request_type_id = os.environ.get('GLPI_FILTER_REQUEST_TYPE_ID', '1').strip()
         self.filter_category_id = os.environ.get('GLPI_FILTER_CATEGORY_ID', '').strip()
         self.verify_ssl = os.environ.get('GLPI_VERIFY_SSL', 'false').lower() in ('true', '1')
+
+        # Contexto de Perfil e Entidade da API REST v2.3 (Perfil 4 = Super-Admin, Entidade 0 = Raiz)
+        self.profile_id = os.environ.get('GLPI_PROFILE_ID', '4').strip()
+        self.entity_id = os.environ.get('GLPI_ENTITY_ID', '0').strip()
+        self.entity_recursive = os.environ.get('GLPI_ENTITY_RECURSIVE', 'true').lower() in ('true', '1')
 
         # Cache de token OAuth2 em memoria
         self._access_token = None
@@ -156,9 +161,24 @@ class GlpiClient:
             self._registrar_falha(motivo=str(e))
             raise
 
+    def _construir_headers(self, token: str) -> dict:
+        """Monta headers seguros para a API REST v2.3 do GLPI com contexto de perfil/entidade."""
+        headers = {
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/json'
+        }
+        if self.profile_id:
+            headers['GLPI-Profile'] = self.profile_id
+        if self.entity_id:
+            headers['GLPI-Entity'] = self.entity_id
+        if self.entity_recursive:
+            headers['GLPI-Entity-Recursive'] = 'true'
+        return headers
+
     def buscar_tickets(self, ultimo_glpi_id: int = None, limite: int = None) -> list:
         """
         Consulta tickets mais recentes via GET /Assistance/Ticket de forma estritamente controlada.
+        Compativel com OpenAPI 3.0 e filtragem RSQL da API v2.3 do GLPI.
         """
         try:
             self._verificar_circuit_breaker()
@@ -170,21 +190,25 @@ class GlpiClient:
         except Exception:
             return []
 
-        limite_busca = min(limite or self.batch_size, 30)  # Teto maximo rigido de 30 para seguranca absoluta
+        limite_busca = min(limite or self.batch_size, 50)  # Teto maximo seguro de 50 para evitar sobrecarga
         endpoint = f"{self.api_url}/v2.3/Assistance/Ticket"
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Accept': 'application/json'
-        }
+        headers = self._construir_headers(token)
 
-        params = {
-            'sort': 'id',
-            'order': 'DESC',
-            'range': f"0-{limite_busca - 1}"
-        }
+        # Na API REST v2.3: utiliza sort=id:asc/desc, limit e filter (RSQL)
+        if ultimo_glpi_id and isinstance(ultimo_glpi_id, int) and ultimo_glpi_id > 0:
+            params = {
+                'sort': 'id:asc',
+                'limit': limite_busca,
+                'filter': f"id=gt={ultimo_glpi_id}"
+            }
+        else:
+            params = {
+                'sort': 'id:desc',
+                'limit': limite_busca
+            }
 
         try:
-            logger.info(f"Consultando lote seguro de ate {limite_busca} tickets no GLPI...")
+            logger.info(f"Consultando lote seguro de ate {limite_busca} tickets no GLPI (Filtro: {params.get('filter', 'Sem filtro')})...")
             res = self.session.get(
                 endpoint,
                 headers=headers,
@@ -193,14 +217,14 @@ class GlpiClient:
                 timeout=(self.timeout_connect, self.timeout_read)
             )
 
-            if res.status_code == 200:
+            if res.status_code in (200, 206):
                 self._registrar_sucesso()
                 tickets = res.json()
                 if not isinstance(tickets, list):
                     tickets = [tickets]
 
-                # Ordena localmente por ID decrescente para garantir os mais recentes primeiro
-                tickets.sort(key=lambda t: t.get('id', 0), reverse=True)
+                # Ordena sempre por ID crescente para garantir processamento sequencial confiavel
+                tickets.sort(key=lambda t: t.get('id', 0))
                 logger.info(f"Recebidos {len(tickets)} tickets do GLPI.")
 
                 if ultimo_glpi_id and isinstance(ultimo_glpi_id, int):
@@ -246,10 +270,7 @@ class GlpiClient:
             return {}
 
         endpoint = f"{self.api_url}/v2.3/Assistance/Ticket/{ticket_id}"
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'Accept': 'application/json'
-        }
+        headers = self._construir_headers(token)
 
         try:
             res = self.session.get(

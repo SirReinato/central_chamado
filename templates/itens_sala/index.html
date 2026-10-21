@@ -19,6 +19,17 @@
         </div>
 
         <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Botão de Relatório Mensal em PDF -->
+            <div class="btn-group">
+                <a href="{{ url_for('itens_sala.gerar_relatorio_pdf') }}" target="_blank" class="btn botaoSecundario d-inline-flex align-items-center gap-2" title="Gerar e baixar relatório de estoque por sala e saídas do mês vigente em PDF">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                    <span>Relatório Mensal</span>
+                </a>
+                <button type="button" class="btn botaoSecundario dropdown-toggle dropdown-toggle-split px-2" data-bs-toggle="modal" data-bs-target="#modalFiltroRelatorio" title="Opções de relatório / Outros meses">
+                    <span class="visually-hidden">Opções de Relatório</span>
+                </button>
+            </div>
+
             <button type="button" class="btn botaoSecundario d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoItem" title="Cadastrar novo item no inventário">
                 <i class="bi bi-plus-lg text-warning"></i>
                 <span>Novo Material</span>
@@ -1055,6 +1066,78 @@
     </div>
 </div>
 
+<!-- =============================================================
+     MODAL: GERAR RELATÓRIO DE ESTOQUE E SAÍDAS (PDF)
+     ============================================================= -->
+<div class="modal fade" id="modalFiltroRelatorio" tabindex="-1" aria-labelledby="modalFiltroRelatorioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content cardPadrao" style="border: 1px solid var(--cor-borda); border-radius: 16px; background: var(--cor-fundo-card);">
+            <div class="modal-header border-bottom" style="border-color: var(--cor-borda) !important;">
+                <h5 class="modal-title fw-bold text-tema d-flex align-items-center gap-2" id="modalFiltroRelatorioLabel">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                    <span>Relatório de Itens e Saídas</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form action="{{ url_for('itens_sala.gerar_relatorio_pdf') }}" method="GET" target="_blank">
+                <div class="modal-body p-4">
+                    <p class="text-tema-secundario small mb-3">
+                        Gera o documento executivo em PDF contendo o <b>saldo atual em cada sala</b> (Sala Principal e 3º Andar) e o <b>histórico detalhado de saídas</b> com setores, recebedores e técnicos responsáveis.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold text-tema">Mês de Referência</label>
+                            <select name="mes" id="selectRelatorioMes" class="form-select selectPadrao" style="border-radius: 8px;">
+                                <option value="1">Janeiro</option>
+                                <option value="2">Fevereiro</option>
+                                <option value="3">Março</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Maio</option>
+                                <option value="6">Junho</option>
+                                <option value="7">Julho</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold text-tema">Ano</label>
+                            <select name="ano" id="selectRelatorioAno" class="form-select selectPadrao" style="border-radius: 8px;">
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 p-3 rounded-3" style="background: rgba(var(--cor-azul-rgb), 0.08); border: 1px solid rgba(var(--cor-azul-rgb), 0.2);">
+                        <div class="d-flex align-items-center gap-2 text-info small fw-semibold mb-1">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>Estrutura do Documento:</span>
+                        </div>
+                        <ul class="text-tema-secundario small mb-0 ps-3" style="font-size: 0.8rem;">
+                            <li>Indicadores consolidados e saldo disponível por sala;</li>
+                            <li>Tabela de posição de materiais e sinalizadores de estoque mínimo;</li>
+                            <li>Listagem completa de saídas / entregas do mês selecionado;</li>
+                            <li>Resumo analítico com ranking dos setores mais atendidos.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer border-top d-flex justify-content-between" style="border-color: var(--cor-borda) !important;">
+                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn botaoPrimario d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-download"></i>
+                        <span>Gerar Relatório (PDF)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 <!-- Chart.js para a Aba de Métricas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1246,6 +1329,12 @@ const graficosDados = {{ graficos_json | safe }};
 // FILTRO RÁPIDO INSTANTÂNEO EM TEMPO REAL NOS CARDS DAS SALAS
 // =========================================================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Configura valores vigentes no modal de relatório
+    const selMes = document.getElementById('selectRelatorioMes');
+    const selAno = document.getElementById('selectRelatorioAno');
+    if (selMes) selMes.value = (new Date().getMonth() + 1).toString();
+    if (selAno) selAno.value = new Date().getFullYear().toString();
+
     const inputFiltro = document.getElementById('filtroRapidoTexto');
     if (inputFiltro) {
         inputFiltro.addEventListener('input', function() {

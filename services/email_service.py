@@ -200,7 +200,7 @@ class EmailService:
                     {aviso_anexo_html}
 
                     <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">
-                        Mensagem gerada pelo sistema Central de Chamados & Monitoramento.
+                        Mensagem gerada pelo sistema Hub Central - SirReinato Brasfort & Monitoramento.
                     </p>
                 </div>
 
