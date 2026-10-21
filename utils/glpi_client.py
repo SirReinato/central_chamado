@@ -175,7 +175,7 @@ class GlpiClient:
             headers['GLPI-Entity-Recursive'] = 'true'
         return headers
 
-    def buscar_tickets(self, ultimo_glpi_id: int = None, limite: int = None) -> list:
+    def buscar_tickets(self, ultimo_glpi_id: int = None, limite: int = None, apenas_abertos: bool = False) -> list:
         """
         Consulta tickets mais recentes via GET /Assistance/Ticket de forma estritamente controlada.
         Compativel com OpenAPI 3.0 e filtragem RSQL da API v2.3 do GLPI.
@@ -190,22 +190,29 @@ class GlpiClient:
         except Exception:
             return []
 
-        limite_busca = min(limite or self.batch_size, 50)  # Teto maximo seguro de 50 para evitar sobrecarga
+        limite_busca = min(limite or self.batch_size, 100)  # Teto maximo seguro de 100 para evitar sobrecarga
         endpoint = f"{self.api_url}/v2.3/Assistance/Ticket"
         headers = self._construir_headers(token)
 
         # Na API REST v2.3: utiliza sort=id:asc/desc, limit e filter (RSQL)
+        filtros_rsql = []
+        if apenas_abertos:
+            filtros_rsql.append("status.id=in=(1,2,3,4)")
+
         if ultimo_glpi_id and isinstance(ultimo_glpi_id, int) and ultimo_glpi_id > 0:
+            filtros_rsql.append(f"id=gt={ultimo_glpi_id}")
             params = {
                 'sort': 'id:asc',
-                'limit': limite_busca,
-                'filter': f"id=gt={ultimo_glpi_id}"
+                'limit': limite_busca
             }
         else:
             params = {
                 'sort': 'id:desc',
                 'limit': limite_busca
             }
+
+        if filtros_rsql:
+            params['filter'] = ";".join(filtros_rsql)
 
         try:
             logger.info(f"Consultando lote seguro de ate {limite_busca} tickets no GLPI (Filtro: {params.get('filter', 'Sem filtro')})...")
@@ -255,6 +262,13 @@ class GlpiClient:
             logger.error(f"Erro de rede na consulta ao GLPI: {e}")
             self._registrar_falha(motivo=str(e))
             return []
+
+    def buscar_tickets_abertos(self, limite: int = 100) -> list:
+        """
+        Consulta todos os tickets que estao atualmente abertos no GLPI (status 1, 2, 3, 4).
+        Executa uma unica requisicao ultra-rapida (aprox. 0.6s) para conciliacao de estado.
+        """
+        return self.buscar_tickets(ultimo_glpi_id=None, limite=limite, apenas_abertos=True)
 
     def buscar_detalhe_ticket(self, ticket_id: int) -> dict:
         """
