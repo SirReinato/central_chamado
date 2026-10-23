@@ -189,7 +189,7 @@ class EmailService:
         </head>
         <body>
             <div class="card">
-                <div class="header">
+                <div class="header" style="background-color: #f8fafc;">
                     <span class="badge" style="color: black;">Aprovação Obrigatória</span>
                     <h2 style="margin: 0; font-size: 20px; color: black; font-weight: 700;">Solicitação de Cancelamento de NF</h2>
                     <p style="margin: 4px 0 0 0; font-size: 13px; color: black; opacity: 0.9;">Chamado GLPI #{chamado_glpi_id}</p>
