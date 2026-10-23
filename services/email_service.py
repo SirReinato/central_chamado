@@ -190,9 +190,9 @@ class EmailService:
         <body>
             <div class="card">
                 <div class="header">
-                    <span class="badge">Aprovação Obrigatória</span>
-                    <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Solicitação de Cancelamento de NF</h2>
-                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Chamado GLPI #{chamado_glpi_id}</p>
+                    <span class="badge" style="color: black;">Aprovação Obrigatória</span>
+                    <h2 style="margin: 0; font-size: 20px; color: black; font-weight: 700;">Solicitação de Cancelamento de NF</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: black; opacity: 0.9;">Chamado GLPI #{chamado_glpi_id}</p>
                 </div>
                 <div class="content">
                     <div class="alert-box">
@@ -245,7 +245,7 @@ class EmailService:
                     </p>
                 </div>
                 <div class="footer">
-                    Hub Central - SirReinato Brasfort &bull; Notificação Automática do GLPI
+                    &bull; Notificação Automática do GLPI &bull; Dep. de TI
                 </div>
             </div>
         </body>
