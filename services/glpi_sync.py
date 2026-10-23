@@ -14,6 +14,7 @@ import threading
 from datetime import datetime
 from models import db, Chamado, GlpiSyncLog, Usuario
 from utils.glpi_client import GlpiClient
+from services.email_service import EmailService
 from utils.logger import get_logger
 
 logger = get_logger('glpi_sync')
@@ -52,21 +53,41 @@ def _limpar_html(conteudo_html: str) -> str:
 
 
 def _extrair_campos_formulario(conteudo_html: str) -> dict:
-    """Extrai campos rotulados no padrao de formularios do GLPI (ex: <b>X) Campo</b>: Valor)."""
+    """
+    Extrai campos rotulados no padrao de formularios do GLPI (ex: <b>X) Campo</b>: Valor ou <strong>).
+    Suporta quebras de linha (<br>, <p>), colons internos e campos multilinhas.
+    """
     if not conteudo_html:
         return {}
     txt = html.unescape(conteudo_html).replace('\xa0', ' ')
-    txt = re.sub(r'<br\s*/?>', '\n', txt, flags=re.IGNORECASE)
-    txt = re.sub(r'</?(?:p|div)>', '\n', txt, flags=re.IGNORECASE)
+    txt = re.sub(r'</?(?:p|div|br)[^>]*>', '\n', txt, flags=re.IGNORECASE)
+
+    # Padrao que encontra rotulos delimitados por <b> ou <strong>
+    padrao = r'<(?:b|strong)>\s*(\d+\)\s*[^<]+?)\s*</(?:b|strong)>\s*:?'
+    partes = re.split(padrao, txt, flags=re.IGNORECASE)
 
     campos = {}
-    padrao = r'<b>\s*\d+\)\s*([^<:]+)\s*</b>\s*:\s*([^<\n\r]+)'
-    matches = re.findall(padrao, txt, flags=re.IGNORECASE)
-    for k, v in matches:
-        k_clean = k.strip()
-        v_clean = re.sub(r'<[^>]+>', '', v).strip()
-        if v_clean:
-            campos[k_clean] = v_clean
+    if len(partes) > 1:
+        for i in range(1, len(partes), 2):
+            rotulo_bruto = partes[i].strip()
+            rotulo = re.sub(r'^\d+\)\s*', '', rotulo_bruto).rstrip(':').strip()
+            valor_bruto = partes[i+1] if i+1 < len(partes) else ''
+            valor_limpo = re.sub(r'<[^>]+>', '', valor_bruto)
+            linhas = [l.strip() for l in valor_limpo.splitlines() if l.strip() and l.strip() != ':']
+            valor_final = ' '.join(linhas).strip()
+            if rotulo and valor_final:
+                campos[rotulo] = valor_final
+
+    # Fallback para formato legado caso nada seja capturado
+    if not campos:
+        padrao_legado = r'<(?:b|strong)>\s*(?:(\d+\)\s*)?([^<:]+)\s*</(?:b|strong)>\s*:\s*([^<\n\r]+)'
+        matches = re.findall(padrao_legado, txt, flags=re.IGNORECASE)
+        for _, k, v in matches:
+            k_clean = k.strip()
+            v_clean = re.sub(r'<[^>]+>', '', v).strip()
+            if v_clean:
+                campos[k_clean] = v_clean
+
     return campos
 
 
@@ -168,6 +189,67 @@ def _formatar_dados_ad_ds(campos: dict, t_id: int, descricao_original: str) -> t
     return True, titulo_formatado, solicitante_formatado, setor_formatado, categoria, prioridade, descricao_ad
 
 
+def _formatar_dados_cancelamento_nf(
+    campos: dict,
+    t_id: int,
+    descricao_original: str,
+    base_glpi_url: str,
+    solicitante_original: str = ""
+) -> tuple:
+    """
+    Identifica se e um formulario de Cancelamento de Nota Fiscal (ID 36) e gera
+    a formatacao estruturada para auditoria e o link de aprovacao no GLPI.
+    Retorna: (is_nf_form, titulo_formatado, solicitante_formatado, categoria, prioridade, descricao_final, link_glpi)
+    """
+    chaves_nf = [k for k in campos.keys() if 'nfe' in k.lower() or 'nota fiscal' in k.lower()]
+    is_nf_form = len(chaves_nf) > 0 or 'cancelamento de nota fiscal' in descricao_original.lower()
+
+    if not is_nf_form:
+        return False, None, None, None, None, descricao_original, None
+
+    numero_nf = campos.get('NFe nº / Série') or campos.get('NFe nº / Serie') or campos.get('NFe') or '-'
+    valor = campos.get('Valor') or '-'
+    cliente = campos.get('Cliente / Contrato') or campos.get('Cliente') or 'Cliente não informado'
+    data_emissao = campos.get('Data de emissão') or campos.get('Data de emissao') or '-'
+    motivo = campos.get('Motivo do pedido') or '-'
+    evidencias = campos.get('Evidências') or campos.get('Evidencias') or '-'
+    categoria_causa = campos.get('Categoria da causa  (pré-análise)') or campos.get('Categoria da causa') or '-'
+    risco = campos.get('Risco se não cancelar') or '-'
+    acao = campos.get('Ação corretiva/evitativa proposta') or '-'
+    responsavel = campos.get('Responsável pelo ajuste / Prazo') or '-'
+
+    link_glpi = f"{base_glpi_url.rstrip('/')}/front/ticket.form.php?id={t_id}"
+
+    titulo_formatado = f"Cancelamento NF #{numero_nf}: {cliente} (R$ {valor})"
+    solicitante_formatado = f"{solicitante_original} (NF #{numero_nf})"
+    categoria = "Cancelamento de Nota Fiscal"
+    prioridade = "Alta"
+
+    descricao_nf = f"""======================================================================
+📑 SOLICITAÇÃO DE CANCELAMENTO DE NOTA FISCAL (GLPI #{t_id})
+======================================================================
+• NFe nº / Série          : {numero_nf}
+• Valor da Nota           : R$ {valor}
+• Data de Emissão         : {data_emissao}
+• Cliente / Contrato      : {cliente}
+• Solicitante             : {solicitante_original}
+• Categoria da Causa      : {categoria_causa}
+• Motivo do Pedido        : {motivo}
+• Evidências              : {evidencias}
+• Risco se não cancelar   : {risco}
+• Ação Corretiva Proposta : {acao}
+• Responsável / Prazo     : {responsavel}
+======================================================================
+🔗 LINK DIRETO PARA AVALIAÇÃO / APROVAÇÃO NO GLPI:
+{link_glpi}
+======================================================================
+
+📄 DETALHES COMPLETOS DO FORMULÁRIO (GLPI #{t_id}):
+{descricao_original}"""
+
+    return True, titulo_formatado, solicitante_formatado, categoria, prioridade, descricao_nf, link_glpi
+
+
 def executar_sincronizacao(dry_run: bool = False) -> dict:
     """
     Executa a sincronizacao com o GLPI.
@@ -184,6 +266,7 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
         'novos_importados': 0,
         'ja_existentes': 0,
         'fechados_conciliados': 0,
+        'emails_enviados': 0,
         'dry_run': dry_run,
         'status': 'Sucesso',
         'mensagem': ''
@@ -299,16 +382,30 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
             prio_num = t.get('priority', 3)
             prioridade = MAPA_PRIORIDADE.get(prio_num, 'Média')
 
-            # Parser inteligente para formularios de Criacao de Usuario / AD DS
+            # Base URL da interface web do GLPI
+            base_glpi_url = re.sub(r'/api\.php.*$', '', client.api_url)
+
+            # Parser inteligente para formularios
             campos_form = _extrair_campos_formulario(descricao_bruta)
+
+            # 1. Formulario de Criacao de Usuario / AD DS
             is_user_form, tit_fmt, sol_fmt, set_fmt, cat_fmt, prio_fmt, desc_final = _formatar_dados_ad_ds(
                 campos=campos_form,
                 t_id=t_id,
                 descricao_original=descricao_limpa
             )
 
+            # 2. Formulario de Cancelamento de Nota Fiscal (ID 36)
+            is_nf_form, tit_nf, sol_nf, cat_nf, prio_nf, desc_nf, link_nf = _formatar_dados_cancelamento_nf(
+                campos=campos_form,
+                t_id=t_id,
+                descricao_original=descricao_limpa,
+                base_glpi_url=base_glpi_url,
+                solicitante_original=solicitante_original
+            )
+
             # Filtro 5: Opcional - restringe apenas a chamados originados de formularios
-            if filtro_apenas_form and not is_user_form and len(campos_form) == 0:
+            if filtro_apenas_form and not (is_user_form or is_nf_form) and len(campos_form) == 0:
                 logger.debug(f"Ticket #{t_id} ignorado pois nao e um formulario (GLPI_FILTER_ONLY_FORMS ativo).")
                 continue
 
@@ -319,6 +416,13 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
                 categoria_nome = cat_fmt or categoria_nome
                 prioridade = prio_fmt or prioridade
                 descricao = desc_final
+            elif is_nf_form:
+                titulo = tit_nf or titulo
+                solicitante = sol_nf or solicitante_original
+                setor = "Financeiro / Faturamento"
+                categoria_nome = cat_nf or "Cancelamento de Nota Fiscal"
+                prioridade = prio_nf or "Alta"
+                descricao = desc_nf
             else:
                 solicitante = solicitante_original
                 setor = setor_original
@@ -345,6 +449,24 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
                 )
                 db.session.add(novo_chamado)
 
+                # Disparo de alerta por e-mail para aprovacao de Cancelamento de NF
+                if is_nf_form:
+                    try:
+                        logger.info(f"Disparando e-mail de alerta para Cancelamento de NF #{t_id}...")
+                        sucesso_mail, msg_mail = EmailService.enviar_notificacao_cancelamento_nf(
+                            chamado_glpi_id=t_id,
+                            dados_nf=campos_form,
+                            solicitante=solicitante_original,
+                            link_glpi=link_nf
+                        )
+                        if sucesso_mail:
+                            resultado['emails_enviados'] += 1
+                            logger.info(f"E-mail de aprovacao para NF #{t_id} enviado com sucesso!")
+                        else:
+                            logger.warning(f"Falha ao enviar e-mail de aprovacao para NF #{t_id}: {msg_mail}")
+                    except Exception as err_mail:
+                        logger.error(f"Erro no envio de e-mail de aprovacao para NF #{t_id}: {err_mail}", exc_info=True)
+
             resultado['novos_importados'] += 1
 
         # Conciliacao automatica de chamados fechados no GLPI
@@ -364,6 +486,7 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
         if not dry_run:
             db.session.commit()
 
+            msg_part_email = f" {resultado['emails_enviados']} e-mails de alerta enviados." if resultado['emails_enviados'] > 0 else ""
             log_sync = GlpiSyncLog(
                 data_execucao=datetime.now(),
                 tickets_encontrados=resultado['total_encontrados'],
@@ -373,6 +496,7 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
                     f"Verificados {resultado['total_encontrados']} tickets abertos. "
                     f"{resultado['novos_importados']} importados (Novo ou {tecnico_alvo}). "
                     f"{resultado['fechados_conciliados']} conciliados para Resolvido."
+                    f"{msg_part_email}"
                 ),
                 ultimo_ticket_id=maior_id_processado if maior_id_processado > 0 else ultimo_id
             )
@@ -382,10 +506,9 @@ def executar_sincronizacao(dry_run: bool = False) -> dict:
         resultado['mensagem'] = (
             f"Concluido com sucesso. {resultado['novos_importados']} novos importados de "
             f"{resultado['total_encontrados']} abertos analisados. "
-            f"{resultado['fechados_conciliados']} conciliados para Resolvido."
+            f"{resultado['fechados_conciliados']} conciliados para Resolvido. "
+            f"{resultado['emails_enviados']} e-mails enviados."
         )
-        logger.info(f"Sincronizacao GLPI finalizada: {resultado}")
-        return resultado
         logger.info(f"Sincronizacao GLPI finalizada: {resultado}")
         return resultado
 

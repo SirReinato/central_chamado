@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import login_required, current_user
-from models import db, Impressora
+from models import db, Impressora, EstoqueSuprimento
 from services.impressoras_services import ImpressorasService
 from services.suprimentos_services import SuprimentosService
 from utils.decorator import printer_staff_required
@@ -393,4 +393,35 @@ def ajustar_estoque(familia_id):
         familia_id, tipo_insumo, quantidade, motivo, usuario_nome
     )
     flash(mensagem, 'success' if sucesso else 'danger')
-    return redirect(url_for('impressoras.gerenciar_estoque'))
+    return redirect(url_for('impressoras.gerenciar_estoque'))
+
+
+# ==========================================
+# API: Impressoras por Família de Suprimento
+# ==========================================
+@impressoras_bp.route('/api/familia/<int:familia_id>/impressoras', methods=['GET'])
+@login_required
+@printer_staff_required
+def api_impressoras_por_familia(familia_id):
+    """Retorna JSON com as impressoras vinculadas a uma família de suprimentos."""
+    familia = db.session.get(EstoqueSuprimento, familia_id)
+    if not familia:
+        return jsonify({'error': 'Família não encontrada'}), 404
+
+    impressoras = Impressora.query.filter_by(suprimento_id=familia.id).all()
+    dados = []
+    for imp in impressoras:
+        dados.append({
+            'id': imp.id,
+            'nome': imp.nome or 'Sem nome',
+            'ip': imp.ip or '—',
+            'modelo': imp.modelo or '—',
+            'local': imp.local or '—',
+            'online': bool(imp.online)
+        })
+
+    return jsonify({
+        'familia': familia.nome_familia,
+        'total': len(dados),
+        'impressoras': dados
+    })

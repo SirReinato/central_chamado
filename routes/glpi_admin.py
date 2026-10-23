@@ -46,7 +46,7 @@ def painel():
     api_url = os.environ.get('GLPI_API_URL', 'https://helpdesk.brasfort.com.br/api.php')
     client_id_raw = os.environ.get('GLPI_CLIENT_ID', '')
     client_id_mascarado = f"{client_id_raw[:8]}...{client_id_raw[-6:]}" if len(client_id_raw) > 14 else "Configurado"
-    intervalo_minutos = int(os.environ.get('GLPI_SYNC_INTERVAL_MINUTES', 30))
+    intervalo_minutos = int(os.environ.get('GLPI_SYNC_INTERVAL_MINUTES', 15))
     batch_size = int(os.environ.get('GLPI_BATCH_SIZE', 15))
     sync_ativo = os.environ.get('GLPI_ENABLE_SYNC', 'false').lower() in ('true', '1')
 

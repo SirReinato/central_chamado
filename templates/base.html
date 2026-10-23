@@ -67,6 +67,8 @@
                 <span>Administração</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Usuários</span>
             {% elif request.endpoint and request.endpoint.startswith('ramais.') %}
                 <span>Diretório</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Ramais</span>
+            {% elif request.endpoint and request.endpoint.startswith('assinatura.') %}
+                <span>Utilidades</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Gerador de Assinatura</span>
             {% elif request.endpoint and request.endpoint.startswith('glpi_admin.') %}
                 <span>Supremo</span> <i class="bi bi-chevron-right small text-secondary mx-1"></i> <span class="moduloAtual">Integração GLPI</span>
             {% else %}
@@ -170,6 +172,10 @@
                 <i class="bi bi-telephone-inbound sidebarIcon text-info"></i>
                 <span class="sidebarLabel">Ramais</span>
             </a>
+            <a href="{{ url_for('assinatura.gerador') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('assinatura.') %}active{% endif %}" title="Gerador de Assinatura de E-mail Brasfort">
+                <i class="bi bi-card-heading sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Assinatura de E-mail</span>
+            </a>
 
             {% else %}
             <!-- Demais Perfis (Administrador, Operador, Usuário Comum) -->
@@ -220,6 +226,10 @@
             <a href="{{ url_for('ramais.index') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('ramais.') %}active{% endif %}" title="Diretório de Ramais Internos">
                 <i class="bi bi-telephone-inbound sidebarIcon text-info"></i>
                 <span class="sidebarLabel">Ramais</span>
+            </a>
+            <a href="{{ url_for('assinatura.gerador') }}" class="sidebarItem {% if request.endpoint and request.endpoint.startswith('assinatura.') %}active{% endif %}" title="Gerador de Assinatura de E-mail Brasfort">
+                <i class="bi bi-card-heading sidebarIcon text-warning"></i>
+                <span class="sidebarLabel">Assinatura de E-mail</span>
             </a>
 
             <!-- INFRAESTRUTURA & TI (Admin e Operador) -->

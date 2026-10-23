@@ -8,6 +8,10 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email import encoders
+from dotenv import load_dotenv
+
+# Carrega variaveis defensivamente caso executado isoladamente
+load_dotenv()
 
 from utils.logger import get_logger
 
@@ -38,6 +42,241 @@ class EmailService:
             "mail_from_name": mail_from_name,
             "default_recipient": default_recipient
         }
+
+    @classmethod
+    def enviar_email(
+        cls,
+        destinatarios,
+        assunto,
+        corpo_html,
+        corpo_texto=None,
+        anexos=None
+    ) -> tuple:
+        """
+        Envia e-mail corporativo formatado em HTML via SMTP (Exchange / Outlook / Office365).
+        Retorna: (sucesso: bool, mensagem: str)
+        """
+        config = cls.get_smtp_config()
+
+        if not config["password"]:
+            msg_erro = "Senha de e-mail (SMTP_PASSWORD) não configurada no arquivo .env."
+            logger.warning(msg_erro)
+            return False, msg_erro
+
+        # Higieniza e valida destinatários contra Header Injection
+        if isinstance(destinatarios, str):
+            lista_destinatarios = [
+                re.sub(r'[\r\n]+', '', d).strip()
+                for d in destinatarios.replace(";", ",").split(",")
+                if d.strip()
+            ]
+        else:
+            lista_destinatarios = [
+                re.sub(r'[\r\n]+', '', str(d)).strip()
+                for d in destinatarios
+                if str(d).strip()
+            ]
+
+        if not lista_destinatarios:
+            return False, "Nenhum endereço de destinatário válido foi informado."
+
+        assunto_limpo = re.sub(r'[\r\n]+', ' ', assunto or 'Notificação - Central de Chamados').strip()
+
+        msg = MIMEMultipart("alternative")
+        msg["From"] = f"{config['mail_from_name']} <{config['mail_from_address']}>"
+        msg["To"] = ", ".join(lista_destinatarios)
+        msg["Subject"] = assunto_limpo
+
+        if corpo_texto:
+            msg.attach(MIMEText(corpo_texto, "plain", "utf-8"))
+        if corpo_html:
+            msg.attach(MIMEText(corpo_html, "html", "utf-8"))
+
+        if anexos:
+            for nome_anexo, dados_bytes, mime_type in anexos:
+                tipo_primario, subtipo = mime_type.split("/", 1) if "/" in mime_type else ("application", "octet-stream")
+                parte = MIMEBase(tipo_primario, subtipo)
+                parte.set_payload(dados_bytes)
+                encoders.encode_base64(parte)
+                parte.add_header("Content-Disposition", f'attachment; filename="{nome_anexo}"')
+                msg.attach(parte)
+
+        try:
+            logger.info(
+                f"Conectando ao SMTP {config['server']}:{config['port']} "
+                f"para enviar para {', '.join(lista_destinatarios)}..."
+            )
+            smtp_class = smtplib.SMTP_SSL if config["use_ssl"] else smtplib.SMTP
+            with smtp_class(config["server"], config["port"], timeout=25) as servidor:
+                servidor.ehlo()
+                if config["use_tls"] and not config["use_ssl"]:
+                    servidor.starttls()
+                    servidor.ehlo()
+
+                if config["user"] and config["password"]:
+                    servidor.login(config["user"], config["password"])
+
+                envelope_sender = config["mail_from_address"] or config["user"]
+                try:
+                    servidor.sendmail(envelope_sender, lista_destinatarios, msg.as_string())
+                except smtplib.SMTPSenderRefused as err_sender:
+                    logger.warning(
+                        f"Envelope sender {envelope_sender} recusado ({err_sender}). "
+                        f"Tentando novamente com {config['user']}..."
+                    )
+                    servidor.sendmail(config["user"], lista_destinatarios, msg.as_string())
+
+            logger.info(f"E-mail enviado com sucesso para: {', '.join(lista_destinatarios)}")
+            return True, f"E-mail enviado com sucesso para {', '.join(lista_destinatarios)}!"
+
+        except smtplib.SMTPAuthenticationError as e:
+            msg_erro = f"Falha de autenticação SMTP ({config['user']}): {e}"
+            logger.error(msg_erro)
+            return False, msg_erro
+        except Exception as e:
+            msg_erro = f"Erro ao enviar e-mail via SMTP ({config['server']}:{config['port']}): {str(e)}"
+            logger.error(msg_erro, exc_info=True)
+            return False, msg_erro
+
+    @classmethod
+    def enviar_notificacao_cancelamento_nf(
+        cls,
+        chamado_glpi_id: int,
+        dados_nf: dict,
+        solicitante: str,
+        link_glpi: str,
+        destinatarios: str = None
+    ) -> tuple:
+        """
+        Dispara e-mail de alerta para aprovacao/recusa de Cancelamento de Nota Fiscal (Formulario ID 36).
+        Destinatario padrao configuravel via GLPI_NF_CANCEL_EMAIL_RECIPIENT.
+        """
+        dest = destinatarios or os.environ.get(
+            "GLPI_NF_CANCEL_EMAIL_RECIPIENT",
+            "renato.lima@brasfort.com.br"
+        )
+
+        numero_nf = dados_nf.get('NFe nº / Série') or dados_nf.get('NFe nº / Serie') or dados_nf.get('NFe') or 'S/N'
+        valor = dados_nf.get('Valor') or 'Não informado'
+        cliente = dados_nf.get('Cliente / Contrato') or dados_nf.get('Cliente') or 'Não informado'
+        motivo = dados_nf.get('Motivo do pedido') or 'Não informado'
+        data_emissao = dados_nf.get('Data de emissão') or dados_nf.get('Data de emissao') or 'Não informado'
+        risco = dados_nf.get('Risco se não cancelar') or 'Não informado'
+        categoria_causa = dados_nf.get('Categoria da causa  (pré-análise)') or dados_nf.get('Categoria da causa') or 'Não informado'
+
+        assunto = f"🚨 [Aprovação Necessária] Cancelamento de Nota Fiscal nº {numero_nf} — GLPI #{chamado_glpi_id}"
+
+        corpo_html = f"""
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }}
+                .card {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }}
+                .header {{ background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); padding: 24px; color: #ffffff; text-align: left; }}
+                .badge {{ display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
+                .content {{ padding: 24px; }}
+                .alert-box {{ background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; color: #991b1b; line-height: 1.5; }}
+                .info-table {{ width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; }}
+                .info-table td {{ padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }}
+                .info-label {{ font-weight: 600; color: #64748b; width: 38%; }}
+                .info-val {{ color: #0f172a; font-weight: 500; }}
+                .btn-container {{ text-align: center; margin: 28px 0 16px 0; }}
+                .btn {{ display: inline-block; background-color: #0284c7; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px rgba(2, 132, 199, 0.25); }}
+                .footer {{ background-color: #f8fafc; padding: 16px 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center; }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="header">
+                    <span class="badge">Aprovação Obrigatória</span>
+                    <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Solicitação de Cancelamento de NF</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Chamado GLPI #{chamado_glpi_id}</p>
+                </div>
+                <div class="content">
+                    <div class="alert-box">
+                        <strong>Prezada Cristiene Travassos,</strong><br>
+                        Uma nova solicitação de <strong>Cancelamento de Nota Fiscal</strong> foi registrada no GLPI e necessita de sua avaliação direta (aprovação ou recusa).
+                    </div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">NFe nº / Série:</td>
+                            <td class="info-val"><strong style="color: #b91c1c; font-size: 15px;">{numero_nf}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Valor:</td>
+                            <td class="info-val"><strong>R$ {valor}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Cliente / Contrato:</td>
+                            <td class="info-val">{cliente}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Data de Emissão:</td>
+                            <td class="info-val">{data_emissao}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Solicitante:</td>
+                            <td class="info-val">{solicitante}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Categoria da Causa:</td>
+                            <td class="info-val">{categoria_causa}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Motivo do Pedido:</td>
+                            <td class="info-val">{motivo}</td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Risco se não cancelar:</td>
+                            <td class="info-val">{risco}</td>
+                        </tr>
+                    </table>
+
+                    <div class="btn-container">
+                        <a href="{link_glpi}" target="_blank" class="btn">
+                            👉 Acessar Chamado no GLPI para Aprovar / Recusar
+                        </a>
+                    </div>
+                    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 8px;">
+                        Link direto: <a href="{link_glpi}" style="color: #0284c7;">{link_glpi}</a>
+                    </p>
+                </div>
+                <div class="footer">
+                    Hub Central - SirReinato Brasfort &bull; Notificação Automática do GLPI
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        corpo_texto = f"""
+        SOLICITAÇÃO DE CANCELAMENTO DE NOTA FISCAL (GLPI #{chamado_glpi_id})
+
+        Prezada Cristiene Travassos,
+        Uma nova solicitação de cancelamento de Nota Fiscal foi aberta no GLPI e aguarda sua avaliação.
+
+        * NFe nº / Série : {numero_nf}
+        * Valor          : R$ {valor}
+        * Cliente        : {cliente}
+        * Data Emissão   : {data_emissao}
+        * Solicitante    : {solicitante}
+        * Causa          : {categoria_causa}
+        * Motivo         : {motivo}
+        * Risco          : {risco}
+
+        Para aprovar ou recusar o cancelamento, acesse o link direto no GLPI:
+        {link_glpi}
+        """
+
+        return cls.enviar_email(
+            destinatarios=dest,
+            assunto=assunto,
+            corpo_html=corpo_html,
+            corpo_texto=corpo_texto
+        )
 
     @classmethod
     def enviar_relatorio_impressoras(

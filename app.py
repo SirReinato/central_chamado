@@ -1,5 +1,6 @@
 import atexit
 import os
+import subprocess
 from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, session, redirect, url_for
@@ -17,6 +18,7 @@ from routes.base_conhecimento import conhecimento_bp
 from routes.itens_sala import itens_sala_bp
 from routes.glpi_admin import glpi_admin_bp
 from routes.ramais import ramais_bp
+from routes.assinatura import assinatura_bp
 from services.impressoras_services import ImpressorasService
 from utils.logger import setup_logging, get_logger
 
@@ -135,6 +137,7 @@ app.register_blueprint(conhecimento_bp)
 app.register_blueprint(itens_sala_bp)
 app.register_blueprint(glpi_admin_bp)
 app.register_blueprint(ramais_bp)
+app.register_blueprint(assinatura_bp)
 
 # Cria as tabelas em ambos os bancos (chamados.db e estoque_suprimentos.db)
 with app.app_context():
@@ -176,7 +179,7 @@ def tarefa_sincronizar_glpi():
 
 # Agendamento GLPI (apenas se GLPI_ENABLE_SYNC estiver ativo no .env)
 if os.environ.get('GLPI_ENABLE_SYNC', 'false').lower() in ('true', '1'):
-    intervalo_min = int(os.environ.get('GLPI_SYNC_INTERVAL_MINUTES', 30))
+    intervalo_min = int(os.environ.get('GLPI_SYNC_INTERVAL_MINUTES', 15))
     scheduler.add_job(
         func=tarefa_sincronizar_glpi,
         trigger="interval",
@@ -185,6 +188,43 @@ if os.environ.get('GLPI_ENABLE_SYNC', 'false').lower() in ('true', '1'):
         replace_existing=True
     )
     logger.info(f"Job de sincronizacao GLPI agendado a cada {intervalo_min} minutos.")
+
+
+# ==========================================
+# TAREFA: Atualizacao Automatica do Graphify
+# ==========================================
+def tarefa_atualizar_graphify():
+    """Atualiza o grafo de conhecimento do Graphify incrementalmente."""
+    try:
+        resultado = subprocess.run(
+            ["graphify", ".", "--update"],
+            capture_output=True,
+            text=True,
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            env={**os.environ, "OLLAMA_BASE_URL": os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")},
+            timeout=300
+        )
+        if resultado.returncode == 0:
+            logger.info("Graphify atualizado com sucesso via scheduler.")
+        else:
+            logger.warning(f"Graphify concluiu com avisos: {resultado.stderr[:500]}")
+    except subprocess.TimeoutExpired:
+        logger.warning("Graphify expirou o tempo limite (5min) na atualizacao agendada.")
+    except FileNotFoundError:
+        logger.warning("Graphify CLI nao encontrado. Instale com: uv tool install graphifyy")
+    except Exception as e:
+        logger.error(f"Falha ao atualizar Graphify automaticamente: {e}", exc_info=True)
+
+
+# Atualizacao do Graphify a cada 6 horas (baixo custo, apenas arquivos alterados)
+scheduler.add_job(
+    func=tarefa_atualizar_graphify,
+    trigger="interval",
+    hours=6,
+    id="job_atualizar_graphify",
+    replace_existing=True
+)
+logger.info("Job de atualizacao do Graphify agendado a cada 6 horas.")
 
 
 import sys

@@ -114,13 +114,18 @@
                                     <td class="text-center">{{ fam.estoque_minimo }}</td>
                                     <td class="text-end">
                                         <!-- Botão para abrir Modal de Adicionar Lote -->
-                                        <button type="button" class="btn btn-sm botaoDetalhes" data-bs-toggle="modal"
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-acao-estoque" data-bs-toggle="modal"
                                             data-bs-target="#modalAdicionar{{ fam.id }}">
                                             <i class="bi bi-plus-circle"></i> Repor
                                         </button>
-                                        <button type="button" class="btn btn-sm botaoSecundario ms-1"
+                                        <button type="button" class="btn btn-sm btn-outline-secondary btn-acao-estoque ms-1"
                                             data-bs-toggle="modal" data-bs-target="#modalAjustar{{ fam.id }}">
                                             <i class="bi bi-sliders"></i> Ajustar
+                                        </button>
+                                        <!-- Botão para ver Impressoras da Família -->
+                                        <button type="button" class="btn btn-sm btn-outline-info btn-acao-estoque ms-1"
+                                            onclick="carregarImpressorasFamilia({{ fam.id }})">
+                                            <i class="bi bi-printer"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -238,6 +243,30 @@
                         </div>
                     </div>
                     {% endfor %}
+
+                    <!-- Modal: Impressoras da Família -->
+                    <div class="modal fade" id="modalImpressorasFamilia" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content bg-dark text-white border-secondary">
+                                <div class="modal-header border-secondary">
+                                    <h5 class="modal-title" id="modalImpressorasTitulo">
+                                        <i class="bi bi-printer me-2"></i>Impressoras da Família
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="modalImpressorasCorpo">
+                                    <div class="text-center text-muted py-4">
+                                        <div class="spinner-border text-info" role="status"></div>
+                                        <div class="mt-2">Carregando impressoras...</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer border-secondary">
+                                    <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -490,5 +519,129 @@
     </div>
 
 </div>
+
+<style>
+    /* Botões de ação menores na tabela de estoque */
+    .btn-acao-estoque {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.78rem;
+        line-height: 1;
+    }
+    .btn-acao-estoque i {
+        font-size: 0.85rem;
+    }
+    /* Modal de impressoras da família */
+    #modalImpressorasCorpo .lista-impressoras {
+        max-height: 350px;
+        overflow-y: auto;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+    #modalImpressorasCorpo .item-impressora {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 0.8rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    #modalImpressorasCorpo .item-impressora:last-child {
+        border-bottom: none;
+    }
+    #modalImpressorasCorpo .info-impressora .nome {
+        font-weight: 600;
+        color: #fff;
+    }
+    #modalImpressorasCorpo .info-impressora .detalhe {
+        font-size: 0.78rem;
+        color: #94a3b8;
+    }
+    #modalImpressorasCorpo .badge-online {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+    }
+    #modalImpressorasCorpo .badge-offline {
+        background: rgba(148, 163, 184, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+    }
+</style>
+
+<script>
+    function carregarImpressorasFamilia(familiaId) {
+        const corpo = document.getElementById('modalImpressorasCorpo');
+        const titulo = document.getElementById('modalImpressorasTitulo');
+
+        corpo.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <div class="spinner-border text-info" role="status"></div>
+                <div class="mt-2">Carregando impressoras...</div>
+            </div>
+        `;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalImpressorasFamilia'));
+        modal.show();
+
+        fetch(`/impressoras/api/familia/${familiaId}/impressoras`)
+            .then(response => {
+                if (!response.ok) throw new Error('Erro ao carregar impressoras');
+                return response.json();
+            })
+            .then(data => {
+                titulo.innerHTML = `<i class="bi bi-printer me-2"></i>Impressoras da Família: <strong>${data.familia}</strong>`;
+
+                if (!data.impressoras || data.impressoras.length === 0) {
+                    corpo.innerHTML = `
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-printer fs-1 d-block mb-2 opacity-50"></i>
+                            <p class="mb-0">Nenhuma impressora vinculada a esta família.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="lista-impressoras">';
+                data.impressoras.forEach(imp => {
+                    const statusClass = imp.online ? 'badge-online' : 'badge-offline';
+                    const statusText = imp.online ? 'Online' : 'Offline';
+                    html += `
+                        <div class="item-impressora">
+                            <div class="info-impressora">
+                                <div class="nome">${imp.nome}</div>
+                                <div class="detalhe">
+                                    <i class="bi bi-printer-fill me-1 text-info opacity-75"></i>${imp.modelo} |
+                                    <i class="bi bi-123 me-1 text-info opacity-75"></i>${imp.ip} |
+                                    <i class="bi bi-geo-alt me-1 text-info opacity-75"></i>${imp.local}
+                                </div>
+                            </div>
+                            <span class="${statusClass}">${statusText}</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                html += `
+                    <div class="mt-3 text-muted small">
+                        <i class="bi bi-box-seam me-1"></i> Total: <strong>${data.total}</strong> impressora(s)
+                    </div>
+                `;
+                corpo.innerHTML = html;
+            })
+            .catch(err => {
+                corpo.innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                        <p class="mb-0">Erro ao carregar impressoras: ${err.message}</p>
+                    </div>
+                `;
+            });
+    }
+</script>
 
 {% endblock %}

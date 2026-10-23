@@ -1,0 +1,715 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Fonte Montserrat com suporte offline (local) e CDN (fallback) -->
+<style>
+@font-face {
+    font-family: 'MontserratLocal';
+    src: url("{{ url_for('static', filename='fonts/Montserrat-Bold.ttf') }}") format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'MontserratLocal';
+    src: url("{{ url_for('static', filename='fonts/Montserrat-Italic.ttf') }}") format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+.cardAssinaturaPreview {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.canvasWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+#signatureCanvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.areaUploadFoto {
+    border: 2px dashed rgba(var(--cor-cinza-claro-rgb), 0.25);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(var(--cor-cinza-claro-rgb), 0.03);
+}
+
+.areaUploadFoto:hover, .areaUploadFoto.dragover {
+    border-color: var(--cor-dourado);
+    background: rgba(var(--cor-dourado-rgb), 0.08);
+}
+
+.badgeDica {
+    background: rgba(var(--cor-azul-rgb), 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(var(--cor-azul-rgb), 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.controleFotoBox {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(var(--cor-cinza-claro-rgb), 0.12);
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+</style>
+
+<div class="container my-4">
+
+    <!-- Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card cardPadrao">
+        <!-- Barra de destaque superior -->
+        <div class="barraDestaque"></div>
+
+        <!-- Cabeçalho -->
+        <div class="cabecalhoCard d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h1 class="tituloPrincipal mb-1">
+                    <i class="bi bi-card-heading text-warning me-2"></i>Gerador de Assinatura de E-mail
+                </h1>
+                <p class="subtituloCard mb-0">
+                    Crie sua assinatura oficial Brasfort padronizada com foto, contatos e dimensões institucionais (637 x 174 px).
+                </p>
+            </div>
+
+            <!-- Botão de preenchimento rápido -->
+            <button type="button" class="btn btn-sm btn-outline-warning" id="btnAutoPreencher">
+                <i class="bi bi-person-check me-1"></i> Preencher com Meus Dados
+            </button>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-4">
+
+                <!-- COLUNA ESQUERDA: FORMULÁRIO -->
+                <div class="col-12 col-xl-5">
+                    <div class="p-3 rounded" style="background: rgba(0, 0, 0, 0.15); border: 1px solid var(--cor-borda);">
+                        <h5 class="fw-bold text-tema mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                            <i class="bi bi-pencil-square text-info me-2"></i>Dados do Colaborador
+                        </h5>
+
+                        <form id="formAssinatura" method="POST" action="{{ url_for('assinatura.gerar_download') }}" enctype="multipart/form-data">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <!-- Nome -->
+                            <div class="mb-3">
+                                <label for="inputNome" class="form-label text-tema fw-semibold small">
+                                    Nome Completo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control inputPadrao"
+                                       id="inputNome"
+                                       name="nome"
+                                       placeholder="Ex: Renato Lima"
+                                       value="{{ current_user.nome if current_user.is_authenticated else '' }}"
+                                       required>
+                            </div>
+
+                            <!-- Setor -->
+                            <div class="mb-3">
+                                <label for="inputSetor" class="form-label text-tema fw-semibold small">
+                                    Setor / Cargo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control inputPadrao"
+                                       id="inputSetor"
+                                       name="setor"
+                                       list="listaSetores"
+                                       placeholder="Ex: Setor de Suporte de TI"
+                                       value="Setor de Suporte de TI"
+                                       required>
+                                <datalist id="listaSetores">
+                                    {% for s in setores %}
+                                    <option value="{{ s }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+
+                            <!-- Diretoria -->
+                            <div class="mb-3">
+                                <label for="inputDiretoria" class="form-label text-tema fw-semibold small">
+                                    Diretoria <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control inputPadrao"
+                                       id="inputDiretoria"
+                                       name="diretoria"
+                                       list="listaDiretorias"
+                                       placeholder="Ex: Diretoria de Inovação e Processos"
+                                       value="Diretoria de Inovação e Processos"
+                                       required>
+                                <datalist id="listaDiretorias">
+                                    {% for d in diretorias %}
+                                    <option value="{{ d }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+
+                            <!-- E-mail -->
+                            <div class="mb-3">
+                                <label for="inputEmail" class="form-label text-tema fw-semibold small">
+                                    E-mail Corporativo <span class="text-danger">*</span>
+                                </label>
+                                <input type="email"
+                                       class="form-control inputPadrao"
+                                       id="inputEmail"
+                                       name="email"
+                                       placeholder="Ex: renato.lima@brasfort.com.br"
+                                       value="{{ current_user.email if current_user.is_authenticated else '' }}"
+                                       required>
+                            </div>
+
+                            <!-- Telefone / Ramal -->
+                            <div class="mb-3">
+                                <label for="inputTelefone" class="form-label text-tema fw-semibold small">
+                                    Telefone / Ramal <span class="text-danger">*</span>
+                                </label>
+                                <input type="text"
+                                       class="form-control inputPadrao"
+                                       id="inputTelefone"
+                                       name="telefone"
+                                       placeholder="Ex: (61) 3878-3434"
+                                       value="(61) 3878-3434"
+                                       required>
+                            </div>
+
+                            <!-- Foto do Colaborador -->
+                            <div class="mb-3">
+                                <label class="form-label text-tema fw-semibold small d-flex justify-content-between align-items-center">
+                                    <span>Foto do Colaborador (Opcional)</span>
+                                    <button type="button" class="btn btn-sm text-danger p-0 d-none" id="btnRemoverFoto" title="Remover foto">
+                                        <i class="bi bi-x-circle me-1"></i>Remover Foto
+                                    </button>
+                                </label>
+
+                                <div class="areaUploadFoto" id="dropAreaFoto">
+                                    <input type="file"
+                                           class="d-none"
+                                           id="inputFoto"
+                                           name="foto"
+                                           accept="image/png, image/jpeg, image/jpg, image/webp">
+                                    <div id="uploadPrompt">
+                                        <i class="bi bi-cloud-arrow-up fs-2 text-warning d-block mb-1"></i>
+                                        <span class="small fw-semibold text-tema d-block">Clique ou arraste uma foto aqui</span>
+                                        <span class="small text-tema-secundario" style="font-size: 0.75rem;">
+                                            Recomendado: foto nítida de rosto com fundo claro
+                                        </span>
+                                    </div>
+                                    <div id="uploadPreviewInfo" class="d-none">
+                                        <img id="imgThumb" src="" alt="Thumbnail" class="rounded-circle border border-warning mb-1" style="width: 50px; height: 50px; object-fit: cover;">
+                                        <div class="small text-tema fw-semibold" id="txtNomeArquivo">foto.png</div>
+                                    </div>
+                                </div>
+
+                                <!-- Controles de Ajuste de Foto (Zoom & Supernitidez) -->
+                                <div id="controlesFoto" class="controleFotoBox mt-2 d-none">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="sliderZoom" class="small text-tema fw-semibold mb-0">
+                                            <i class="bi bi-zoom-in text-info me-1"></i>Enquadramento / Zoom:
+                                        </label>
+                                        <span class="small text-warning fw-bold" id="txtZoomVal">1.0x</span>
+                                    </div>
+                                    <input type="range" class="form-range" id="sliderZoom" min="1.0" max="2.5" step="0.05" value="1.0">
+
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="chkSuperNitidez" checked>
+                                        <label class="form-check-label small text-tema" for="chkSuperNitidez">
+                                            <strong>Supernitidez Fotográfica</strong> (Smart Sharpening)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação do Formulário -->
+                            <div class="d-flex gap-2 pt-2">
+                                <button type="button" class="btn botaoSecundario flex-grow-1" id="btnRestaurarPadrao">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Limpar
+                                </button>
+                                <button type="submit" class="btn botaoPrimario flex-grow-1" id="btnGerarBackend">
+                                    <i class="bi bi-download me-1"></i> Baixar PNG
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: PREVIEW & DOWNLOAD -->
+                <div class="col-12 col-xl-7">
+                    <div class="h-100 d-flex flex-column justify-content-between">
+
+                        <!-- Preview Card -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold text-tema mb-0">
+                                    <i class="bi bi-eye text-warning me-2"></i>Prévia em Tempo Real
+                                </h5>
+                                <span class="badge bg-secondary bg-opacity-25 text-tema small border border-secondary border-opacity-25">
+                                    Dimensões: 637 x 174 px
+                                </span>
+                            </div>
+
+                            <p class="text-tema-secundario small mb-3">
+                                A assinatura abaixo é gerada fielmente ao modelo institucional com renderização fotográfica de alta nitidez.
+                            </p>
+
+                            <!-- Caixa do Canvas (Fundo Branco do Outlook) -->
+                            <div class="cardAssinaturaPreview w-100 text-center mb-3">
+                                <div class="canvasWrapper">
+                                    <canvas id="signatureCanvas" width="637" height="174"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Botões de Ação Rápida -->
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
+                                <button type="button" class="btn btn-warning fw-semibold px-3 py-2" id="btnCopiarImagem" title="Copia a imagem diretamente para a área de transferência do Windows">
+                                    <i class="bi bi-clipboard2-check me-1"></i> Copiar Imagem (Outlook)
+                                </button>
+
+                                <button type="button" class="btn btn-outline-light px-3 py-2" id="btnBaixarCanvas" title="Baixar arquivo PNG da assinatura em 637x174 com supernitidez">
+                                    <i class="bi bi-download me-1"></i> Baixar PNG (637 x 174)
+                                </button>
+
+                                <button type="button" class="btn btn-outline-info px-3 py-2" id="btnBaixarHD" title="Baixar versão de altíssima definição 2x (1274 x 348 px) para monitores Retina/4K">
+                                    <i class="bi bi-aspect-ratio me-1"></i> Baixar em 2x (Retina)
+                                </button>
+                            </div>
+
+                            <div id="alertFeedback" class="alert alert-success d-none text-center py-2 mb-3" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i>Assinatura copiada com sucesso! Agora basta colar com <strong>Ctrl + V</strong> no Outlook.
+                            </div>
+                        </div>
+
+                        <!-- Card de Instruções para o Outlook -->
+                        <div class="badgeDica">
+                            <h6 class="fw-bold text-info mb-2">
+                                <i class="bi bi-info-circle-fill me-1"></i> Como obter máxima nitidez no Outlook / Webmail:
+                            </h6>
+                            <ol class="small mb-0 ps-3 text-tema">
+                                <li class="mb-1">Utilize o controle de <strong>"Enquadramento / Zoom"</strong> para centralizar o rosto do colaborador perfeitamente.</li>
+                                <li class="mb-1">Clique no botão dourado <strong>"Copiar Imagem (Outlook)"</strong> acima (ou baixe o arquivo PNG).</li>
+                                <li class="mb-1">No Outlook, acesse: <strong>Arquivo > Opções > Email > Assinaturas</strong> (ou no Outlook Web: <strong>Configurações > Email > Redigir e Responder</strong>).</li>
+                                <li class="mb-1">Cole a imagem diretamente na caixa com <strong>Ctrl + V</strong>. A assinatura preservará a nitidez total.</li>
+                                <li>Salve e defina como padrão para <em>"Novas Mensagens"</em> e <em>"Respostas / Encaminhamentos"</em>.</li>
+                            </ol>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Scripts do Gerador Canvas com Algoritmo de Supernitidez (Step-Down Scaling + Smart Sharpen) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Inputs
+    const inputNome = document.getElementById('inputNome');
+    const inputSetor = document.getElementById('inputSetor');
+    const inputDiretoria = document.getElementById('inputDiretoria');
+    const inputEmail = document.getElementById('inputEmail');
+    const inputTelefone = document.getElementById('inputTelefone');
+    const inputFoto = document.getElementById('inputFoto');
+    const sliderZoom = document.getElementById('sliderZoom');
+    const txtZoomVal = document.getElementById('txtZoomVal');
+    const chkSuperNitidez = document.getElementById('chkSuperNitidez');
+    const controlesFoto = document.getElementById('controlesFoto');
+
+    // Botões
+    const btnAutoPreencher = document.getElementById('btnAutoPreencher');
+    const btnRestaurarPadrao = document.getElementById('btnRestaurarPadrao');
+    const btnCopiarImagem = document.getElementById('btnCopiarImagem');
+    const btnBaixarCanvas = document.getElementById('btnBaixarCanvas');
+    const btnBaixarHD = document.getElementById('btnBaixarHD');
+    const btnRemoverFoto = document.getElementById('btnRemoverFoto');
+    const alertFeedback = document.getElementById('alertFeedback');
+
+    // Área upload
+    const dropAreaFoto = document.getElementById('dropAreaFoto');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const uploadPreviewInfo = document.getElementById('uploadPreviewInfo');
+    const imgThumb = document.getElementById('imgThumb');
+    const txtNomeArquivo = document.getElementById('txtNomeArquivo');
+
+    // Imagens Base (637 x 174)
+    const baseTemplateImg = new Image();
+    baseTemplateImg.src = "{{ url_for('static', filename='img/assinatura_base_template.png') }}";
+
+    const defaultAvatarImg = new Image();
+    defaultAvatarImg.src = "{{ url_for('static', filename='img/avatar_placeholder.png') }}";
+
+    let customUserImg = null;
+
+    // Aguarda carregar template base
+    baseTemplateImg.onload = function() {
+        desenharAssinatura();
+    };
+
+    defaultAvatarImg.onload = function() {
+        if (!customUserImg) {
+            desenharAssinatura();
+        }
+    };
+
+    // ALGORITMO DE SUPERNITIDEZ MULTI-ETAPAS (STEP-DOWN SCALING)
+    // Evita o desfoque bilinear padrão do browser quando reduz fotos de 1000px+ para 98px
+    function processarFotoComSuperNitidez(img, targetSize, zoom, aplicarSharpen) {
+        const nw = img.naturalWidth || img.width;
+        const nh = img.naturalHeight || img.height;
+        const baseMinDim = Math.min(nw, nh);
+        const cropDim = baseMinDim / zoom;
+        const sx = (nw - cropDim) / 2;
+        const sy = (nh - cropDim) / 2;
+
+        // 1. Recorte central 1:1 inicial
+        let curCanvas = document.createElement('canvas');
+        curCanvas.width = Math.round(cropDim);
+        curCanvas.height = Math.round(cropDim);
+        let curCtx = curCanvas.getContext('2d');
+        curCtx.imageSmoothingEnabled = true;
+        curCtx.imageSmoothingQuality = 'high';
+        curCtx.drawImage(img, sx, sy, cropDim, cropDim, 0, 0, curCanvas.width, curCanvas.height);
+
+        // 2. Redução em degraus de 50% (preserva frequências espaciais e micro-detalhes)
+        let curW = curCanvas.width;
+        let curH = curCanvas.height;
+
+        while (curW / 2 > targetSize * 1.2) {
+            curW = Math.round(curW / 2);
+            curH = Math.round(curH / 2);
+            const nextCanvas = document.createElement('canvas');
+            nextCanvas.width = curW;
+            nextCanvas.height = curH;
+            const nextCtx = nextCanvas.getContext('2d');
+            nextCtx.imageSmoothingEnabled = true;
+            nextCtx.imageSmoothingQuality = 'high';
+            nextCtx.drawImage(curCanvas, 0, 0, curW, curH);
+            curCanvas = nextCanvas;
+        }
+
+        // 3. Etapa final exata para o diâmetro da moldura
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = targetSize;
+        finalCanvas.height = targetSize;
+        const finalCtx = finalCanvas.getContext('2d');
+        finalCtx.imageSmoothingEnabled = true;
+        finalCtx.imageSmoothingQuality = 'high';
+        finalCtx.drawImage(curCanvas, 0, 0, targetSize, targetSize);
+
+        // 4. Smart Sharpening (Convolução laplaciana suave para realçar olhos, cabelos e sorriso)
+        if (aplicarSharpen) {
+            aplicarFiltroNitidez(finalCtx, targetSize, targetSize, 0.22);
+        }
+
+        return finalCanvas;
+    }
+
+    // Filtro de Realce de Nitidez fotográfica (Unsharp Laplacian)
+    function aplicarFiltroNitidez(c, w, h, mix) {
+        try {
+            const imgData = c.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const copy = new Uint8ClampedArray(data);
+
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = (y * w + x) * 4;
+                    for (let ch = 0; ch < 3; ch++) {
+                        const center = copy[idx + ch];
+                        const up = copy[((y - 1) * w + x) * 4 + ch];
+                        const down = copy[((y + 1) * w + x) * 4 + ch];
+                        const left = copy[(y * w + (x - 1)) * 4 + ch];
+                        const right = copy[(y * w + (x + 1)) * 4 + ch];
+
+                        const lap = 5 * center - up - down - left - right;
+                        data[idx + ch] = Math.min(255, Math.max(0, center * (1 - mix) + lap * mix));
+                    }
+                }
+            }
+            c.putImageData(imgData, 0, 0);
+        } catch (e) {
+            // Em caso de restrição de canvas, continua normalmente
+        }
+    }
+
+    // Função de desenho principal em 637 x 174
+    function desenharAssinatura(escala = 1) {
+        const largura = 637 * escala;
+        const altura = 174 * escala;
+
+        if (escala !== 1) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = largura;
+            tempCanvas.height = altura;
+            const tempCtx = tempCanvas.getContext('2d');
+            renderizarNoContexto(tempCtx, escala);
+            return tempCanvas;
+        } else {
+            renderizarNoContexto(ctx, 1);
+        }
+    }
+
+    function renderizarNoContexto(c, s) {
+        c.imageSmoothingEnabled = true;
+        c.imageSmoothingQuality = 'high';
+
+        // 1. Limpar canvas com fundo branco
+        c.fillStyle = '#ffffff';
+        c.fillRect(0, 0, 637 * s, 174 * s);
+
+        // 2. Desenhar o template base institucional primeiro (637 x 174)
+        if (baseTemplateImg.complete) {
+            c.drawImage(baseTemplateImg, 0, 0, 637 * s, 174 * s);
+        }
+
+        // 3. Desenhar a foto com recorte circular perfeitamente suave e supernitidez
+        const centerX = 85.5 * s;
+        const centerY = 87.0 * s;
+        const radius = 49.0 * s;
+
+        const drawSize = Math.round(radius * 2 + 6);
+        const drawX = centerX - drawSize / 2;
+        const drawY = centerY - drawSize / 2;
+
+        c.save();
+        c.beginPath();
+        c.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
+        c.closePath();
+        c.clip();
+
+        const zoom = parseFloat(sliderZoom.value) || 1.0;
+        const usarSharpen = chkSuperNitidez.checked;
+
+        if (customUserImg && customUserImg.complete && customUserImg.naturalWidth > 0) {
+            // Processa com algoritmo de supernitidez
+            const fotoNitida = processarFotoComSuperNitidez(customUserImg, drawSize, zoom, usarSharpen);
+            c.drawImage(fotoNitida, drawX, drawY, drawSize, drawSize);
+        } else if (defaultAvatarImg.complete && defaultAvatarImg.naturalWidth > 0) {
+            c.drawImage(defaultAvatarImg, drawX, drawY, drawSize, drawSize);
+        } else {
+            c.fillStyle = '#f1f5f9';
+            c.fillRect(drawX, drawY, drawSize, drawSize);
+        }
+        c.restore();
+
+        // 4. Desenhar os textos fiéis ao modeloPadrãoatualizado
+        const nome = (inputNome.value || '').trim();
+        const setor = (inputSetor.value || '').trim();
+        const diretoria = (inputDiretoria.value || '').trim();
+        const email = (inputEmail.value || '').trim();
+        const telefone = (inputTelefone.value || '').trim();
+
+        // Linha 1: Nome (Bold, #00144b, 16px)
+        c.font = `bold ${16 * s}px "MontserratLocal", "Montserrat", "Segoe UI", Arial, sans-serif`;
+        c.fillStyle = '#00144b';
+        c.fillText(nome, 180 * s, 55 * s);
+
+        // Linha 2: Setor (Medium, #3b72c3, 14px)
+        c.font = `500 ${14 * s}px "MontserratLocal", "Montserrat", "Segoe UI", Arial, sans-serif`;
+        c.fillStyle = '#3b72c3';
+        c.fillText(setor, 179 * s, 76 * s);
+
+        // Linha 3: Diretoria (SemiBold Italic, #73767a, 12px)
+        c.font = `italic 600 ${12 * s}px "MontserratLocal", "Montserrat", "Segoe UI", Arial, sans-serif`;
+        c.fillStyle = '#73767a';
+        c.fillText(diretoria, 179 * s, 99 * s);
+
+        // Linhas 4 e 5: E-mail e Telefone (Medium, #828282, 11px)
+        c.font = `500 ${11 * s}px "MontserratLocal", "Montserrat", "Segoe UI", Arial, sans-serif`;
+        c.fillStyle = '#828282';
+        c.fillText(email, 179 * s, 125 * s);
+        c.fillText(telefone, 179 * s, 140 * s);
+    }
+
+    // Ouvintes de digitação em tempo real
+    [inputNome, inputSetor, inputDiretoria, inputEmail, inputTelefone].forEach(input => {
+        input.addEventListener('input', () => desenharAssinatura(1));
+    });
+
+    // Slider de zoom e toggle de nitidez
+    sliderZoom.addEventListener('input', function() {
+        txtZoomVal.textContent = parseFloat(this.value).toFixed(2) + 'x';
+        desenharAssinatura(1);
+    });
+
+    chkSuperNitidez.addEventListener('change', () => desenharAssinatura(1));
+
+    // Upload e Drag & Drop de Foto
+    dropAreaFoto.addEventListener('click', () => inputFoto.click());
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropAreaFoto.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropAreaFoto.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropAreaFoto.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropAreaFoto.classList.remove('dragover');
+        });
+    });
+
+    dropAreaFoto.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+            inputFoto.files = files;
+            processarArquivoFoto(files[0]);
+        }
+    });
+
+    inputFoto.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            processarArquivoFoto(this.files[0]);
+        }
+    });
+
+    function processarArquivoFoto(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                customUserImg = img;
+                imgThumb.src = e.target.result;
+                txtNomeArquivo.textContent = file.name;
+                uploadPrompt.classList.add('d-none');
+                uploadPreviewInfo.classList.remove('d-none');
+                btnRemoverFoto.classList.remove('d-none');
+                controlesFoto.classList.remove('d-none');
+                sliderZoom.value = 1.0;
+                txtZoomVal.textContent = '1.0x';
+                desenharAssinatura(1);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    btnRemoverFoto.addEventListener('click', (e) => {
+        e.stopPropagation();
+        inputFoto.value = '';
+        customUserImg = null;
+        uploadPrompt.classList.remove('d-none');
+        uploadPreviewInfo.classList.add('d-none');
+        btnRemoverFoto.classList.add('d-none');
+        controlesFoto.classList.add('d-none');
+        desenharAssinatura(1);
+    });
+
+    // Auto Preencher com dados do usuário logado
+    btnAutoPreencher.addEventListener('click', () => {
+        {% if current_user.is_authenticated %}
+        inputNome.value = "{{ current_user.nome }}";
+        inputEmail.value = "{{ current_user.email }}";
+        {% endif %}
+        desenharAssinatura(1);
+    });
+
+    // Limpar / Resetar
+    btnRestaurarPadrao.addEventListener('click', () => {
+        inputNome.value = '';
+        inputSetor.value = 'Setor de Suporte de TI';
+        inputDiretoria.value = 'Diretoria de Inovação e Processos';
+        inputEmail.value = '';
+        inputTelefone.value = '(61) 3878-3434';
+        btnRemoverFoto.click();
+        desenharAssinatura(1);
+    });
+
+    // Copiar Imagem para o Clipboard (637 x 174)
+    btnCopiarImagem.addEventListener('click', async () => {
+        try {
+            canvas.toBlob(async function(blob) {
+                if (!blob) {
+                    alert('Não foi possível gerar a imagem.');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    alertFeedback.classList.remove('d-none');
+                    setTimeout(() => alertFeedback.classList.add('d-none'), 4000);
+                } else {
+                    alert('Seu navegador não suporta cópia direta de imagem. Use o botão Baixar PNG.');
+                }
+            }, 'image/png');
+        } catch (err) {
+            console.error(err);
+            alert('Não foi possível copiar automaticamente para a área de transferência. Use o botão "Baixar PNG".');
+        }
+    });
+
+    // Download PNG (637 x 174)
+    btnBaixarCanvas.addEventListener('click', () => {
+        const nomeSlug = (inputNome.value || 'assinatura').trim().replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+        const link = document.createElement('a');
+        link.download = `assinatura_${nomeSlug}_637x174.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // Download 2x (1274 x 348)
+    btnBaixarHD.addEventListener('click', () => {
+        const tempCanvas = desenharAssinatura(2);
+        const nomeSlug = (inputNome.value || 'assinatura').trim().replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
+        const link = document.createElement('a');
+        link.download = `assinatura_${nomeSlug}_1274x348.png`;
+        link.href = tempCanvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // Forçar redesenho quando a fonte carregar
+    document.fonts.ready.then(function () {
+        desenharAssinatura(1);
+    });
+});
+</script>
+{% endblock %}

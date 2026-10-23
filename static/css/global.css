@@ -988,6 +988,67 @@ body {
     box-shadow: 0 3px 10px rgba(194, 165, 109, 0.4);
 }
 
+/* Botões de Ação Compactos (Ícones) em Tabelas (Ex: Fila de Chamados) */
+.btnAcaoIcone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    padding: 0;
+    line-height: 1;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+.btnAcaoIcone--ver {
+    background: rgba(194, 165, 109, 0.15);
+    color: #e2c07a;
+    border-color: rgba(194, 165, 109, 0.4);
+}
+
+.btnAcaoIcone--ver:hover {
+    background: #C2A56D;
+    color: #1a222d;
+    border-color: #C2A56D;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(194, 165, 109, 0.4);
+}
+
+.btnAcaoIcone--editar {
+    background: rgba(84, 122, 149, 0.22);
+    color: #93c5fd;
+    border-color: rgba(84, 122, 149, 0.45);
+}
+
+.btnAcaoIcone--editar:hover {
+    background: #547A95;
+    color: #ffffff;
+    border-color: #547A95;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(84, 122, 149, 0.4);
+}
+
+.btnAcaoIcone--excluir {
+    background: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+    border-color: rgba(220, 38, 38, 0.4);
+}
+
+.btnAcaoIcone--excluir:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(220, 38, 38, 0.4);
+}
+
 /* Ponto Luminoso de Status */
 .pontoStatus {
     width: 8px;
