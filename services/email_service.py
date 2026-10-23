@@ -171,83 +171,104 @@ class EmailService:
         <html lang="pt-BR">
         <head>
             <meta charset="utf-8">
-            <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }}
-                .card {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }}
-                .header {{ background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%); padding: 24px; color: #ffffff; text-align: left; }}
-                .badge {{ display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
-                .content {{ padding: 24px; }}
-                .alert-box {{ background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; color: #991b1b; line-height: 1.5; }}
-                .info-table {{ width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; }}
-                .info-table td {{ padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }}
-                .info-label {{ font-weight: 600; color: #64748b; width: 38%; }}
-                .info-val {{ color: #0f172a; font-weight: 500; }}
-                .btn-container {{ text-align: center; margin: 28px 0 16px 0; }}
-                .btn {{ display: inline-block; background-color: #0284c7; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 6px rgba(2, 132, 199, 0.25); }}
-                .footer {{ background-color: #f8fafc; padding: 16px 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; text-align: center; }}
-            </style>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Cancelamento de Nota Fiscal - GLPI #{chamado_glpi_id}</title>
         </head>
-        <body>
-            <div class="card">
-                <div class="header" style="background-color: #f8fafc;">
-                    <span class="badge" style="color: black;">Aprovação Obrigatória</span>
-                    <h2 style="margin: 0; font-size: 20px; color: black; font-weight: 700;">Solicitação de Cancelamento de NF</h2>
-                    <p style="margin: 4px 0 0 0; font-size: 13px; color: black; opacity: 0.9;">Chamado GLPI #{chamado_glpi_id}</p>
-                </div>
-                <div class="content">
-                    <div class="alert-box">
-                        <strong>Prezada Cristiene Travassos,</strong><br>
-                        Uma nova solicitação de <strong>Cancelamento de Nota Fiscal</strong> foi registrada no GLPI e necessita de sua avaliação direta (aprovação ou recusa).
-                    </div>
+        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: Arial, Helvetica, sans-serif; color: #1e293b;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f1f5f9; padding: 25px 10px;">
+                <tr>
+                    <td align="center">
+                        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden;">
+                            <!-- Header com Fundo Vermelho Escuro e Texto Branco Visivel -->
+                            <tr>
+                                <td style="background-color: #991b1b; padding: 24px; text-align: left;">
+                                    <span style="display: inline-block; background-color: #b91c1c; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                                        Aprovação Obrigatória
+                                    </span>
+                                    <h2 style="margin: 0; font-size: 21px; font-weight: bold; color: #ffffff; line-height: 1.3;">
+                                        Solicitação de Cancelamento de NF
+                                    </h2>
+                                    <p style="margin: 6px 0 0 0; font-size: 13px; color: #fecaca; font-weight: normal;">
+                                        Chamado GLPI #{chamado_glpi_id}
+                                    </p>
+                                </td>
+                            </tr>
 
-                    <table class="info-table">
-                        <tr>
-                            <td class="info-label">NFe nº / Série:</td>
-                            <td class="info-val"><strong style="color: #b91c1c; font-size: 15px;">{numero_nf}</strong></td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Valor:</td>
-                            <td class="info-val"><strong>R$ {valor}</strong></td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Cliente / Contrato:</td>
-                            <td class="info-val">{cliente}</td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Data de Emissão:</td>
-                            <td class="info-val">{data_emissao}</td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Solicitante:</td>
-                            <td class="info-val">{solicitante}</td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Categoria da Causa:</td>
-                            <td class="info-val">{categoria_causa}</td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Motivo do Pedido:</td>
-                            <td class="info-val">{motivo}</td>
-                        </tr>
-                        <tr>
-                            <td class="info-label">Risco se não cancelar:</td>
-                            <td class="info-val">{risco}</td>
-                        </tr>
-                    </table>
+                            <!-- Conteúdo do E-mail -->
+                            <tr>
+                                <td style="padding: 24px; background-color: #ffffff;">
+                                    <!-- Caixa de Alerta -->
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px; margin-bottom: 22px;">
+                                        <tr>
+                                            <td style="padding: 14px 16px; font-size: 14px; color: #991b1b; line-height: 1.5;">
+                                                <strong>Prezada Cristiene Travassos,</strong><br>
+                                                Uma nova solicitação de <strong>Cancelamento de Nota Fiscal</strong> foi registrada no GLPI e necessita de sua avaliação direta (aprovação ou recusa).
+                                            </td>
+                                        </tr>
+                                    </table>
 
-                    <div class="btn-container">
-                        <a href="{link_glpi}" target="_blank" class="btn">
-                            👉 Acessar Chamado no GLPI para Aprovar / Recusar
-                        </a>
-                    </div>
-                    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 8px;">
-                        Link direto: <a href="{link_glpi}" style="color: #0284c7;">{link_glpi}</a>
-                    </p>
-                </div>
-                <div class="footer">
-                    &bull; Notificação Automática do GLPI &bull; Dep. de TI
-                </div>
-            </div>
+                                    <!-- Tabela com Dados da NF -->
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b; width: 38%;">NFe nº / Série:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #b91c1c; font-weight: bold; font-size: 15px;">{numero_nf}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Valor:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a; font-weight: bold;">R$ {valor}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Cliente / Contrato:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{cliente}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Data de Emissão:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{data_emissao}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Solicitante:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{solicitante}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Categoria da Causa:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{categoria_causa}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Motivo do Pedido:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{motivo}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Risco se não cancelar:</td>
+                                            <td style="padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">{risco}</td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Botão de Ação -->
+                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 24px 0 14px 0;">
+                                        <tr>
+                                            <td align="center">
+                                                <a href="{link_glpi}" target="_blank" style="display: inline-block; background-color: #0284c7; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: bold; font-size: 15px;">
+                                                    👉 Acessar Chamado no GLPI para Aprovar / Recusar
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 8px 0 0 0;">
+                                        Link direto: <a href="{link_glpi}" style="color: #0284c7; word-break: break-all;">{link_glpi}</a>
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Rodapé Solicitado pelo Usuário -->
+                            <tr>
+                                <td style="background-color: #f8fafc; padding: 14px 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; text-align: center;">
+                                    Notificação Automática do GLPI
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
         </body>
         </html>
         """
