@@ -59,36 +59,41 @@ def _extrair_campos_formulario(conteudo_html: str) -> dict:
     """
     if not conteudo_html:
         return {}
-    txt = html.unescape(conteudo_html).replace('\xa0', ' ')
-    txt = re.sub(r'</?(?:p|div|br)[^>]*>', '\n', txt, flags=re.IGNORECASE)
 
-    # Padrao que encontra rotulos delimitados por <b> ou <strong>
-    padrao = r'<(?:b|strong)>\s*(\d+\)\s*[^<]+?)\s*</(?:b|strong)>\s*:?'
-    partes = re.split(padrao, txt, flags=re.IGNORECASE)
+    try:
+        txt = html.unescape(conteudo_html).replace('\xa0', ' ')
+        txt = re.sub(r'</?(?:p|div|br)[^>]*>', '\n', txt, flags=re.IGNORECASE)
 
-    campos = {}
-    if len(partes) > 1:
-        for i in range(1, len(partes), 2):
-            rotulo_bruto = partes[i].strip()
-            rotulo = re.sub(r'^\d+\)\s*', '', rotulo_bruto).rstrip(':').strip()
-            valor_bruto = partes[i+1] if i+1 < len(partes) else ''
-            valor_limpo = re.sub(r'<[^>]+>', '', valor_bruto)
-            linhas = [l.strip() for l in valor_limpo.splitlines() if l.strip() and l.strip() != ':']
-            valor_final = ' '.join(linhas).strip()
-            if rotulo and valor_final:
-                campos[rotulo] = valor_final
+        # Padrao que encontra rotulos delimitados por <b> ou <strong> (ex: <b>1) Campo</b>)
+        padrao = r'<(?:b|strong)>\s*(\d+\)\s*[^<]+?)\s*</(?:b|strong)>\s*:?'
+        partes = re.split(padrao, txt, flags=re.IGNORECASE)
 
-    # Fallback para formato legado caso nada seja capturado
-    if not campos:
-        padrao_legado = r'<(?:b|strong)>\s*(?:(\d+\)\s*)?([^<:]+)\s*</(?:b|strong)>\s*:\s*([^<\n\r]+)'
-        matches = re.findall(padrao_legado, txt, flags=re.IGNORECASE)
-        for _, k, v in matches:
-            k_clean = k.strip()
-            v_clean = re.sub(r'<[^>]+>', '', v).strip()
-            if v_clean:
-                campos[k_clean] = v_clean
+        campos = {}
+        if len(partes) > 1:
+            for i in range(1, len(partes), 2):
+                rotulo_bruto = partes[i].strip()
+                rotulo = re.sub(r'^\d+\)\s*', '', rotulo_bruto).rstrip(':').strip()
+                valor_bruto = partes[i+1] if i+1 < len(partes) else ''
+                valor_limpo = re.sub(r'<[^>]+>', '', valor_bruto)
+                linhas = [l.strip() for l in valor_limpo.splitlines() if l.strip() and l.strip() != ':']
+                valor_final = ' '.join(linhas).strip()
+                if rotulo and valor_final:
+                    campos[rotulo] = valor_final
 
-    return campos
+        # Fallback para formato legado ou sem numeracao caso nada seja capturado
+        if not campos:
+            padrao_legado = r'<(?:b|strong)>\s*(?:(\d+\))\s*)?([^<:]+)\s*</(?:b|strong)>\s*:\s*([^<\n\r]+)'
+            matches = re.findall(padrao_legado, txt, flags=re.IGNORECASE)
+            for _, k, v in matches:
+                k_clean = k.strip()
+                v_clean = re.sub(r'<[^>]+>', '', v).strip()
+                if v_clean:
+                    campos[k_clean] = v_clean
+
+        return campos
+    except Exception as err:
+        logger.warning(f"Aviso ao analisar campos de formulário HTML: {err}")
+        return {}
 
 
 def _extrair_solicitante(ticket: dict) -> str:

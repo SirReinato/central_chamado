@@ -175,13 +175,13 @@ class EmailService:
             <title>Cancelamento de Nota Fiscal - GLPI #{chamado_glpi_id}</title>
         </head>
         <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: Arial, Helvetica, sans-serif; color: #1e293b;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f1f5f9; padding: 25px 10px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f1f5f9" style="background-color: #f1f5f9; padding: 25px 10px;">
                 <tr>
                     <td align="center">
-                        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden;">
+                        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; border: 1px solid #cbd5e1; overflow: hidden;">
                             <!-- Header com Fundo Vermelho Escuro e Texto Branco Visivel -->
                             <tr>
-                                <td style="background-color: #991b1b; padding: 24px; text-align: left;">
+                                <td bgcolor="#991b1b" style="background-color: #991b1b; padding: 24px; text-align: left;">
                                     <span style="display: inline-block; background-color: #b91c1c; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
                                         Aprovação Obrigatória
                                     </span>
