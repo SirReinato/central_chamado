@@ -2271,4 +2271,197 @@ body.no-sidebar .appMainWrapper {
     background: rgba(248, 113, 113, 0.3);
     color: #ffffff;
     transform: translateY(-1px);
-}
+}
+
+/* =============================================================
+   OTIMIZAÇÕES RESPONSIVAS DA BASE DE CONHECIMENTO (MOBILE)
+   ============================================================= */
+
+@media (max-width: 768px) {
+    /* Redução de padding do container geral no mobile para melhor aproveitamento de tela */
+    .containerPadrao {
+        padding: 12px 10px;
+    }
+
+    /* Hero da Base de Conhecimento */
+    .kbHeroContainer {
+        padding: 16px 14px;
+        border-radius: 14px;
+        margin-bottom: 0.85rem !important;
+    }
+
+    .kbHeroTitle {
+        font-size: 1.35rem !important;
+        line-height: 1.25 !important;
+        margin-bottom: 4px !important;
+    }
+
+    .kbHeroActions {
+        margin-top: 4px;
+    }
+
+    .kbHeroActions .btn {
+        padding: 5px 10px;
+        font-size: 0.78rem;
+    }
+
+    .kbSearchInput {
+        height: 42px !important;
+        font-size: 0.86rem !important;
+        padding-left: 40px !important;
+        border-radius: 10px !important;
+    }
+
+    .kbSearchIcon {
+        left: 14px;
+        font-size: 0.95rem;
+    }
+
+    /* Chips de Categorias */
+    .kbCategoryChips {
+        gap: 6px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Oculta scrollbar feia no mobile */
+    }
+
+    .kbCategoryChips::-webkit-scrollbar {
+        display: none;
+    }
+
+    .kbCategoryChip {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        border-radius: 14px;
+        gap: 6px;
+    }
+
+    /* Barra de Controle de Artigos */
+    .kbControlBar {
+        padding: 8px 10px !important;
+        margin-bottom: 0.85rem !important;
+        border-radius: 10px !important;
+    }
+
+    /* Cards de Artigos */
+    .cardKbItem {
+        padding: 14px 14px;
+        border-radius: 14px;
+    }
+
+    .cardKbTitulo {
+        font-size: 0.98rem;
+        margin-bottom: 6px;
+    }
+
+    .cardKbResumo {
+        font-size: 0.82rem;
+        margin-bottom: 12px;
+        -webkit-line-clamp: 2;
+    }
+
+    .cardKbListaItem {
+        padding: 12px 12px;
+        border-radius: 10px;
+        gap: 10px;
+    }
+
+    /* Visualização do Artigo */
+    .kbArticleContainer {
+        padding: 16px 12px;
+        border-radius: 14px;
+    }
+
+    .kbArticleHeader {
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+    }
+
+    .kbArticleTitle {
+        font-size: 1.35rem !important;
+        line-height: 1.25 !important;
+    }
+
+    .kbArticleLead {
+        font-size: 0.92rem !important;
+        line-height: 1.5 !important;
+        margin-bottom: 10px !important;
+    }
+
+    /* Markdown dentro do Artigo no mobile */
+    .kbMarkdownContent {
+        font-size: 0.92rem;
+        line-height: 1.65;
+    }
+
+    .kbMarkdownContent h1 { font-size: 1.3rem; margin-top: 1.4rem; margin-bottom: 0.65rem; }
+    .kbMarkdownContent h2 { font-size: 1.15rem; margin-top: 1.2rem; margin-bottom: 0.55rem; }
+    .kbMarkdownContent h3 { font-size: 1.02rem; margin-top: 1rem; margin-bottom: 0.45rem; }
+
+    .kbMarkdownContent p {
+        margin-bottom: 0.9rem;
+    }
+
+    .kbMarkdownContent ul,
+    .kbMarkdownContent ol {
+        margin-bottom: 1rem;
+        padding-left: 18px;
+    }
+
+    .kbMarkdownContent pre {
+        padding: 12px 10px;
+        margin: 1rem 0;
+        border-radius: 8px;
+        font-size: 0.82rem;
+    }
+
+    .kbMarkdownContent table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 1rem 0;
+        font-size: 0.82rem;
+    }
+
+    .kbMarkdownContent th,
+    .kbMarkdownContent td {
+        padding: 6px 10px;
+    }
+
+    /* Sumário Mobile Retrátil */
+    .kbMobileTocWrapper .tocNav .toc ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 0;
+    }
+
+    .kbMobileTocWrapper .tocNav .toc ul ul {
+        padding-left: 12px;
+    }
+
+    .kbMobileTocWrapper .tocNav .toc a {
+        color: var(--cor-texto-secundario);
+        text-decoration: none;
+        font-size: 0.82rem;
+        display: block;
+        padding: 3px 0;
+    }
+
+    .kbMobileTocWrapper .tocNav .toc a:hover {
+        color: var(--cor-dourado);
+    }
+
+    /* Feedback box no mobile */
+    .kbFeedbackBox {
+        padding: 16px 12px;
+        margin-top: 24px;
+        border-radius: 12px;
+    }
+
+    .btnFeedbackKb {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+        justify-content: center;
+    }
+}
+

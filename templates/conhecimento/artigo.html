@@ -4,10 +4,10 @@
 <div class="containerPadrao">
 
     <!-- =============================================================
-         1. BREADCRUMB & BARRA DE AÇÕES SUPERIOR
+         1. BREADCRUMB & BARRA DE AÇÕES SUPERIOR (OTIMIZADO MOBILE)
          ============================================================= -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <nav aria-label="breadcrumb">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 mb-md-4 kbTopActionBar">
+        <nav aria-label="breadcrumb" class="d-none d-md-block flex-grow-1 min-w-0">
             <ol class="breadcrumb mb-0 small">
                 <li class="breadcrumb-item">
                     <a href="{{ url_for('conhecimento.index') }}" class="text-decoration-none text-tema-secundario">
@@ -25,28 +25,37 @@
             </ol>
         </nav>
 
-        <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-sm botaoSecundario" id="btnCopiarLinkArtigo" title="Copiar link permanente">
-                <i class="bi bi-link-45deg me-1"></i> Copiar Link
-            </button>
-            <button type="button" class="btn btn-sm botaoSecundario d-none d-sm-inline-flex" onclick="window.print()" title="Imprimir / Exportar PDF">
-                <i class="bi bi-printer me-1"></i> Imprimir
-            </button>
-            {% if current_user.is_admin %}
-            <a href="{{ url_for('conhecimento.editar_artigo', artigo_id=artigo.id) }}" class="btn btn-sm botaoPrimario" title="Editar este artigo">
-                <i class="bi bi-pencil-square me-1"></i> Editar Artigo
+        <!-- Barra de Botões de Ação do Artigo (Fluida e Compacta) -->
+        <div class="d-flex align-items-center justify-content-between justify-content-md-end w-100 w-md-auto gap-2">
+            <a href="{{ url_for('conhecimento.index', categoria=artigo.categoria.slug) }}" class="btn btn-sm botaoSecundario d-inline-flex align-items-center gap-1" title="Voltar para a categoria">
+                <i class="bi bi-arrow-left"></i>
+                <span>Voltar</span>
             </a>
-            {% endif %}
-            <a href="{{ url_for('conhecimento.index') }}" class="btn btn-sm botaoSecundario" title="Voltar para a lista">
-                <i class="bi bi-arrow-left me-1"></i> Voltar
-            </a>
+            
+            <div class="d-flex align-items-center gap-1 ms-auto">
+                <button type="button" class="btn btn-sm botaoSecundario d-inline-flex align-items-center gap-1" id="btnCopiarLinkArtigo" title="Copiar link permanente">
+                    <i class="bi bi-link-45deg"></i>
+                    <span class="d-none d-sm-inline">Copiar Link</span>
+                    <span class="d-sm-none">Link</span>
+                </button>
+                <button type="button" class="btn btn-sm botaoSecundario d-none d-sm-inline-flex align-items-center gap-1" onclick="window.print()" title="Imprimir / Exportar PDF">
+                    <i class="bi bi-printer"></i>
+                    <span>Imprimir</span>
+                </button>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('conhecimento.editar_artigo', artigo_id=artigo.id) }}" class="btn btn-sm botaoPrimario d-inline-flex align-items-center gap-1" title="Editar este artigo">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Editar</span>
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
     <!-- =============================================================
          2. CORPO DO ARTIGO (DUAS COLUNAS: CONTEÚDO + NAVEGAÇÃO LATERAL)
          ============================================================= -->
-    <div class="row g-4">
+    <div class="row g-3 g-lg-4">
         
         <!-- Coluna Principal do Artigo -->
         <div class="col-lg-8 col-xl-9">
@@ -54,36 +63,37 @@
                 
                 <!-- Cabeçalho do Artigo -->
                 <header class="kbArticleHeader">
-                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 mb-2 mb-md-3 flex-wrap">
                         <span class="cardKbCategoriaBadge">
                             <i class="bi {{ artigo.categoria.icone or 'bi-folder' }} me-1"></i>
                             {{ artigo.categoria.nome }}
                         </span>
                         <span class="cardKbReadingTime">
-                            <i class="bi bi-clock"></i> Tempo de leitura: {{ artigo.tempo_leitura_min }} min
+                            <i class="bi bi-clock"></i> {{ artigo.tempo_leitura_min }} min de leitura
                         </span>
-                        <span class="text-tema-secundario small ms-auto d-flex align-items-center gap-1">
-                            <i class="bi bi-eye"></i> {{ artigo.visualizacoes }} visualizações
+                        <span class="text-tema-secundario small ms-auto d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-eye"></i> {{ artigo.visualizacoes }} views
                         </span>
                     </div>
 
-                    <h1 class="tituloPrincipal mb-3" style="font-size: 2rem; line-height: 1.3;">
+                    <h1 class="tituloPrincipal mb-2 mb-md-3 kbArticleTitle">
                         {{ artigo.titulo }}
                     </h1>
 
-                    {% if artigo.resumo %}
-                    <p class="lead text-tema-secundario mb-3" style="font-size: 1.05rem;">
+                    {# Evita renderizar string literal "None" ou vazia #}
+                    {% if artigo.resumo and artigo.resumo.strip() and artigo.resumo.strip() != 'None' and artigo.resumo.strip() != 'null' %}
+                    <p class="lead text-tema-secundario mb-2 mb-md-3 kbArticleLead">
                         {{ artigo.resumo }}
                     </p>
                     {% endif %}
 
                     <!-- Metadados de Autoria e Atualização -->
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top" 
-                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.85rem;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 pt-md-3 border-top" 
+                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.78rem;">
                         <div class="text-tema-secundario">
-                            <span>Publicado por: <strong class="text-tema">{{ artigo.autor.nome or 'Equipe Técnica Brasfort' }}</strong></span>
-                            <span class="mx-2">•</span>
-                            <span>Atualizado em: <strong class="text-tema">{{ artigo.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</strong></span>
+                            <span>Por: <strong class="text-tema">{{ artigo.autor.nome or 'Equipe Técnica Brasfort' }}</strong></span>
+                            <span class="mx-1">•</span>
+                            <span>{{ artigo.data_atualizacao.strftime('%d/%m/%Y às %H:%M') }}</span>
                         </div>
 
                         {% if artigo.tags %}
@@ -98,6 +108,27 @@
                     </div>
                 </header>
 
+                <!-- Sumário Mobile Retrátil (Visível apenas em telas menores que lg quando houver ToC) -->
+                {% if toc_html and toc_html.strip() != '<div class="toc">\n<ul>\n</ul>\n</div>' %}
+                <div class="d-lg-none mb-3">
+                    <div class="kbMobileTocWrapper">
+                        <button class="btn btn-sm w-100 d-flex justify-content-between align-items-center text-tema fw-semibold py-2 px-3" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#collapseMobileToc" aria-expanded="false" aria-controls="collapseMobileToc"
+                                style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--cor-borda); border-radius: 10px;">
+                            <span class="d-flex align-items-center gap-2 text-warning" style="font-size: 0.82rem;">
+                                <i class="bi bi-list-nested"></i> Tópicos / Sumário do Artigo
+                            </span>
+                            <i class="bi bi-chevron-down small text-tema-secundario"></i>
+                        </button>
+                        <div class="collapse mt-2" id="collapseMobileToc">
+                            <div class="p-3 rounded-3 tocNav" style="background: var(--cor-autenticacao); border: 1px solid var(--cor-borda); font-size: 0.82rem;">
+                                {{ toc_html|safe }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Conteúdo Renderizado a partir do Markdown -->
                 <div class="kbMarkdownContent" id="kbConteudoArtigo">
                     {{ conteudo_html|safe }}
@@ -107,20 +138,20 @@
                      3. CAIXA DE AVALIAÇÃO / FEEDBACK (ÚTIL / NÃO ÚTIL)
                      ========================================================= -->
                 <section class="kbFeedbackBox">
-                    <h3 class="h5 fw-bold text-tema mb-2">
+                    <h3 class="h6 fw-bold text-tema mb-1 mb-md-2" style="font-size: 1rem;">
                         Este artigo resolveu o seu problema?
                     </h3>
-                    <p class="text-tema-secundario small mb-4">
+                    <p class="text-tema-secundario small mb-3">
                         Sua avaliação ajuda a equipe de TI a aprimorar nossos tutoriais e procedimentos.
                     </p>
 
-                    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+                    <div class="d-flex justify-content-center align-items-center gap-2 gap-sm-3 flex-wrap">
                         <!-- Formulário de Feedback Útil -->
-                        <form method="POST" action="{{ url_for('conhecimento.feedback_artigo', artigo_id=artigo.id) }}">
+                        <form method="POST" action="{{ url_for('conhecimento.feedback_artigo', artigo_id=artigo.id) }}" class="flex-grow-1 flex-sm-grow-0">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="util" value="1">
-                            <button type="submit" class="btn btnFeedbackKb btnFeedbackSim">
-                                <i class="bi bi-hand-thumbs-up-fill fs-5"></i>
+                            <button type="submit" class="btn btnFeedbackKb btnFeedbackSim w-100">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
                                 <span>Sim, resolveu!</span>
                                 {% if artigo.votos_util > 0 %}
                                 <span class="badge bg-success bg-opacity-50 text-white rounded-pill ms-1">{{ artigo.votos_util }}</span>
@@ -129,8 +160,8 @@
                         </form>
 
                         <!-- Botão Não Resolveu (Abre colapso com campo de melhoria) -->
-                        <button type="button" class="btn btnFeedbackKb btnFeedbackNao" data-bs-toggle="collapse" data-bs-target="#collapseFeedbackNao" aria-expanded="false" aria-controls="collapseFeedbackNao">
-                            <i class="bi bi-hand-thumbs-down-fill fs-5"></i>
+                        <button type="button" class="btn btnFeedbackKb btnFeedbackNao flex-grow-1 flex-sm-grow-0" data-bs-toggle="collapse" data-bs-target="#collapseFeedbackNao" aria-expanded="false" aria-controls="collapseFeedbackNao">
+                            <i class="bi bi-hand-thumbs-down-fill"></i>
                             <span>Não resolveu</span>
                             {% if artigo.votos_inutil > 0 %}
                             <span class="badge bg-danger bg-opacity-50 text-white rounded-pill ms-1">{{ artigo.votos_inutil }}</span>
@@ -139,9 +170,9 @@
                     </div>
 
                     <!-- Colapso para Feedback Negativo com Comentário Construtivo -->
-                    <div class="collapse mt-4 text-start" id="collapseFeedbackNao">
+                    <div class="collapse mt-3 text-start" id="collapseFeedbackNao">
                         <form method="POST" action="{{ url_for('conhecimento.feedback_artigo', artigo_id=artigo.id) }}" 
-                              class="p-3 rounded-3" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--cor-borda);">
+                              class="p-2.5 p-md-3 rounded-3" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--cor-borda);">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="util" value="0">
                             
@@ -150,7 +181,7 @@
                             </label>
                             <textarea name="comentario" id="feedbackComentario" class="form-control mb-3" rows="3" 
                                       placeholder="Ex: O comando não funcionou no Windows 11, o link está desatualizado, etc." 
-                                      style="background: rgba(255, 255, 255, 0.05); color: #fff; border-color: var(--cor-borda);"></textarea>
+                                      style="background: rgba(255, 255, 255, 0.05); color: #fff; border-color: var(--cor-borda); font-size: 0.88rem;"></textarea>
                             
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#collapseFeedbackNao">
@@ -164,12 +195,12 @@
                     </div>
 
                     <!-- Links de Sugestão de Melhoria e Solicitação -->
-                    <div class="d-flex justify-content-center align-items-center gap-4 mt-4 pt-3 border-top" 
-                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.85rem;">
+                    <div class="d-flex justify-content-center align-items-center gap-3 gap-md-4 mt-3 mt-md-4 pt-3 border-top flex-wrap" 
+                         style="border-color: rgba(255, 255, 255, 0.08) !important; font-size: 0.82rem;">
                         <a href="{{ url_for('conhecimento.solicitar_artigo') }}?artigo_origem={{ artigo.id }}" class="text-decoration-none text-tema-secundario hover-dourado">
-                            <i class="bi bi-pencil me-1"></i> Sugerir melhoria neste artigo
+                            <i class="bi bi-pencil me-1"></i> Sugerir melhoria
                         </a>
-                        <span class="text-secondary">•</span>
+                        <span class="text-secondary d-none d-sm-inline">•</span>
                         <a href="{{ url_for('conhecimento.solicitar_artigo') }}" class="text-decoration-none text-tema-secundario hover-dourado">
                             <i class="bi bi-plus-circle me-1"></i> Solicitar novo tutorial
                         </a>
@@ -179,13 +210,13 @@
             </article>
         </div>
 
-        <!-- Coluna Lateral de Apoio (Sumário ToC, Relacionados, Suporte) -->
+        <!-- Coluna Lateral de Apoio (Sumário ToC Desktop, Relacionados, Suporte) -->
         <div class="col-lg-4 col-xl-3">
-            <div class="d-flex flex-column gap-4">
+            <div class="d-flex flex-column gap-3 gap-md-4">
                 
-                <!-- 1. Table of Contents / Sumário Flutuante -->
+                <!-- 1. Table of Contents / Sumário Flutuante Desktop -->
                 {% if toc_html and toc_html.strip() != '<div class="toc">\n<ul>\n</ul>\n</div>' %}
-                <div class="kbTocWrapper">
+                <div class="kbTocWrapper d-none d-lg-block">
                     <div class="kbTocTitle d-flex align-items-center gap-2">
                         <i class="bi bi-list-nested"></i>
                         <span>Nesta Página</span>
@@ -199,7 +230,7 @@
                 <!-- 2. Artigos Relacionados -->
                 {% if artigos_relacionados %}
                 <div class="p-3 rounded-3" style="background: var(--cor-card-1); border: 1px solid var(--cor-borda);">
-                    <div class="d-flex align-items-center gap-2 mb-3 text-warning fw-bold small text-uppercase">
+                    <div class="d-flex align-items-center gap-2 mb-2 mb-md-3 text-warning fw-bold small text-uppercase" style="font-size: 0.78rem;">
                         <i class="bi bi-link-45deg"></i>
                         <span>Artigos Relacionados</span>
                     </div>
@@ -222,10 +253,10 @@
                 {% endif %}
 
                 <!-- 3. Precisa de Ajuda Adicional? -->
-                <div class="p-4 rounded-3 text-center" style="background: rgba(var(--cor-azul-escuro-rgb), 0.5); border: 1px dashed var(--cor-borda);">
-                    <i class="bi bi-headset fs-1 text-warning mb-2 d-inline-block"></i>
-                    <h4 class="h6 fw-bold text-tema mb-2">Não encontrou a solução?</h4>
-                    <p class="text-tema-secundario small mb-3">
+                <div class="p-3 p-md-4 rounded-3 text-center" style="background: rgba(var(--cor-azul-escuro-rgb), 0.5); border: 1px dashed var(--cor-borda);">
+                    <i class="bi bi-headset fs-2 fs-md-1 text-warning mb-2 d-inline-block"></i>
+                    <h4 class="h6 fw-bold text-tema mb-1 mb-md-2" style="font-size: 0.95rem;">Não encontrou a solução?</h4>
+                    <p class="text-tema-secundario small mb-3" style="font-size: 0.82rem;">
                         Nossa equipe técnica de suporte pode te atender diretamente via chamado.
                     </p>
                     <a href="{{ url_for('chamados.novo_chamado') }}" class="btn btn-sm botaoPrimario w-100">
@@ -248,8 +279,8 @@ document.addEventListener('DOMContentLoaded', function() {
     codeBlocks.forEach(function(pre) {
         // Envolve em container se necessário ou adiciona botão
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 py-0 px-2';
-        copyBtn.style.fontSize = '0.75rem';
+        copyBtn.className = 'btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-1 m-md-2 py-0 px-2';
+        copyBtn.style.fontSize = '0.72rem';
         copyBtn.style.zIndex = '5';
         copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
         
@@ -276,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCopiarLink.addEventListener('click', function() {
             navigator.clipboard.writeText(window.location.href).then(function() {
                 const originalHtml = btnCopiarLink.innerHTML;
-                btnCopiarLink.innerHTML = '<i class="bi bi-check2 text-success me-1"></i> Link Copiado!';
+                btnCopiarLink.innerHTML = '<i class="bi bi-check2 text-success me-1"></i> Copiado!';
                 setTimeout(function() {
                     btnCopiarLink.innerHTML = originalHtml;
                 }, 2000);
