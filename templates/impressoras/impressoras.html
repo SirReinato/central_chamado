@@ -20,7 +20,7 @@
         </div>
 
         <!-- AÇÕES -->
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="acoesImpressorasHeader d-flex gap-2 flex-wrap">
 
             <a href="{{ url_for('impressoras.relatorio_paginas_pdf') }}" class="btn botaoSecundario"
                 title="Exportar documento PDF com a contagem de páginas de todas as impressoras">
@@ -75,13 +75,13 @@
     <!-- =====================================================
          RESUMO
          ===================================================== -->
-    <div class="row g-4 mb-4">
+    <div class="row g-2 g-md-4 mb-3 mb-md-4">
 
         <!-- TOTAL -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <a href="{{ url_for('impressoras.index', page=1) }}" class="text-decoration-none d-block cardMetricaLink"
                 title="Ver todas as impressoras">
-                <div class="cardMetrica p-4 d-flex justify-content-between align-items-center">
+                <div class="cardMetrica p-3 p-md-4 d-flex justify-content-between align-items-center">
                     <div>
                         <div class="cardMetricaTitulo">
                             Total de Impressoras
@@ -102,11 +102,11 @@
         </div>
 
         <!-- ONLINE -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <a href="{{ url_for('impressoras.index', page=1, status='online') }}"
                 class="text-decoration-none d-block cardMetricaLink" title="Ir para Página 1: Impressoras Online">
                 <div
-                    class="cardMetrica p-4 d-flex justify-content-between align-items-center {% if pagination.page == 1 %}cardMetricaAtivoOnline{% endif %}">
+                    class="cardMetrica p-3 p-md-4 d-flex justify-content-between align-items-center {% if pagination.page == 1 %}cardMetricaAtivoOnline{% endif %}">
                     <div>
                         <div class="cardMetricaTitulo" style="color: #4ade80;">
                             Monitoramento Ativo
@@ -127,12 +127,12 @@
         </div>
 
         <!-- OFFLINE -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <a href="{{ url_for('impressoras.index', page=2, status='offline') }}"
                 class="text-decoration-none d-block cardMetricaLink"
                 title="Ir para Página 2: Impressoras Offline / Manual">
                 <div
-                    class="cardMetrica p-4 d-flex justify-content-between align-items-center {% if pagination.page == 2 %}cardMetricaAtivoOffline{% endif %}">
+                    class="cardMetrica p-3 p-md-4 d-flex justify-content-between align-items-center {% if pagination.page == 2 %}cardMetricaAtivoOffline{% endif %}">
                     <div>
                         <div class="cardMetricaTitulo" style="color: #fbbf24;">
                             Atenção / Offline
@@ -294,7 +294,7 @@
         </div>
 
         <!-- ABAS DE NAVEGAÇÃO: APENAS 2 PÁGINAS (ONLINE / OFFLINE) -->
-        <div class="px-4 pb-3 pt-2 d-flex justify-content-between align-items-center flex-wrap gap-2 border-top"
+        <div class="px-3 px-md-4 pb-3 pt-2 abasNavegacaoImpressoras d-flex justify-content-between align-items-center flex-wrap gap-2 border-top"
             style="border-color: var(--cor-borda) !important;">
             <div class="btn-group p-1 rounded-pill"
                 style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--cor-borda);">
@@ -315,8 +315,8 @@
             </div>
         </div>
 
-        <!-- TABELA -->
-        <div class="table-responsive">
+        <!-- TABELA (DESKTOP E DISPOSITIVOS LARGOS >= 992px) -->
+        <div class="table-responsive d-none d-lg-block">
 
             <table class="table tabelaPadrao table-hover align-middle mb-0">
 
@@ -496,203 +496,6 @@
                     </tr>
 
 
-                    <!-- ==========================================
-                         MODAL EDITAR / VINCULAR / CONTADOR MANUAL
-                         ========================================== -->
-                    <div class="modal fade" id="modalVincular{{ imp.id }}" tabindex="-1"
-                        aria-labelledby="modalVincularLabel{{ imp.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content modalTema">
-                                <div class="modal-header border-bottom border-secondary">
-                                    <h5 class="modal-title fw-bold text-tema" id="modalVincularLabel{{ imp.id }}">
-                                        <i class="bi bi-pencil-square text-primary me-2"></i>Editar Impressora: {{
-                                        imp.nome }}
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <form method="POST"
-                                    action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="modal-body p-4 text-start">
-
-                                        <!-- DESTAQUE CONTADOR MANUAL DE PÁGINAS -->
-                                        <div class="p-3 rounded mb-4 border border-primary border-opacity-50"
-                                            style="background: rgba(13, 110, 253, 0.08);">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <label class="form-label labelCampo fw-bold text-primary mb-0 fs-6">
-                                                    <i class="bi bi-speedometer2 me-1"></i>Contador Total de Páginas
-                                                    Impressas
-                                                </label>
-                                                <span class="badge bg-primary text-white">Manual / Físico</span>
-                                            </div>
-                                            <div class="input-group mt-2">
-                                                <input type="number" name="paginas_impressas"
-                                                    class="form-control inputPadrao fs-5 fw-bold"
-                                                    value="{{ imp.paginas_impressas or 0 }}" min="0" step="1" required>
-                                                <span class="input-group-text bg-transparent text-tema"
-                                                    style="border-color: var(--cor-borda);">páginas</span>
-                                            </div>
-                                            <small class="text-tema-secundario mt-2 d-block">
-                                                <i class="bi bi-info-circle me-1"></i>Insira a leitura física do visor
-                                                da impressora. Esse contador alimentará diretamente a <strong>Página
-                                                    1</strong> do relatório em PDF e o e-mail oficial.
-                                            </small>
-                                        </div>
-
-                                        <!-- IDENTIFICAÇÃO E NÚMERO DE SÉRIE -->
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Número de Série (Serial)</label>
-                                                <input type="text" name="serial" class="form-control inputPadrao"
-                                                    value="{{ imp.serial or '' }}"
-                                                    placeholder="Ex: D4N714867, K3N553363">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Contato / Responsável</label>
-                                                <input type="text" name="contato" class="form-control inputPadrao"
-                                                    value="{{ imp.contato or '' }}"
-                                                    placeholder="Ex: Robson (61 98111-2098)">
-                                            </div>
-                                        </div>
-
-                                        <!-- LOCALIZAÇÃO -->
-                                        <div class="mb-3">
-                                            <label class="form-label labelCampo">Local Principal (Exibido no
-                                                Relatório)</label>
-                                            <input type="text" name="local" class="form-control inputPadrao"
-                                                value="{{ imp.local or '' }}"
-                                                placeholder="Ex: Luger - Asa Norte, Luger - Taguatinga, Lavanderia Braslav">
-                                            <small class="text-tema-secundario">Define a identificação de local exibida
-                                                no PDF exportado.</small>
-                                        </div>
-
-                                        <div class="row g-3 mb-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Andar / Unidade</label>
-                                                <input type="text" name="andar" class="form-control inputPadrao"
-                                                    value="{{ imp.andar if imp.andar != 'Não Informado' else '' }}"
-                                                    placeholder="Ex: Asa Norte, Taguatinga, Térreo">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Sala / Setor Interno</label>
-                                                <input type="text" name="sala" class="form-control inputPadrao"
-                                                    value="{{ imp.sala if imp.sala != 'Não Informado' else '' }}"
-                                                    placeholder="Ex: Recepção, Administrativo">
-                                            </div>
-                                        </div>
-
-                                        <!-- SUPRIMENTO E STATUS -->
-                                        <div class="row g-3 mb-2">
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Família de Suprimento
-                                                    (Estoque)</label>
-                                                <select name="suprimento_id" class="form-select selectPadrao">
-                                                    <option value="">-- Nenhum / Desvincular --</option>
-                                                    {% for fam in familias %}
-                                                    <option value="{{ fam.id }}" {% if imp.suprimento_id==fam.id
-                                                        %}selected{% endif %}>
-                                                        {{ fam.nome_familia }} (Toner: {{ fam.quantidade_toner }} |
-                                                        Cilindro: {{ fam.quantidade_cilindro }})
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label class="form-label labelCampo">Status no Relatório</label>
-                                                <select name="online" class="form-select selectPadrao">
-                                                    <option value="1" {% if imp.online %}selected{% endif %}>● Ativa /
-                                                        Monitorada (Página 1 do Relatório)</option>
-                                                    <option value="0" {% if not imp.online %}selected{% endif %}>○
-                                                        Desativada / Sem Comunicação (Página 2)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                    <div class="modal-footer border-top border-secondary">
-                                        <button type="button" class="btn botaoSecundario"
-                                            data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn botaoPrimario">
-                                            <i class="bi bi-check2-circle me-1"></i>Salvar Alterações
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- ==========================================
-                         MODAL RETIRAR INSUMO
-                         ========================================== -->
-                    <div class="modal fade" id="modalRetirar{{ imp.id }}" tabindex="-1"
-                        aria-labelledby="modalRetirarLabel{{ imp.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content modalTema">
-                                <div class="modal-header">
-                                    <h5 class="modal-title fw-bold text-tema" id="modalRetirarLabel{{ imp.id }}">
-                                        <i class="bi bi-box-arrow-up-right text-warning me-1"></i> Retirar Insumo: {{
-                                        imp.nome }}
-                                    </h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                {% if imp.suprimento %}
-                                <form method="POST"
-                                    action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="modal-body p-4 text-start">
-                                        <div class="alert alert-info py-2 px-3 mb-3 small" role="alert">
-                                            <strong>Família vinculada:</strong> {{ imp.suprimento.nome_familia }}<br>
-                                            <strong>Estoque disponível:</strong> Toners: {{
-                                            imp.suprimento.quantidade_toner }} | Cilindros: {{
-                                            imp.suprimento.quantidade_cilindro }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label labelCampo">Insumo a ser retirado</label>
-                                            <select name="tipo_insumo" class="form-select selectPadrao" required>
-                                                <option value="toner">Toner (Estoque: {{ imp.suprimento.quantidade_toner
-                                                    }})</option>
-                                                <option value="cilindro">Cilindro (Estoque: {{
-                                                    imp.suprimento.quantidade_cilindro }})</option>
-                                            </select>
-                                        </div>
-                                        <p class="text-tema-secundario small mb-0">
-                                            Ao confirmar, 1 unidade do item selecionado será abatida do estoque e
-                                            registrada no histórico em seu nome.
-                                        </p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn botaoSecundario"
-                                            data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-warning">Confirmar Retirada</button>
-                                    </div>
-                                </form>
-                                {% else %}
-                                <div class="modal-body p-4 text-center">
-                                    <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-3"></i>
-                                    <h6 class="fw-bold text-tema">Impressora sem suprimento vinculado</h6>
-                                    <p class="text-tema-secundario small mb-3">
-                                        Para registrar a retirada de um insumo diretamente por esta tela, vincule
-                                        primeiro esta impressora a uma família de suprimentos.
-                                    </p>
-                                    <button type="button" class="btn botaoPrimario btn-sm" data-bs-dismiss="modal"
-                                        data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}">
-                                        Vincular Agora
-                                    </button>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn botaoSecundario"
-                                        data-bs-dismiss="modal">Fechar</button>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-
                     {% else %}
 
                     <!-- NENHUMA IMPRESSORA -->
@@ -735,6 +538,369 @@
             </table>
 
         </div>
+
+        <!-- =====================================================
+             LISTA EM CARDS (MOBILE / DISPOSITIVOS PEQUENOS < 992px)
+             ===================================================== -->
+        <div class="d-lg-none impressorasCardsMobile px-2 px-sm-3 pb-3 d-flex flex-column gap-3">
+            {% for imp in impressoras %}
+            <div class="cardImpressoraMobile">
+
+                <!-- TOPO: NOME, MODELO, SERIAL E STATUS -->
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="cardImpressoraMobile-nome text-truncate">{{ imp.nome }}</span>
+                            {% if imp.is_virtual %}
+                            <span class="badge badgeVirtual" title="Fila virtual / software (não é impressora física)">
+                                <i class="bi bi-display me-1"></i>Virtual
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap small text-tema-secundario">
+                            {% if imp.modelo %}
+                            <span class="cardImpressoraMobile-modelo">
+                                <i class="bi bi-cpu me-1 opacity-75"></i>{{ imp.modelo }}
+                            </span>
+                            {% endif %}
+                            {% if imp.serial %}
+                            <span class="badge badgeSerial" title="Número de Série">
+                                <i class="bi bi-upc-scan me-1 text-warning opacity-75"></i>S/N: {{ imp.serial }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- STATUS BADGE -->
+                    <div class="flex-shrink-0">
+                        {% if imp.online %}
+                        <span class="badgeStatus badgeStatus--online">
+                            <span class="pontoStatus pontoStatus--online"></span> Online
+                        </span>
+                        {% else %}
+                        <span class="badgeStatus badgeStatus--offline">
+                            <span class="pontoStatus pontoStatus--offline"></span> Offline
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- LINHA IP & LOCALIZAÇÃO -->
+                <div class="cardImpressoraMobile-meta">
+                    <div class="cardImpressoraMobile-metaCol">
+                        <span class="metaLabel"><i class="bi bi-hdd-network me-1"></i>IP / Rede:</span>
+                        {% if imp.ip %}
+                        <a href="http://{{ imp.ip }}" target="_blank" rel="noopener noreferrer" class="ipImpressora ipImpressora--link" title="Acessar interface web da impressora">
+                            <span>{{ imp.ip }}</span>
+                            <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.7rem;"></i>
+                        </a>
+                        {% else %}
+                        <span class="badgeManualIP" title="Equipamento externo / controle manual (sem IP de rede local)">
+                            <i class="bi bi-pencil-fill me-1"></i>Manual
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="cardImpressoraMobile-metaCol">
+                        <span class="metaLabel"><i class="bi bi-geo-alt-fill me-1 text-info"></i>Local:</span>
+                        <div class="metaValor text-truncate" title="Localização">
+                            {% if imp.local and imp.local.strip() %}
+                                {{ imp.local }}
+                            {% elif (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
+                                {{ imp.andar }} - {{ imp.sala }}
+                            {% else %}
+                                <span class="text-secondary opacity-75 fst-italic">Não informado</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAINEL DE NÍVEIS DE SUPRIMENTOS (TONER E CILINDRO) -->
+                <div class="cardImpressoraMobile-suprimentos">
+                    <!-- TONER PRETO -->
+                    <div class="suprimentoNivelItem">
+                        <div class="d-flex justify-content-between align-items-center mb-1 small">
+                            <span class="suprimentoLabel">
+                                <i class="bi bi-droplet-fill me-1 text-info"></i>Toner
+                            </span>
+                            {% if imp.toner_preto is not none %}
+                            <span class="badgeNivel {% if imp.toner_preto <= 15 %}badgeNivel--critico{% elif imp.toner_preto <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                {{ imp.toner_preto }}%
+                            </span>
+                            {% else %}
+                            <span class="text-secondary opacity-50 small">—</span>
+                            {% endif %}
+                        </div>
+                        {% if imp.toner_preto is not none %}
+                        <div class="barraProgressoInsumo">
+                            <div class="barraProgressoInsumoFill {% if imp.toner_preto <= 15 %}barra--critico{% elif imp.toner_preto <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
+                                style="width: {{ [imp.toner_preto, 100]|min }}%;"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- CILINDRO / DRUM (SE HOUVER) -->
+                    {% if imp.cilindro is not none %}
+                    <div class="suprimentoNivelItem mt-2 pt-2 border-top border-secondary border-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center mb-1 small">
+                            <span class="suprimentoLabel">
+                                <i class="bi bi-disc-fill me-1 text-warning"></i>Cilindro (Drum)
+                            </span>
+                            <span class="badgeNivel {% if imp.cilindro <= 15 %}badgeNivel--critico{% elif imp.cilindro <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                {{ imp.cilindro }}%
+                            </span>
+                        </div>
+                        <div class="barraProgressoInsumo">
+                            <div class="barraProgressoInsumoFill {% if imp.cilindro <= 15 %}barra--critico{% elif imp.cilindro <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
+                                style="width: {{ [imp.cilindro, 100]|min }}%;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- FAMÍLIA DE SUPRIMENTO & CONTADOR / ÚLTIMO CHECK -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pt-2 border-top border-secondary border-opacity-25 small">
+                    <div>
+                        {% if imp.suprimento %}
+                        <span class="badgeSuprimento" title="Toner em Estoque: {{ imp.suprimento.quantidade_toner }} | Cilindro em Estoque: {{ imp.suprimento.quantidade_cilindro }}">
+                            <i class="bi bi-box-seam me-1 text-info"></i>{{ imp.suprimento.nome_familia }}
+                        </span>
+                        {% else %}
+                        <span class="badgeSemVinculo" title="Nenhuma família de suprimento vinculada a esta impressora">
+                            <i class="bi bi-dash-circle me-1 opacity-50"></i>Sem vínculo
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        {% if imp.paginas_impressas is not none and imp.paginas_impressas > 0 %}
+                        <div class="badgeContador" title="Contador total de páginas impressas">
+                            <i class="bi bi-speedometer2 text-warning me-1"></i>
+                            <strong>{{ "{:,}".format(imp.paginas_impressas).replace(',', '.') }}</strong>
+                            <span class="small opacity-75 ms-1">págs</span>
+                        </div>
+                        {% endif %}
+
+                        <span class="ultimaVerificacao small" title="Última checagem">
+                            <i class="bi bi-clock me-1"></i>{{ imp.ultimo_check.strftime('%d/%m %H:%M') if imp.ultimo_check else '—' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- AÇÕES DO CARD TOUCH-FRIENDLY -->
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn botaoSecundario btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2"
+                        data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}"
+                        title="Editar localização, suprimento e contador manual de páginas">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                        <span>Editar / Contador</span>
+                    </button>
+
+                    <button type="button" class="btn btn-warning btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 text-dark fw-bold"
+                        data-bs-toggle="modal" data-bs-target="#modalRetirar{{ imp.id }}"
+                        title="Retirar Insumo de Estoque">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Retirar Insumo</span>
+                    </button>
+                </div>
+
+            </div>
+            {% else %}
+            <!-- NENHUMA IMPRESSORA (CARD MOBILE) -->
+            <div class="cardPadrao text-center py-5 px-3">
+                <i class="bi bi-printer text-tema-secundario fs-1 d-block mb-2"></i>
+                <h5 class="tituloTabela mb-1">
+                    Nenhuma impressora {{ pagination.status_nome|lower }} encontrada.
+                </h5>
+                <p class="text-tema-secundario small mb-3">
+                    Não há impressoras com status {{ pagination.status_nome|lower }} correspondentes aos filtros selecionados.
+                </p>
+                {% if pagination.page == 1 and pagination.total_offline > 0 %}
+                <a href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                    class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                    <i class="bi bi-arrow-right-circle me-1"></i> Ver Página 2: Offline / Manual ({{ pagination.total_offline }} itens)
+                </a>
+                {% elif pagination.page == 2 and pagination.total_online > 0 %}
+                <a href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                    class="btn btn-sm btn-outline-success rounded-pill px-3">
+                    <i class="bi bi-arrow-left-circle me-1"></i> Ver Página 1: Online ({{ pagination.total_online }} itens)
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- =====================================================
+             MODAIS DE IMPRESSORAS (COMPARTILHADOS: DESKTOP & MOBILE)
+             ===================================================== -->
+        {% for imp in impressoras %}
+
+        <!-- MODAL EDITAR / VINCULAR / CONTADOR MANUAL -->
+        <div class="modal fade" id="modalVincular{{ imp.id }}" tabindex="-1"
+            aria-labelledby="modalVincularLabel{{ imp.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content modalTema">
+                    <div class="modal-header border-bottom border-secondary">
+                        <h5 class="modal-title fw-bold text-tema" id="modalVincularLabel{{ imp.id }}">
+                            <i class="bi bi-pencil-square text-primary me-2"></i>Editar Impressora: {{ imp.nome }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{{ url_for('impressoras.vincular_impressora', impressora_id=imp.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="modal-body p-4 text-start">
+
+                            <!-- DESTAQUE CONTADOR MANUAL DE PÁGINAS -->
+                            <div class="p-3 rounded mb-4 border border-primary border-opacity-50"
+                                style="background: rgba(13, 110, 253, 0.08);">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label labelCampo fw-bold text-primary mb-0 fs-6">
+                                        <i class="bi bi-speedometer2 me-1"></i>Contador Total de Páginas Impressas
+                                    </label>
+                                    <span class="badge bg-primary text-white">Manual / Físico</span>
+                                </div>
+                                <div class="input-group mt-2">
+                                    <input type="number" name="paginas_impressas"
+                                        class="form-control inputPadrao fs-5 fw-bold"
+                                        value="{{ imp.paginas_impressas or 0 }}" min="0" step="1" required>
+                                    <span class="input-group-text bg-transparent text-tema"
+                                        style="border-color: var(--cor-borda);">páginas</span>
+                                </div>
+                                <small class="text-tema-secundario mt-2 d-block">
+                                    <i class="bi bi-info-circle me-1"></i>Insira a leitura física do visor da impressora. Esse contador alimentará diretamente a <strong>Página 1</strong> do relatório em PDF e o e-mail oficial.
+                                </small>
+                            </div>
+
+                            <!-- IDENTIFICAÇÃO E NÚMERO DE SÉRIE -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Número de Série (Serial)</label>
+                                    <input type="text" name="serial" class="form-control inputPadrao"
+                                        value="{{ imp.serial or '' }}" placeholder="Ex: D4N714867, K3N553363">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Contato / Responsável</label>
+                                    <input type="text" name="contato" class="form-control inputPadrao"
+                                        value="{{ imp.contato or '' }}" placeholder="Ex: Robson (61 98111-2098)">
+                                </div>
+                            </div>
+
+                            <!-- LOCALIZAÇÃO -->
+                            <div class="mb-3">
+                                <label class="form-label labelCampo">Local Principal (Exibido no Relatório)</label>
+                                <input type="text" name="local" class="form-control inputPadrao"
+                                    value="{{ imp.local or '' }}"
+                                    placeholder="Ex: Luger - Asa Norte, Luger - Taguatinga, Lavanderia Braslav">
+                                <small class="text-tema-secundario">Define a identificação de local exibida no PDF exportado.</small>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Andar / Unidade</label>
+                                    <input type="text" name="andar" class="form-control inputPadrao"
+                                        value="{{ imp.andar if imp.andar != 'Não Informado' else '' }}"
+                                        placeholder="Ex: Asa Norte, Taguatinga, Térreo">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Sala / Setor Interno</label>
+                                    <input type="text" name="sala" class="form-control inputPadrao"
+                                        value="{{ imp.sala if imp.sala != 'Não Informado' else '' }}"
+                                        placeholder="Ex: Recepção, Administrativo">
+                                </div>
+                            </div>
+
+                            <!-- SUPRIMENTO E STATUS -->
+                            <div class="row g-3 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Família de Suprimento (Estoque)</label>
+                                    <select name="suprimento_id" class="form-select selectPadrao">
+                                        <option value="">-- Nenhum / Desvincular --</option>
+                                        {% for fam in familias %}
+                                        <option value="{{ fam.id }}" {% if imp.suprimento_id==fam.id %}selected{% endif %}>
+                                            {{ fam.nome_familia }} (Toner: {{ fam.quantidade_toner }} | Cilindro: {{ fam.quantidade_cilindro }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label labelCampo">Status no Relatório</label>
+                                    <select name="online" class="form-select selectPadrao">
+                                        <option value="1" {% if imp.online %}selected{% endif %}>● Ativa / Monitorada (Página 1 do Relatório)</option>
+                                        <option value="0" {% if not imp.online %}selected{% endif %}>○ Desativada / Sem Comunicação (Página 2)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer border-top border-secondary">
+                            <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn botaoPrimario">
+                                <i class="bi bi-check2-circle me-1"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL RETIRAR INSUMO -->
+        <div class="modal fade" id="modalRetirar{{ imp.id }}" tabindex="-1"
+            aria-labelledby="modalRetirarLabel{{ imp.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modalTema">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold text-tema" id="modalRetirarLabel{{ imp.id }}">
+                            <i class="bi bi-box-arrow-up-right text-warning me-1"></i> Retirar Insumo: {{ imp.nome }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    {% if imp.suprimento %}
+                    <form method="POST" action="{{ url_for('impressoras.retirar_insumo', impressora_id=imp.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="modal-body p-4 text-start">
+                            <div class="alert alert-info py-2 px-3 mb-3 small" role="alert">
+                                <strong>Família vinculada:</strong> {{ imp.suprimento.nome_familia }}<br>
+                                <strong>Estoque disponível:</strong> Toners: {{ imp.suprimento.quantidade_toner }} | Cilindros: {{ imp.suprimento.quantidade_cilindro }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label labelCampo">Insumo a ser retirado</label>
+                                <select name="tipo_insumo" class="form-select selectPadrao" required>
+                                    <option value="toner">Toner (Estoque: {{ imp.suprimento.quantidade_toner }})</option>
+                                    <option value="cilindro">Cilindro (Estoque: {{ imp.suprimento.quantidade_cilindro }})</option>
+                                </select>
+                            </div>
+                            <p class="text-tema-secundario small mb-0">
+                                Ao confirmar, 1 unidade do item selecionado será abatida do estoque e registrada no histórico em seu nome.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-warning">Confirmar Retirada</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <div class="modal-body p-4 text-center">
+                        <i class="bi bi-exclamation-triangle text-warning fs-1 d-block mb-3"></i>
+                        <h6 class="fw-bold text-tema">Impressora sem suprimento vinculado</h6>
+                        <p class="text-tema-secundario small mb-3">
+                            Para registrar a retirada de um insumo diretamente por esta tela, vincule primeiro esta impressora a uma família de suprimentos.
+                        </p>
+                        <button type="button" class="btn botaoPrimario btn-sm" data-bs-dismiss="modal"
+                            data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}">
+                            Vincular Agora
+                        </button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% endfor %}
 
         <!-- RODAPÉ DE PAGINAÇÃO: EXATAMENTE 2 PÁGINAS (ONLINE / OFFLINE) -->
         {% if pagination and pagination.total > 0 %}
