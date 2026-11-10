@@ -58,3 +58,21 @@
 
 3. **`static/css/global.css`**:
    - Criação de bloco completo e dedicado de regras responsivas sob `@media (max-width: 768px)` e `@media (max-width: 576px)`.
+
+---
+
+## Status Final da Execução (DoD Validado)
+
+| Issue | Escopo | Status |
+| :--- | :--- | :--- |
+| **SIR-76** | Otimização do Hero e Listagem de Artigos (`index.html`) | ✅ Concluído (Done) |
+| **SIR-77** | Layout de Leitura, Sumário Retrátil e Correção do `"None"` (`artigo.html`) | ✅ Concluído (Done) |
+| **SIR-78** | Regras Responsivas Avançadas em `global.css` (<768px e <576px) | ✅ Concluído (Done) |
+| **SIR-79** | Rastreabilidade no `AGENTS.md`, Sincronização Graphify e Git Push | ✅ Concluído (Done) |
+
+### Resultados Obtidos:
+- **Área útil de visualização no `index.html`**: Redução de ~140px de altura no cabeçalho. Artigos agora aparecem imediatamente no primeiro terço da tela do smartphone.
+- **Área de leitura no `artigo.html`**: Ganho de +50px de largura útil (padding reduzido de 40px para 10-12px em telas estreitas).
+- **Bug do `"None"`**: 100% eliminado em artigos com resumo nulo/vazio.
+- **Sumário Mobile**: Adicionado accordion colapsável para saltos rápidos no conteúdo longo.
+
