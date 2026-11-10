@@ -2464,4 +2464,63 @@ body.no-sidebar .appMainWrapper {
         justify-content: center;
     }
 }
+
+/* Telas Ultra-Compactas (Smartphones estreitos < 576px) */
+@media (max-width: 576px) {
+    .containerPadrao {
+        padding: 10px 8px;
+    }
+
+    .kbHeroContainer {
+        padding: 14px 12px;
+        border-radius: 12px;
+    }
+
+    .kbHeroTitle {
+        font-size: 1.22rem !important;
+    }
+
+    .kbHeroActions {
+        gap: 4px;
+    }
+
+    .kbHeroActions .btn {
+        padding: 4px 8px;
+        font-size: 0.74rem;
+    }
+
+    .cardKbItem {
+        padding: 12px 10px;
+        border-radius: 12px;
+    }
+
+    .cardKbCategoriaBadge {
+        font-size: 0.68rem;
+        padding: 2px 7px;
+    }
+
+    .cardKbTitulo {
+        font-size: 0.92rem;
+    }
+
+    .kbArticleContainer {
+        padding: 14px 10px;
+        border-radius: 12px;
+    }
+
+    .kbArticleTitle {
+        font-size: 1.22rem !important;
+    }
+
+    .kbTopActionBar .btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    .kbMarkdownContent pre {
+        padding: 10px 8px;
+        border-radius: 6px;
+    }
+}
+
 
