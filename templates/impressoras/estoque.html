@@ -208,17 +208,19 @@
 
                     <!-- Modal: Repor Estoque -->
                     <div class="modal fade" id="modalAdicionar{{ fam.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content bg-dark text-white border-secondary">
-                                <div class="modal-header border-secondary">
-                                    <h5 class="modal-title">Repor Estoque: {{ fam.nome_familia }}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content modalTema">
+                                <div class="modal-header border-bottom border-secondary">
+                                    <h5 class="modal-title fw-bold text-tema">
+                                        <i class="bi bi-plus-circle text-primary me-2"></i>Repor Estoque: {{ fam.nome_familia }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
                                 <form action="{{ url_for('impressoras.adicionar_estoque', familia_id=fam.id) }}"
                                     method="POST">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="modal-body">
+                                    <div class="modal-body p-4 text-start">
                                         <div class="mb-3">
                                             <label class="form-label labelCampo">Adicionar Toners (Qtd a somar)</label>
                                             <input type="number" class="form-control inputPadrao" name="toner_add"
@@ -231,7 +233,7 @@
                                                 value="0" min="0">
                                         </div>
                                     </div>
-                                    <div class="modal-footer border-secondary">
+                                    <div class="modal-footer border-top border-secondary">
                                         <button type="button" class="btn botaoSecundario"
                                             data-bs-dismiss="modal">Cancelar</button>
                                         <button type="submit" class="btn botaoPrimario">Salvar Entrada</button>
@@ -243,17 +245,19 @@
 
                     <!-- Modal: Ajuste Manual -->
                     <div class="modal fade" id="modalAjustar{{ fam.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content bg-dark text-white border-secondary">
-                                <div class="modal-header border-secondary">
-                                    <h5 class="modal-title">Ajuste Manual: {{ fam.nome_familia }}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content modalTema">
+                                <div class="modal-header border-bottom border-secondary">
+                                    <h5 class="modal-title fw-bold text-tema">
+                                        <i class="bi bi-sliders text-warning me-2"></i>Ajuste Manual: {{ fam.nome_familia }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
                                 <form action="{{ url_for('impressoras.ajustar_estoque', familia_id=fam.id) }}"
                                     method="POST">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="modal-body">
+                                    <div class="modal-body p-4 text-start">
                                         <div class="mb-3">
                                             <label class="form-label labelCampo">Insumo</label>
                                             <select class="form-select selectPadrao" name="tipo_insumo" required>
@@ -295,7 +299,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="modal-footer border-secondary">
+                                    <div class="modal-footer border-top border-secondary">
                                         <button type="button" class="btn botaoSecundario"
                                             data-bs-dismiss="modal">Cancelar</button>
                                         <button type="submit" class="btn botaoPrimario">Confirmar Ajuste</button>
@@ -308,22 +312,22 @@
 
                     <!-- Modal: Impressoras da Família -->
                     <div class="modal fade" id="modalImpressorasFamilia" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content bg-dark text-white border-secondary">
-                                <div class="modal-header border-secondary">
-                                    <h5 class="modal-title" id="modalImpressorasTitulo">
-                                        <i class="bi bi-printer me-2"></i>Impressoras da Família
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content modalTema">
+                                <div class="modal-header border-bottom border-secondary">
+                                    <h5 class="modal-title fw-bold text-tema" id="modalImpressorasTitulo">
+                                        <i class="bi bi-printer text-info me-2"></i>Impressoras da Família
                                     </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body" id="modalImpressorasCorpo">
+                                <div class="modal-body p-4" id="modalImpressorasCorpo">
                                     <div class="text-center text-muted py-4">
                                         <div class="spinner-border text-info" role="status"></div>
                                         <div class="mt-2">Carregando impressoras...</div>
                                     </div>
                                 </div>
-                                <div class="modal-footer border-secondary">
+                                <div class="modal-footer border-top border-secondary">
                                     <button type="button" class="btn botaoSecundario" data-bs-dismiss="modal">Fechar</button>
                                 </div>
                             </div>
