@@ -158,7 +158,21 @@
     <!-- =====================================================
          MONITORAMENTO
          ===================================================== -->
-    <div class="cardPadrao mb-4">
+    <div class="cardPadrao mb-4 modo-visualizacao-lista" id="containerMonitoramentoImpressoras">
+        <script>
+            (function() {
+                try {
+                    var m = localStorage.getItem("hub_impressoras_view_mode");
+                    if (m === "cards") {
+                        var el = document.getElementById("containerMonitoramentoImpressoras");
+                        if (el) {
+                            el.classList.remove("modo-visualizacao-lista");
+                            el.classList.add("modo-visualizacao-cards");
+                        }
+                    }
+                } catch(e) {}
+            })();
+        </script>
 
         <!-- card para ir ao esotque -->
         <div class="barraDestaque"></div>
@@ -293,7 +307,7 @@
             </form>
         </div>
 
-        <!-- ABAS DE NAVEGAÇÃO: APENAS 2 PÁGINAS (ONLINE / OFFLINE) -->
+        <!-- ABAS DE NAVEGAÇÃO: APENAS 2 PÁGINAS (ONLINE / OFFLINE) E SELETOR DE VISUALIZAÇÃO -->
         <div class="px-3 px-md-4 pb-3 pt-2 abasNavegacaoImpressoras d-flex justify-content-between align-items-center flex-wrap gap-2 border-top"
             style="border-color: var(--cor-borda) !important;">
             <div class="btn-group p-1 rounded-pill"
@@ -310,13 +324,28 @@
                 </a>
             </div>
 
-            <div class="text-tema-secundario small">
-                Exibindo: <strong>{{ pagination.status_nome }}</strong> ({{ impressoras|length }} equipamentos)
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="text-tema-secundario small">
+                    Exibindo: <strong>{{ pagination.status_nome }}</strong> ({{ impressoras|length }} equipamentos)
+                </div>
+
+                <!-- SELETOR DE VISUALIZAÇÃO (DESKTOP: LISTA / CARDS) -->
+                <div class="seletorVisualizacaoImpressoras d-none d-lg-flex align-items-center gap-1 p-1 rounded-pill"
+                    role="group" aria-label="Modo de Exibição">
+                    <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold btnAlternarModo active"
+                        id="btnModoLista" data-modo="lista" title="Exibir em formato Lista / Tabela">
+                        <i class="bi bi-list-ul me-1"></i> Lista
+                    </button>
+                    <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold btnAlternarModo"
+                        id="btnModoCards" data-modo="cards" title="Exibir em formato Cards">
+                        <i class="bi bi-grid-fill me-1"></i> Cards
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- TABELA (DESKTOP E DISPOSITIVOS LARGOS >= 992px) -->
-        <div class="table-responsive d-none d-lg-block">
+        <!-- TABELA (DESKTOP: MODO LISTA) -->
+        <div class="table-responsive" id="viewModoLista">
 
             <table class="table tabelaPadrao table-hover align-middle mb-0">
 
@@ -540,195 +569,206 @@
         </div>
 
         <!-- =====================================================
-             LISTA EM CARDS (MOBILE / DISPOSITIVOS PEQUENOS < 992px)
+             CARDS (MOBILE E DESKTOP EM MODO CARDS)
              ===================================================== -->
-        <div class="d-lg-none impressorasCardsMobile px-2 px-sm-3 pb-3 d-flex flex-column gap-3">
-            {% for imp in impressoras %}
-            <div class="cardImpressoraMobile">
+        <div class="impressorasCardsContainer px-2 px-sm-3 px-lg-4 pb-3" id="viewModoCards">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+                {% for imp in impressoras %}
+                <div class="col">
+                    <div class="cardImpressoraMobile h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <!-- TOPO: NOME, MODELO, SERIAL, ANDAR E STATUS -->
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="cardImpressoraMobile-nome text-truncate">{{ imp.nome }}</span>
+                                        {% if imp.is_virtual %}
+                                        <span class="badge badgeVirtual" title="Fila virtual / software (não é impressora física)">
+                                            <i class="bi bi-display me-1"></i>Virtual
+                                        </span>
+                                        {% endif %}
+                                    </div>
 
-                <!-- TOPO: NOME, MODELO, SERIAL E STATUS -->
-                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <div class="flex-grow-1 min-w-0">
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <span class="cardImpressoraMobile-nome text-truncate">{{ imp.nome }}</span>
-                            {% if imp.is_virtual %}
-                            <span class="badge badgeVirtual" title="Fila virtual / software (não é impressora física)">
-                                <i class="bi bi-display me-1"></i>Virtual
-                            </span>
-                            {% endif %}
+                                    <div class="d-flex align-items-center gap-2 mt-1 flex-wrap small text-tema-secundario">
+                                        {% if imp.andar and imp.andar != 'Não Informado' %}
+                                        <span class="badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); font-size: 0.72rem; font-weight: 500;" title="Andar / Localização">
+                                            <i class="bi bi-building me-1"></i>{{ imp.andar }}
+                                        </span>
+                                        {% endif %}
+                                        {% if imp.modelo %}
+                                        <span class="cardImpressoraMobile-modelo">
+                                            <i class="bi bi-cpu me-1 opacity-75"></i>{{ imp.modelo }}
+                                        </span>
+                                        {% endif %}
+                                        {% if imp.serial %}
+                                        <span class="badge badgeSerial" title="Número de Série">
+                                            <i class="bi bi-upc-scan me-1 text-warning opacity-75"></i>S/N: {{ imp.serial }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- STATUS BADGE -->
+                                <div class="flex-shrink-0">
+                                    {% if imp.online %}
+                                    <span class="badgeStatus badgeStatus--online">
+                                        <span class="pontoStatus pontoStatus--online"></span> Online
+                                    </span>
+                                    {% else %}
+                                    <span class="badgeStatus badgeStatus--offline">
+                                        <span class="pontoStatus pontoStatus--offline"></span> Offline
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- LINHA IP & LOCALIZAÇÃO -->
+                            <div class="cardImpressoraMobile-meta">
+                                <div class="cardImpressoraMobile-metaCol">
+                                    <span class="metaLabel"><i class="bi bi-hdd-network me-1"></i>IP / Rede:</span>
+                                    {% if imp.ip %}
+                                    <a href="http://{{ imp.ip }}" target="_blank" rel="noopener noreferrer" class="ipImpressora ipImpressora--link" title="Acessar interface web da impressora">
+                                        <span>{{ imp.ip }}</span>
+                                        <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.7rem;"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="badgeManualIP" title="Equipamento externo / controle manual (sem IP de rede local)">
+                                        <i class="bi bi-pencil-fill me-1"></i>Manual
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="cardImpressoraMobile-metaCol">
+                                    <span class="metaLabel"><i class="bi bi-geo-alt-fill me-1 text-info"></i>Local:</span>
+                                    <div class="metaValor text-truncate" title="Localização">
+                                        {% if imp.local and imp.local.strip() %}
+                                            {{ imp.local }}
+                                        {% elif (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
+                                            {{ imp.andar }} - {{ imp.sala }}
+                                        {% else %}
+                                            <span class="text-secondary opacity-75 fst-italic">Não informado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PAINEL DE NÍVEIS DE SUPRIMENTOS (TONER E CILINDRO) -->
+                            <div class="cardImpressoraMobile-suprimentos">
+                                <!-- TONER PRETO -->
+                                <div class="suprimentoNivelItem">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 small">
+                                        <span class="suprimentoLabel">
+                                            <i class="bi bi-droplet-fill me-1 text-info"></i>Toner
+                                        </span>
+                                        {% if imp.toner_preto is not none %}
+                                        <span class="badgeNivel {% if imp.toner_preto <= 15 %}badgeNivel--critico{% elif imp.toner_preto <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                            {{ imp.toner_preto }}%
+                                        </span>
+                                        {% else %}
+                                        <span class="text-secondary opacity-50 small">—</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if imp.toner_preto is not none %}
+                                    <div class="barraProgressoInsumo">
+                                        <div class="barraProgressoInsumoFill {% if imp.toner_preto <= 15 %}barra--critico{% elif imp.toner_preto <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
+                                            style="width: {{ [imp.toner_preto, 100]|min }}%;"></div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- CILINDRO / DRUM (SE HOUVER) -->
+                                {% if imp.cilindro is not none %}
+                                <div class="suprimentoNivelItem mt-2 pt-2 border-top border-secondary border-opacity-10">
+                                    <div class="d-flex justify-content-between align-items-center mb-1 small">
+                                        <span class="suprimentoLabel">
+                                            <i class="bi bi-disc-fill me-1 text-warning"></i>Cilindro (Drum)
+                                        </span>
+                                        <span class="badgeNivel {% if imp.cilindro <= 15 %}badgeNivel--critico{% elif imp.cilindro <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
+                                            {{ imp.cilindro }}%
+                                        </span>
+                                    </div>
+                                    <div class="barraProgressoInsumo">
+                                        <div class="barraProgressoInsumoFill {% if imp.cilindro <= 15 %}barra--critico{% elif imp.cilindro <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
+                                            style="width: {{ [imp.cilindro, 100]|min }}%;"></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- FAMÍLIA DE SUPRIMENTO & CONTADOR / ÚLTIMO CHECK -->
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pt-2 border-top border-secondary border-opacity-25 small">
+                                <div>
+                                    {% if imp.suprimento %}
+                                    <span class="badgeSuprimento" title="Toner em Estoque: {{ imp.suprimento.quantidade_toner }} | Cilindro em Estoque: {{ imp.suprimento.quantidade_cilindro }}">
+                                        <i class="bi bi-box-seam me-1 text-info"></i>{{ imp.suprimento.nome_familia }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badgeSemVinculo" title="Nenhuma família de suprimento vinculada a esta impressora">
+                                        <i class="bi bi-dash-circle me-1 opacity-50"></i>Sem vínculo
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    {% if imp.paginas_impressas is not none and imp.paginas_impressas > 0 %}
+                                    <div class="badgeContador" title="Contador total de páginas impressas">
+                                        <i class="bi bi-speedometer2 text-warning me-1"></i>
+                                        <strong>{{ "{:,}".format(imp.paginas_impressas).replace(',', '.') }}</strong>
+                                        <span class="small opacity-75 ms-1">págs</span>
+                                    </div>
+                                    {% endif %}
+
+                                    <span class="ultimaVerificacao small" title="Última checagem">
+                                        <i class="bi bi-clock me-1"></i>{{ imp.ultimo_check.strftime('%d/%m %H:%M') if imp.ultimo_check else '—' }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap small text-tema-secundario">
-                            {% if imp.modelo %}
-                            <span class="cardImpressoraMobile-modelo">
-                                <i class="bi bi-cpu me-1 opacity-75"></i>{{ imp.modelo }}
-                            </span>
-                            {% endif %}
-                            {% if imp.serial %}
-                            <span class="badge badgeSerial" title="Número de Série">
-                                <i class="bi bi-upc-scan me-1 text-warning opacity-75"></i>S/N: {{ imp.serial }}
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
+                        <!-- AÇÕES DO CARD TOUCH-FRIENDLY & DESKTOP -->
+                        <div class="d-flex gap-2 mt-auto">
+                            <button type="button" class="btn botaoSecundario btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2"
+                                data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}"
+                                title="Editar localização, suprimento e contador manual de páginas">
+                                <i class="bi bi-pencil-square text-primary"></i>
+                                <span>Editar / Contador</span>
+                            </button>
 
-                    <!-- STATUS BADGE -->
-                    <div class="flex-shrink-0">
-                        {% if imp.online %}
-                        <span class="badgeStatus badgeStatus--online">
-                            <span class="pontoStatus pontoStatus--online"></span> Online
-                        </span>
-                        {% else %}
-                        <span class="badgeStatus badgeStatus--offline">
-                            <span class="pontoStatus pontoStatus--offline"></span> Offline
-                        </span>
-                        {% endif %}
+                            <button type="button" class="btn btn-warning btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 text-dark fw-bold"
+                                data-bs-toggle="modal" data-bs-target="#modalRetirar{{ imp.id }}"
+                                title="Retirar Insumo de Estoque">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                <span>Retirar Insumo</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- LINHA IP & LOCALIZAÇÃO -->
-                <div class="cardImpressoraMobile-meta">
-                    <div class="cardImpressoraMobile-metaCol">
-                        <span class="metaLabel"><i class="bi bi-hdd-network me-1"></i>IP / Rede:</span>
-                        {% if imp.ip %}
-                        <a href="http://{{ imp.ip }}" target="_blank" rel="noopener noreferrer" class="ipImpressora ipImpressora--link" title="Acessar interface web da impressora">
-                            <span>{{ imp.ip }}</span>
-                            <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.7rem;"></i>
+                {% else %}
+                <div class="col-12">
+                    <!-- NENHUMA IMPRESSORA (CARD) -->
+                    <div class="cardPadrao text-center py-5 px-3">
+                        <i class="bi bi-printer text-tema-secundario fs-1 d-block mb-2"></i>
+                        <h5 class="tituloTabela mb-1">
+                            Nenhuma impressora {{ pagination.status_nome|lower }} encontrada.
+                        </h5>
+                        <p class="text-tema-secundario small mb-3">
+                            Não há impressoras com status {{ pagination.status_nome|lower }} correspondentes aos filtros selecionados.
+                        </p>
+                        {% if pagination.page == 1 and pagination.total_offline > 0 %}
+                        <a href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                            class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Ver Página 2: Offline / Manual ({{ pagination.total_offline }} itens)
                         </a>
-                        {% else %}
-                        <span class="badgeManualIP" title="Equipamento externo / controle manual (sem IP de rede local)">
-                            <i class="bi bi-pencil-fill me-1"></i>Manual
-                        </span>
+                        {% elif pagination.page == 2 and pagination.total_online > 0 %}
+                        <a href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
+                            class="btn btn-sm btn-outline-success rounded-pill px-3">
+                            <i class="bi bi-arrow-left-circle me-1"></i> Ver Página 1: Online ({{ pagination.total_online }} itens)
+                        </a>
                         {% endif %}
                     </div>
-
-                    <div class="cardImpressoraMobile-metaCol">
-                        <span class="metaLabel"><i class="bi bi-geo-alt-fill me-1 text-info"></i>Local:</span>
-                        <div class="metaValor text-truncate" title="Localização">
-                            {% if imp.local and imp.local.strip() %}
-                                {{ imp.local }}
-                            {% elif (imp.andar and imp.andar != 'Não Informado') or (imp.sala and imp.sala != 'Não Informado') %}
-                                {{ imp.andar }} - {{ imp.sala }}
-                            {% else %}
-                                <span class="text-secondary opacity-75 fst-italic">Não informado</span>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
-
-                <!-- PAINEL DE NÍVEIS DE SUPRIMENTOS (TONER E CILINDRO) -->
-                <div class="cardImpressoraMobile-suprimentos">
-                    <!-- TONER PRETO -->
-                    <div class="suprimentoNivelItem">
-                        <div class="d-flex justify-content-between align-items-center mb-1 small">
-                            <span class="suprimentoLabel">
-                                <i class="bi bi-droplet-fill me-1 text-info"></i>Toner
-                            </span>
-                            {% if imp.toner_preto is not none %}
-                            <span class="badgeNivel {% if imp.toner_preto <= 15 %}badgeNivel--critico{% elif imp.toner_preto <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
-                                {{ imp.toner_preto }}%
-                            </span>
-                            {% else %}
-                            <span class="text-secondary opacity-50 small">—</span>
-                            {% endif %}
-                        </div>
-                        {% if imp.toner_preto is not none %}
-                        <div class="barraProgressoInsumo">
-                            <div class="barraProgressoInsumoFill {% if imp.toner_preto <= 15 %}barra--critico{% elif imp.toner_preto <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
-                                style="width: {{ [imp.toner_preto, 100]|min }}%;"></div>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- CILINDRO / DRUM (SE HOUVER) -->
-                    {% if imp.cilindro is not none %}
-                    <div class="suprimentoNivelItem mt-2 pt-2 border-top border-secondary border-opacity-10">
-                        <div class="d-flex justify-content-between align-items-center mb-1 small">
-                            <span class="suprimentoLabel">
-                                <i class="bi bi-disc-fill me-1 text-warning"></i>Cilindro (Drum)
-                            </span>
-                            <span class="badgeNivel {% if imp.cilindro <= 15 %}badgeNivel--critico{% elif imp.cilindro <= 25 %}badgeNivel--alerta{% else %}badgeNivel--normal{% endif %}">
-                                {{ imp.cilindro }}%
-                            </span>
-                        </div>
-                        <div class="barraProgressoInsumo">
-                            <div class="barraProgressoInsumoFill {% if imp.cilindro <= 15 %}barra--critico{% elif imp.cilindro <= 25 %}barra--alerta{% else %}barra--normal{% endif %}"
-                                style="width: {{ [imp.cilindro, 100]|min }}%;"></div>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- FAMÍLIA DE SUPRIMENTO & CONTADOR / ÚLTIMO CHECK -->
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pt-2 border-top border-secondary border-opacity-25 small">
-                    <div>
-                        {% if imp.suprimento %}
-                        <span class="badgeSuprimento" title="Toner em Estoque: {{ imp.suprimento.quantidade_toner }} | Cilindro em Estoque: {{ imp.suprimento.quantidade_cilindro }}">
-                            <i class="bi bi-box-seam me-1 text-info"></i>{{ imp.suprimento.nome_familia }}
-                        </span>
-                        {% else %}
-                        <span class="badgeSemVinculo" title="Nenhuma família de suprimento vinculada a esta impressora">
-                            <i class="bi bi-dash-circle me-1 opacity-50"></i>Sem vínculo
-                        </span>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        {% if imp.paginas_impressas is not none and imp.paginas_impressas > 0 %}
-                        <div class="badgeContador" title="Contador total de páginas impressas">
-                            <i class="bi bi-speedometer2 text-warning me-1"></i>
-                            <strong>{{ "{:,}".format(imp.paginas_impressas).replace(',', '.') }}</strong>
-                            <span class="small opacity-75 ms-1">págs</span>
-                        </div>
-                        {% endif %}
-
-                        <span class="ultimaVerificacao small" title="Última checagem">
-                            <i class="bi bi-clock me-1"></i>{{ imp.ultimo_check.strftime('%d/%m %H:%M') if imp.ultimo_check else '—' }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- AÇÕES DO CARD TOUCH-FRIENDLY -->
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn botaoSecundario btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2"
-                        data-bs-toggle="modal" data-bs-target="#modalVincular{{ imp.id }}"
-                        title="Editar localização, suprimento e contador manual de páginas">
-                        <i class="bi bi-pencil-square text-primary"></i>
-                        <span>Editar / Contador</span>
-                    </button>
-
-                    <button type="button" class="btn btn-warning btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1 py-2 text-dark fw-bold"
-                        data-bs-toggle="modal" data-bs-target="#modalRetirar{{ imp.id }}"
-                        title="Retirar Insumo de Estoque">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                        <span>Retirar Insumo</span>
-                    </button>
-                </div>
-
+                {% endfor %}
             </div>
-            {% else %}
-            <!-- NENHUMA IMPRESSORA (CARD MOBILE) -->
-            <div class="cardPadrao text-center py-5 px-3">
-                <i class="bi bi-printer text-tema-secundario fs-1 d-block mb-2"></i>
-                <h5 class="tituloTabela mb-1">
-                    Nenhuma impressora {{ pagination.status_nome|lower }} encontrada.
-                </h5>
-                <p class="text-tema-secundario small mb-3">
-                    Não há impressoras com status {{ pagination.status_nome|lower }} correspondentes aos filtros selecionados.
-                </p>
-                {% if pagination.page == 1 and pagination.total_offline > 0 %}
-                <a href="{{ url_for('impressoras.index', page=2, status='offline', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
-                    class="btn btn-sm btn-outline-warning rounded-pill px-3">
-                    <i class="bi bi-arrow-right-circle me-1"></i> Ver Página 2: Offline / Manual ({{ pagination.total_offline }} itens)
-                </a>
-                {% elif pagination.page == 2 and pagination.total_online > 0 %}
-                <a href="{{ url_for('impressoras.index', page=1, status='online', busca=filtros.busca, suprimento=filtros.suprimento, tipo=filtros.tipo) }}"
-                    class="btn btn-sm btn-outline-success rounded-pill px-3">
-                    <i class="bi bi-arrow-left-circle me-1"></i> Ver Página 1: Online ({{ pagination.total_online }} itens)
-                </a>
-                {% endif %}
-            </div>
-            {% endfor %}
         </div>
 
         <!-- =====================================================
@@ -1546,6 +1586,53 @@
             if (modalEl) {
                 modalEl.addEventListener("hidden.bs.modal", function () {
                     localStorage.setItem(CHAVE_ASSINATURA, assinaturaAtual);
+                });
+            }
+
+            /* =========================================================
+               ALTERNÂNCIA DE VISUALIZAÇÃO NO DESKTOP: LISTA / CARDS
+               ========================================================= */
+            const CHAVE_VIEW_MODE = "hub_impressoras_view_mode";
+            const containerMonitoramento = document.getElementById("containerMonitoramentoImpressoras");
+            const btnModoLista = document.getElementById("btnModoLista");
+            const btnModoCards = document.getElementById("btnModoCards");
+
+            function aplicarModoVisualizacao(modo) {
+                if (!containerMonitoramento) return;
+                const modoFinal = modo === "cards" ? "cards" : "lista";
+
+                if (modoFinal === "cards") {
+                    containerMonitoramento.classList.remove("modo-visualizacao-lista");
+                    containerMonitoramento.classList.add("modo-visualizacao-cards");
+                    if (btnModoCards) btnModoCards.classList.add("active");
+                    if (btnModoLista) btnModoLista.classList.remove("active");
+                } else {
+                    containerMonitoramento.classList.remove("modo-visualizacao-cards");
+                    containerMonitoramento.classList.add("modo-visualizacao-lista");
+                    if (btnModoLista) btnModoLista.classList.add("active");
+                    if (btnModoCards) btnModoCards.classList.remove("active");
+                }
+
+                try {
+                    localStorage.setItem(CHAVE_VIEW_MODE, modoFinal);
+                } catch (e) {
+                    /* fallback se localStorage estiver bloqueado */
+                }
+            }
+
+            // Restaura o modo salvo ou padrão ('lista')
+            const modoSalvo = localStorage.getItem(CHAVE_VIEW_MODE) || "lista";
+            aplicarModoVisualizacao(modoSalvo);
+
+            if (btnModoLista) {
+                btnModoLista.addEventListener("click", function () {
+                    aplicarModoVisualizacao("lista");
+                });
+            }
+
+            if (btnModoCards) {
+                btnModoCards.addEventListener("click", function () {
+                    aplicarModoVisualizacao("cards");
                 });
             }
         });
