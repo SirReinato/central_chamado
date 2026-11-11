@@ -159,6 +159,20 @@
          MONITORAMENTO
          ===================================================== -->
     <div class="cardPadrao mb-4 modo-visualizacao-lista" id="containerMonitoramentoImpressoras">
+        <script>
+            (function() {
+                try {
+                    var m = localStorage.getItem("hub_impressoras_view_mode");
+                    if (m === "cards") {
+                        var el = document.getElementById("containerMonitoramentoImpressoras");
+                        if (el) {
+                            el.classList.remove("modo-visualizacao-lista");
+                            el.classList.add("modo-visualizacao-cards");
+                        }
+                    }
+                } catch(e) {}
+            })();
+        </script>
 
         <!-- card para ir ao esotque -->
         <div class="barraDestaque"></div>
@@ -1572,6 +1586,53 @@
             if (modalEl) {
                 modalEl.addEventListener("hidden.bs.modal", function () {
                     localStorage.setItem(CHAVE_ASSINATURA, assinaturaAtual);
+                });
+            }
+
+            /* =========================================================
+               ALTERNÂNCIA DE VISUALIZAÇÃO NO DESKTOP: LISTA / CARDS
+               ========================================================= */
+            const CHAVE_VIEW_MODE = "hub_impressoras_view_mode";
+            const containerMonitoramento = document.getElementById("containerMonitoramentoImpressoras");
+            const btnModoLista = document.getElementById("btnModoLista");
+            const btnModoCards = document.getElementById("btnModoCards");
+
+            function aplicarModoVisualizacao(modo) {
+                if (!containerMonitoramento) return;
+                const modoFinal = modo === "cards" ? "cards" : "lista";
+
+                if (modoFinal === "cards") {
+                    containerMonitoramento.classList.remove("modo-visualizacao-lista");
+                    containerMonitoramento.classList.add("modo-visualizacao-cards");
+                    if (btnModoCards) btnModoCards.classList.add("active");
+                    if (btnModoLista) btnModoLista.classList.remove("active");
+                } else {
+                    containerMonitoramento.classList.remove("modo-visualizacao-cards");
+                    containerMonitoramento.classList.add("modo-visualizacao-lista");
+                    if (btnModoLista) btnModoLista.classList.add("active");
+                    if (btnModoCards) btnModoCards.classList.remove("active");
+                }
+
+                try {
+                    localStorage.setItem(CHAVE_VIEW_MODE, modoFinal);
+                } catch (e) {
+                    /* fallback se localStorage estiver bloqueado */
+                }
+            }
+
+            // Restaura o modo salvo ou padrão ('lista')
+            const modoSalvo = localStorage.getItem(CHAVE_VIEW_MODE) || "lista";
+            aplicarModoVisualizacao(modoSalvo);
+
+            if (btnModoLista) {
+                btnModoLista.addEventListener("click", function () {
+                    aplicarModoVisualizacao("lista");
+                });
+            }
+
+            if (btnModoCards) {
+                btnModoCards.addEventListener("click", function () {
+                    aplicarModoVisualizacao("cards");
                 });
             }
         });

@@ -1147,6 +1147,17 @@ body {
 }
 
 /* Regras de alternância de visualização */
+@keyframes fadeInViewImpressoras {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 991.98px) {
     #viewModoLista {
         display: none !important;
@@ -1159,6 +1170,7 @@ body {
 @media (min-width: 992px) {
     .modo-visualizacao-lista #viewModoLista {
         display: block !important;
+        animation: fadeInViewImpressoras 0.22s ease-out;
     }
     .modo-visualizacao-lista #viewModoCards {
         display: none !important;
@@ -1169,6 +1181,7 @@ body {
     }
     .modo-visualizacao-cards #viewModoCards {
         display: block !important;
+        animation: fadeInViewImpressoras 0.22s ease-out;
     }
 
     .cardImpressoraMobile {
