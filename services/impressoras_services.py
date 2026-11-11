@@ -90,8 +90,81 @@ class ImpressorasService:
     )
 
     @staticmethod
+    def get_criterio_ordenacao_andar():
+        """
+        Retorna a tupla de ordenação SQL para priorizar a hierarquia física de andares:
+        1. -1 / Subsolo (1º Subsolo, SubSolo, -1, SS)
+        2. Térreo (Térreo, Terreo, 0)
+        3. 1º Andar (1º, 1°, 1)
+        4. 2º Andar (2º, 2°, 2)
+        5. 3º Andar (3º, 3°, 3)
+        6. Outras unidades e filiais (Asa Norte, Taguatinga, Almoxarifado, etc.)
+        7. Não informados / Vazios
+        Desempate secundário: nome da impressora.
+        """
+        ordem_andar = db.case(
+            (
+                db.or_(
+                    Impressora.andar.ilike("%subsolo%"),
+                    Impressora.andar.ilike("%sub%solo%"),
+                    Impressora.andar.ilike("%-1%"),
+                    Impressora.andar.ilike("ss%"),
+                    Impressora.andar == "SS",
+                ),
+                1,
+            ),
+            (
+                db.or_(
+                    Impressora.andar.ilike("%térreo%"),
+                    Impressora.andar.ilike("%terreo%"),
+                    Impressora.andar == "0",
+                ),
+                2,
+            ),
+            (
+                db.or_(
+                    Impressora.andar.ilike("1º%"),
+                    Impressora.andar.ilike("1°%"),
+                    Impressora.andar.ilike("1o%"),
+                    Impressora.andar == "1",
+                ),
+                3,
+            ),
+            (
+                db.or_(
+                    Impressora.andar.ilike("2º%"),
+                    Impressora.andar.ilike("2°%"),
+                    Impressora.andar.ilike("2o%"),
+                    Impressora.andar == "2",
+                ),
+                4,
+            ),
+            (
+                db.or_(
+                    Impressora.andar.ilike("3º%"),
+                    Impressora.andar.ilike("3°%"),
+                    Impressora.andar.ilike("3o%"),
+                    Impressora.andar == "3",
+                ),
+                5,
+            ),
+            (
+                db.or_(
+                    Impressora.andar.is_(None),
+                    Impressora.andar == "",
+                    Impressora.andar.ilike("%não informado%"),
+                    Impressora.andar.ilike("%nao informado%"),
+                ),
+                99,
+            ),
+            else_=10,
+        )
+        return (ordem_andar.asc(), Impressora.andar.asc(), Impressora.nome.asc())
+
+    @staticmethod
     def listar_impressoras():
-        return Impressora.query.order_by(Impressora.online.desc(), Impressora.nome.asc()).all()
+        criterios_andar = ImpressorasService.get_criterio_ordenacao_andar()
+        return Impressora.query.order_by(Impressora.online.desc(), *criterios_andar).all()
 
     @staticmethod
     def listar_impressoras_paginadas(busca=None, status_filtro=None, suprimento_filtro=None, tipo_filtro=None, page=1, per_page=None):
@@ -134,15 +207,17 @@ class ImpressorasService:
         total_online = query_base.filter(Impressora.online.is_(True)).count()
         total_offline = query_base.filter(Impressora.online.is_(False)).count()
 
+        criterios_andar = ImpressorasService.get_criterio_ordenacao_andar()
+
         # Determina a página: Página 1 = Online, Página 2 = Offline
         if status_filtro == 'offline' or page == 2:
             page_atual = 2
             status_nome = "Offline"
-            query_pagina = query_base.filter(Impressora.online.is_(False)).order_by(Impressora.nome.asc())
+            query_pagina = query_base.filter(Impressora.online.is_(False)).order_by(*criterios_andar)
         else:
             page_atual = 1
             status_nome = "Online"
-            query_pagina = query_base.filter(Impressora.online.is_(True)).order_by(Impressora.nome.asc())
+            query_pagina = query_base.filter(Impressora.online.is_(True)).order_by(*criterios_andar)
 
         items = query_pagina.all()
 
