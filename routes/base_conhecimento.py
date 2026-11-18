@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
-from models import db, KbCategoria, KbTag, KbArtigo, KbFeedback, KbSolicitacao
+from models import db, KbCategoria, KbTag, KbArtigo, KbFeedback, KbSolicitacao, PERFIS_KB_OPCOES
 from services.conhecimento_service import ConhecimentoService
 from utils.decorator import admin_required
 
@@ -25,14 +25,15 @@ def index():
         categoria_slug=categoria_slug,
         tag_slug=tag_slug,
         ordem=ordem,
-        status='publicado'
+        status='publicado',
+        usuario=current_user
     )
 
     categorias = KbCategoria.query.filter_by(ativo=True).order_by(KbCategoria.ordem).all()
     todas_tags = KbTag.query.order_by(KbTag.nome).all()
     
-    # Artigos em destaque (top 4 mais acessados)
-    artigos_populares = KbArtigo.query.filter_by(status='publicado').order_by(KbArtigo.visualizacoes.desc()).limit(4).all()
+    # Artigos em destaque (top 4 mais acessados respeitando RBAC)
+    artigos_populares = ConhecimentoService.listar_artigos_populares(usuario=current_user, limite=4)
 
     categoria_ativa = KbCategoria.query.filter_by(slug=categoria_slug).first() if categoria_slug else None
 
@@ -57,19 +58,17 @@ def index():
 @login_required
 def ver_artigo(slug):
     """Visualização e leitura completa de um artigo formatado em Markdown."""
-    artigo = ConhecimentoService.obter_artigo_por_slug(slug, incrementar_views=True)
+    artigo = ConhecimentoService.obter_artigo_por_slug(slug, incrementar_views=True, usuario=current_user)
     if not artigo:
         abort(404)
+    if not artigo.usuario_pode_ver(current_user):
+        abort(403)
 
     # Converte Markdown para HTML com ToC e Callouts
     conteudo_html, toc_html = ConhecimentoService.renderizar_markdown(artigo.conteudo_md)
 
-    # Artigos recomendados/relacionados (mesma categoria, excluindo o atual)
-    artigos_relacionados = KbArtigo.query.filter(
-        KbArtigo.categoria_id == artigo.categoria_id,
-        KbArtigo.id != artigo.id,
-        KbArtigo.status == 'publicado'
-    ).order_by(KbArtigo.visualizacoes.desc()).limit(3).all()
+    # Artigos recomendados/relacionados (mesma categoria, excluindo o atual, respeitando RBAC)
+    artigos_relacionados = ConhecimentoService.listar_artigos_relacionados(artigo, usuario=current_user, limite=3)
 
     return render_template(
         'conhecimento/artigo.html',
@@ -84,6 +83,12 @@ def ver_artigo(slug):
 @login_required
 def feedback_artigo(artigo_id):
     """Registra voto útil (👍) ou inútil (👎) com comentário opcional."""
+    artigo = db.session.get(KbArtigo, artigo_id)
+    if not artigo:
+        abort(404)
+    if not artigo.usuario_pode_ver(current_user):
+        abort(403)
+
     util_str = request.form.get('util', '1')
     util = util_str in ('1', 'true', 'True')
     comentario = request.form.get('comentario', '').strip()
@@ -96,10 +101,7 @@ def feedback_artigo(artigo_id):
     )
 
     flash(mensagem, 'success' if sucesso else 'danger')
-    artigo = db.session.get(KbArtigo, artigo_id)
-    if artigo:
-        return redirect(url_for('conhecimento.ver_artigo', slug=artigo.slug))
-    return redirect(url_for('conhecimento.index'))
+    return redirect(url_for('conhecimento.ver_artigo', slug=artigo.slug))
 
 
 @conhecimento_bp.route('/solicitar', methods=['GET', 'POST'])
@@ -157,7 +159,7 @@ def admin_dashboard():
     """Dashboard analítico da Base de Conhecimento e fila de triagem."""
     kpis = ConhecimentoService.obter_kpis_admin()
     solicitacoes_pendentes = KbSolicitacao.query.filter_by(status='pendente').order_by(KbSolicitacao.data_envio.asc()).all()
-    artigos_recentes = KbArtigo.query.order_by(KbArtigo.data_atualizacao.desc()).limit(15).all()
+    artigos_recentes = KbArtigo.query.order_by(KbArtigo.data_atualizacao.desc()).all()
     categorias = KbCategoria.query.order_by(KbCategoria.ordem).all()
 
     return render_template(
@@ -165,7 +167,8 @@ def admin_dashboard():
         kpis=kpis,
         solicitacoes_pendentes=solicitacoes_pendentes,
         artigos_recentes=artigos_recentes,
-        categorias=categorias
+        categorias=categorias,
+        perfis_kb_labels=dict(PERFIS_KB_OPCOES)
     )
 
 
@@ -181,6 +184,9 @@ def novo_artigo():
         conteudo_md = request.form.get('conteudo_md', '').strip()
         tags_raw = request.form.get('tags', '').strip()
         status = request.form.get('status', 'publicado')
+        perfis_permitidos = ConhecimentoService.normalizar_perfis_permitidos(
+            request.form.getlist('perfis_permitidos')
+        )
 
         if not titulo or not conteudo_md or not categoria_id:
             flash("Título, Categoria e Conteúdo Markdown são obrigatórios.", "danger")
@@ -204,6 +210,7 @@ def novo_artigo():
             categoria_id=int(categoria_id),
             autor_id=current_user.id,
             status=status,
+            perfis_permitidos=perfis_permitidos,
             tempo_leitura_min=tempo_leitura
         )
 
@@ -233,7 +240,8 @@ def novo_artigo():
         'conhecimento/editor_artigo.html',
         categorias=categorias,
         artigo=None,
-        solicitacao=solicitacao
+        solicitacao=solicitacao,
+        perfis_kb_opcoes=PERFIS_KB_OPCOES
     )
 
 
@@ -252,6 +260,9 @@ def editar_artigo(artigo_id):
         artigo.resumo = request.form.get('resumo', '').strip()
         artigo.conteudo_md = request.form.get('conteudo_md', '').strip()
         artigo.status = request.form.get('status', 'publicado')
+        artigo.perfis_permitidos = ConhecimentoService.normalizar_perfis_permitidos(
+            request.form.getlist('perfis_permitidos')
+        )
         artigo.tempo_leitura_min = ConhecimentoService.calcular_tempo_leitura(artigo.conteudo_md)
         artigo.data_atualizacao = datetime.now()
 
@@ -278,7 +289,8 @@ def editar_artigo(artigo_id):
         'conhecimento/editor_artigo.html',
         categorias=categorias,
         artigo=artigo,
-        tags_string=tags_string
+        tags_string=tags_string,
+        perfis_kb_opcoes=PERFIS_KB_OPCOES
     )
 
 
