@@ -2,7 +2,16 @@ import re
 import unicodedata
 from datetime import datetime
 import markdown
-from models import db, KbCategoria, KbTag, KbArtigo, KbFeedback, KbSolicitacao, Usuario
+from models import (
+    db,
+    KbCategoria,
+    KbTag,
+    KbArtigo,
+    KbFeedback,
+    KbSolicitacao,
+    Usuario,
+    PERFIS_KB_VALIDOS,
+)
 
 class ConhecimentoService:
     @staticmethod
@@ -81,9 +90,23 @@ class ConhecimentoService:
 
         return re.sub(padrao, substituir_callout, texto, flags=re.MULTILINE)
 
+    @staticmethod
+    def normalizar_perfis_permitidos(perfis_raw):
+        """Valida e serializa perfis selecionados para armazenamento em KbArtigo.perfis_permitidos."""
+        if not perfis_raw:
+            return None
+        selecionados = []
+        vistos = set()
+        for perfil in perfis_raw:
+            p = (perfil or '').strip()
+            if p in PERFIS_KB_VALIDOS and p not in vistos:
+                selecionados.append(p)
+                vistos.add(p)
+        return ','.join(selecionados) if selecionados else None
+
     @classmethod
-    def listar_artigos(cls, busca='', categoria_slug='', tag_slug='', ordem='relevancia', status='publicado'):
-        """Retorna lista de artigos filtrados e ordenados."""
+    def listar_artigos(cls, busca='', categoria_slug='', tag_slug='', ordem='relevancia', status='publicado', usuario=None):
+        """Retorna lista de artigos filtrados (incluindo RBAC quando usuario for informado) e ordenados."""
         query = KbArtigo.query
 
         if status:
@@ -107,6 +130,9 @@ class ConhecimentoService:
 
         artigos = query.all()
 
+        if usuario is not None:
+            artigos = [a for a in artigos if a.usuario_pode_ver(usuario)]
+
         # Ordenação
         if ordem == 'uteis':
             artigos.sort(key=lambda a: (a.percentual_util, a.votos_util), reverse=True)
@@ -120,10 +146,33 @@ class ConhecimentoService:
         return artigos
 
     @classmethod
-    def obter_artigo_por_slug(cls, slug, incrementar_views=True):
-        """Busca artigo pelo slug e opcionalmente incrementa visualizações."""
+    def listar_artigos_populares(cls, usuario=None, limite=4):
+        """Retorna os artigos publicados mais acessados respeitando o RBAC do usuário."""
+        artigos = KbArtigo.query.filter_by(status='publicado').order_by(KbArtigo.visualizacoes.desc()).all()
+        if usuario is not None:
+            artigos = [a for a in artigos if a.usuario_pode_ver(usuario)]
+        return artigos[:limite]
+
+    @classmethod
+    def listar_artigos_relacionados(cls, artigo, usuario=None, limite=3):
+        """Retorna artigos relacionados da mesma categoria respeitando o RBAC do usuário."""
+        artigos = KbArtigo.query.filter(
+            KbArtigo.categoria_id == artigo.categoria_id,
+            KbArtigo.id != artigo.id,
+            KbArtigo.status == 'publicado'
+        ).order_by(KbArtigo.visualizacoes.desc()).all()
+        if usuario is not None:
+            artigos = [a for a in artigos if a.usuario_pode_ver(usuario)]
+        return artigos[:limite]
+
+    @classmethod
+    def obter_artigo_por_slug(cls, slug, incrementar_views=True, usuario=None):
+        """Busca artigo pelo slug e incrementa visualizações apenas se o usuário tiver acesso."""
         artigo = KbArtigo.query.filter_by(slug=slug).first()
-        if artigo and incrementar_views:
+        if not artigo:
+            return None
+        pode_ver = True if usuario is None else artigo.usuario_pode_ver(usuario)
+        if incrementar_views and pode_ver:
             artigo.visualizacoes = (artigo.visualizacoes or 0) + 1
             db.session.commit()
         return artigo
