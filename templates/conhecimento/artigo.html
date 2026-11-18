@@ -71,6 +71,11 @@
                         <span class="cardKbReadingTime">
                             <i class="bi bi-clock"></i> {{ artigo.tempo_leitura_min }} min de leitura
                         </span>
+                        {% if artigo.is_restrito %}
+                        <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25" title="Acesso restrito a perfis autorizados">
+                            <i class="bi bi-lock-fill me-1"></i>Acesso Restrito
+                        </span>
+                        {% endif %}
                         <span class="text-tema-secundario small ms-auto d-flex align-items-center gap-1" style="font-size: 0.75rem;">
                             <i class="bi bi-eye"></i> {{ artigo.visualizacoes }} views
                         </span>

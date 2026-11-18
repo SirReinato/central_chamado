@@ -252,6 +252,7 @@
                         <th class="ps-3 py-3 --bs-light text-light">Artigo</th>
                         <th class="py-3 --bs-light text-light">Categoria</th>
                         <th class="py-3 --bs-light text-light">Status</th>
+                        <th class="py-3 --bs-light text-light">Visibilidade</th>
                         <th class="py-3 --bs-light text-light">Visualizações</th>
                         <th class="py-3 --bs-light text-light">Útil (%)</th>
                         <th class="py-3 --bs-light text-light">Atualizado Em</th>
@@ -279,6 +280,23 @@
                             <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">Rascunho</span>
                             {% else %}
                             <span class="badge bg-secondary">Arquivado</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 small">
+                            {% if art.is_restrito %}
+                            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25"
+                                  title="Perfis: {{ art.lista_perfis_permitidos|join(', ') }}">
+                                <i class="bi bi-lock-fill me-1"></i>Restrito
+                            </span>
+                            <div class="text-tema-secundario mt-1" style="font-size: 0.72rem;">
+                                {% for p in art.lista_perfis_permitidos %}
+                                    {{ perfis_kb_labels.get(p, p) }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25">
+                                <i class="bi bi-globe2 me-1"></i>Todos
+                            </span>
                             {% endif %}
                         </td>
                         <td class="py-3 small text-tema-secundario">

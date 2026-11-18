@@ -207,7 +207,7 @@
                         </div>
 
                         <!-- Tags -->
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label for="tags" class="form-label text-tema fw-semibold small">Tags (separadas por vírgula)</label>
                             <input type="text" 
                                    class="form-control inputPadrao" 
@@ -217,6 +217,33 @@
                                    placeholder="rede, windows, ip, brother"
                                    autocomplete="off">
                             <div class="form-text text-tema-secundario small">Ex: vpn, roteador, toner, tutorial</div>
+                        </div>
+
+                        <!-- Controle de Acesso por Perfil (RBAC) -->
+                        <div class="mb-4 p-3 rounded-3" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cor-borda);">
+                            <label class="form-label text-tema fw-semibold small d-flex align-items-center gap-1 mb-2">
+                                <i class="bi bi-shield-lock text-warning"></i>
+                                <span>Visibilidade / Perfis Permitidos</span>
+                            </label>
+                            {% set perfis_atuais = artigo.lista_perfis_permitidos if artigo else [] %}
+                            <div class="d-flex flex-column gap-2">
+                                {% for codigo_perfil, label_perfil in perfis_kb_opcoes %}
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           name="perfis_permitidos"
+                                           value="{{ codigo_perfil }}"
+                                           id="perfil_{{ codigo_perfil }}"
+                                           {% if codigo_perfil in perfis_atuais %}checked{% endif %}>
+                                    <label class="form-check-label small text-tema" for="perfil_{{ codigo_perfil }}">
+                                        {{ label_perfil }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text text-tema-secundario small mt-2">
+                                Deixe tudo desmarcado para manter o artigo <strong>público para todos</strong>. Administradores e Supremo sempre têm acesso.
+                            </div>
                         </div>
 
                         <!-- Botão de Salvar -->

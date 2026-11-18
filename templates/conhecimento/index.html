@@ -163,6 +163,11 @@
                             <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                 <span class="cardKbCategoriaBadge">{{ art.categoria.nome }}</span>
                                 <span class="cardKbReadingTime"><i class="bi bi-clock"></i> {{ art.tempo_leitura_min }} min</span>
+                                {% if art.is_restrito %}
+                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25" style="font-size: 0.68rem;">
+                                    <i class="bi bi-lock-fill me-1"></i>Restrito
+                                </span>
+                                {% endif %}
                                 {% if art.percentual_util > 0 %}
                                 <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25" style="font-size: 0.68rem;">
                                     <i class="bi bi-hand-thumbs-up-fill me-1"></i>{{ art.percentual_util }}%
@@ -199,9 +204,16 @@
                                 <i class="bi {{ art.categoria.icone or 'bi-folder' }} me-1"></i>
                                 {{ art.categoria.nome }}
                             </span>
-                            <span class="cardKbReadingTime">
-                                <i class="bi bi-clock"></i> {{ art.tempo_leitura_min }} min
-                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                {% if art.is_restrito %}
+                                <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25" style="font-size: 0.68rem;" title="Artigo com acesso restrito por perfil">
+                                    <i class="bi bi-lock-fill"></i> Restrito
+                                </span>
+                                {% endif %}
+                                <span class="cardKbReadingTime">
+                                    <i class="bi bi-clock"></i> {{ art.tempo_leitura_min }} min
+                                </span>
+                            </div>
                         </div>
 
                         <h3 class="cardKbTitulo">
