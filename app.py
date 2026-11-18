@@ -139,9 +139,24 @@ app.register_blueprint(glpi_admin_bp)
 app.register_blueprint(ramais_bp)
 app.register_blueprint(assinatura_bp)
 
+def _garantir_migracoes_sqlite():
+    """Aplica migrações incrementais idempotentes em tabelas SQLite já existentes."""
+    colunas_kb = [
+        row[1]
+        for row in db.session.execute(db.text("PRAGMA table_info(kb_artigos)")).fetchall()
+    ]
+    if 'perfis_permitidos' not in colunas_kb:
+        db.session.execute(
+            db.text("ALTER TABLE kb_artigos ADD COLUMN perfis_permitidos VARCHAR(255)")
+        )
+        db.session.commit()
+        logger.info("Migração SQLite aplicada: coluna kb_artigos.perfis_permitidos adicionada.")
+
+
 # Cria as tabelas em ambos os bancos (chamados.db e estoque_suprimentos.db)
 with app.app_context():
     db.create_all()
+    _garantir_migracoes_sqlite()
 
 
 # ==========================================

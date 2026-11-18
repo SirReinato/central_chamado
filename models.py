@@ -371,6 +371,17 @@ class KbTag(db.Model):
     slug = db.Column(db.String(50), unique=True, nullable=False)
 
 
+# Perfis selecionáveis para restrição de leitura (RBAC) na Base de Conhecimento
+# (admin e supremo possuem acesso irrestrito por padrão)
+PERFIS_KB_OPCOES = [
+    ('operador', 'Operador'),
+    ('tecnicoImpressora', 'Técnico de Impressora'),
+    ('usuario', 'Usuário Comum'),
+    ('admin', 'Administrador'),
+]
+PERFIS_KB_VALIDOS = {codigo for codigo, _ in PERFIS_KB_OPCOES}
+
+
 class KbArtigo(db.Model):
     __tablename__ = 'kb_artigos'
 
@@ -384,6 +395,7 @@ class KbArtigo(db.Model):
     autor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
 
     status = db.Column(db.String(20), default='publicado')  # 'rascunho', 'publicado', 'arquivado'
+    perfis_permitidos = db.Column(db.String(255), nullable=True)  # None/vazio = público; CSV = restrito
     tempo_leitura_min = db.Column(db.Integer, default=3)
     visualizacoes = db.Column(db.Integer, default=0)
 
@@ -398,6 +410,31 @@ class KbArtigo(db.Model):
     autor = db.relationship('Usuario', backref='artigos_kb')
     tags = db.relationship('KbTag', secondary=artigo_tags, backref=db.backref('artigos', lazy='dynamic'))
     feedbacks = db.relationship('KbFeedback', backref='artigo', cascade='all, delete-orphan', lazy='dynamic')
+
+    @property
+    def lista_perfis_permitidos(self):
+        """Retorna a lista de perfis com acesso explícito (vazio = público)."""
+        if not self.perfis_permitidos:
+            return []
+        return [p.strip() for p in self.perfis_permitidos.split(',') if p.strip()]
+
+    @property
+    def is_restrito(self):
+        """Indica se o artigo possui restrição de leitura por perfil."""
+        return len(self.lista_perfis_permitidos) > 0
+
+    def usuario_pode_ver(self, usuario):
+        """Verifica se o usuário autenticado possui permissão para visualizar o artigo."""
+        if not usuario or not getattr(usuario, 'is_authenticated', False):
+            return False
+        if getattr(usuario, 'is_admin', False):
+            return True
+        if self.status != 'publicado':
+            return False
+        perfis = self.lista_perfis_permitidos
+        if not perfis:
+            return True
+        return getattr(usuario, 'perfil', None) in perfis
 
     @property
     def total_votos(self):
